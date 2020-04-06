@@ -17,22 +17,28 @@ class InitialTask : Task<Int>() {
     lateinit var controlSocket: Socket
 
     override fun call(): Int {
+        updateMessage("start mouse service")
+        if (!startMouseService()) return get()
+        updateValue(1)
+
+        Thread.sleep(1000)
+
         updateMessage("enable mouse tunnel")
         if (!enableTunnel(MOUSE_PORT, MOUSE_SOCKET)) return get()
-        updateValue(1)
+        updateValue(2)
 
         updateMessage("connect to mouse")
         mouseSocket = Socket("localhost", MOUSE_PORT)
         if (mouseSocket.getInputStream().read() < 0) return get()
-        updateValue(2)
+        updateValue(3)
 
         Thread.sleep(1000)
 
         updateMessage("enable control tunnel")
         if (!enableTunnel(CONTROL_PORT, CONTROL_SOCKET)) return get()
-        updateValue(3)
+        updateValue(4)
 
-        updateMessage("start controller")
+        updateMessage("start control service")
         Thread(Runnable {
             startController()
         }).start()
@@ -42,9 +48,26 @@ class InitialTask : Task<Int>() {
         updateMessage("connect to control")
         controlSocket = Socket("localhost", CONTROL_PORT)
         if (controlSocket.getInputStream().read() < 0) return get()
-        updateValue(4)
+        updateValue(5)
 
         return get()
+    }
+
+    private fun startMouseService(): Boolean {
+        try {
+            var command = "adb shell am force-stop cn.wycode.control"
+            println(command)
+            runtime.exec(command)
+
+            command = "adb shell am start-activity cn.wycode.control/.MainActivity"
+            val process = runtime.exec(command)
+            val result = process.inputStream.bufferedReader().readText()
+            println(result)
+            return !result.contains("Error")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return false
     }
 
     private fun startController(): Boolean {

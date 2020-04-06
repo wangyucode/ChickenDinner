@@ -39,7 +39,7 @@ class Controller : Initializable {
         initialTask.valueProperty().addListener { _, old, value ->
             println("valueProperty-->$old,$value")
             when (value) {
-                2 -> {
+                3 -> {
                     mouseConnected = true
                     mouseOutputStream = initialTask.mouseSocket.getOutputStream()
                     val readTask = ReadTask(initialTask.mouseSocket)
@@ -48,11 +48,11 @@ class Controller : Initializable {
                         canvas.height = screenInfo.height.toDouble() / RATIO
 
                         canvas.scene.window.height = canvas.height
-                        canvas.scene.window.width = canvas.width + 65
+                        canvas.scene.window.width = canvas.width + 70
                     }
                     Thread(readTask).start()
                 }
-                4 -> {
+                5 -> {
                     println("success!")
                 }
             }

@@ -1,4 +1,4 @@
-package cn.wycode.control_server.model;
+package cn.wycode.control.server.model;
 
 import android.graphics.Rect;
 

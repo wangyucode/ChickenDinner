@@ -1,14 +1,8 @@
-package cn.wycode.control_client
+package cn.wycode.control.client
 
+import cn.wycode.control.common.*
 import javafx.concurrent.Task
 import java.net.Socket
-
-const val MOUSE_PORT = 15940
-const val CONTROL_PORT = 15941
-const val MOUSE_SOCKET = "mouse-socket"
-const val CONTROL_SOCKET = "control-socket"
-const val CONTROL_PATH = "/data/local/tmp/controller.jar"
-const val CONTROL_SERVER = "cn.wycode.control_server.ControlServer"
 
 class InitialTask : Task<Int>() {
 

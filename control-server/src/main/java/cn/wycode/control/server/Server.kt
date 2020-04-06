@@ -1,12 +1,11 @@
 @file:JvmName("ControlServer")
-package cn.wycode.control_server
+package cn.wycode.control.server
 
 import android.net.LocalServerSocket
 import android.net.LocalSocket
-import cn.wycode.control_server.utils.Ln
+import cn.wycode.control.server.utils.Ln
 import java.io.File
 import java.io.IOException
-import java.net.Socket
 
 const val CONTROL_PATH = "/data/local/tmp/controller.jar"
 const val CONTROL_SOCKET = "control-socket"
@@ -20,6 +19,8 @@ class Server {
         val serverSocket = LocalServerSocket(CONTROL_SOCKET)
         controlSocket = serverSocket.accept()
         controlSocket.outputStream.write(1)
+
+        Controller(controlSocket.inputStream).run()
     }
 
 }

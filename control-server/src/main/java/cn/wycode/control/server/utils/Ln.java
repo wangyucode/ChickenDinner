@@ -1,4 +1,4 @@
-package cn.wycode.control_server.utils;
+package cn.wycode.control.server.utils;
 
 import android.util.Log;
 

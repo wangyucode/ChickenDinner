@@ -1,4 +1,4 @@
-package cn.wycode.control_server.wrappers;
+package cn.wycode.control.server.wrappers;
 
 import android.annotation.SuppressLint;
 import android.os.IBinder;

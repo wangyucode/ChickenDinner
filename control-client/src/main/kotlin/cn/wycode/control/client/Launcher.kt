@@ -1,4 +1,4 @@
-package cn.wycode.control_client
+package cn.wycode.control.client
 
 import javafx.application.Application
 import javafx.fxml.FXMLLoader

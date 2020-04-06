@@ -1,4 +1,4 @@
-package cn.wycode.control_server.model;
+package cn.wycode.control.server.model;
 
 public final class DisplayInfo {
     private final Size size;

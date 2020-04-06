@@ -1,4 +1,4 @@
-package cn.wycode.control_server.wrappers;
+package cn.wycode.control.server.wrappers;
 
 import android.annotation.SuppressLint;
 import android.graphics.Rect;
@@ -9,7 +9,7 @@ import android.view.Surface;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import cn.wycode.control_server.utils.Ln;
+import cn.wycode.control.server.utils.Ln;
 
 @SuppressLint("PrivateApi")
 public final class SurfaceControl {

@@ -1,4 +1,4 @@
-package cn.wycode.control_server.wrappers;
+package cn.wycode.control.server.wrappers;
 
 import android.os.IInterface;
 import android.view.InputEvent;
@@ -6,7 +6,7 @@ import android.view.InputEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import cn.wycode.control_server.utils.Ln;
+import cn.wycode.control.server.utils.Ln;
 
 public final class InputManager {
 

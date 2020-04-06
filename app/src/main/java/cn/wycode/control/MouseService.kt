@@ -16,8 +16,6 @@ import androidx.core.app.NotificationCompat
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
-
-const val SOCKET_NAME = "mouse-socket"
 const val CHANNEL_ID = "cn.wycode.control_channel"
 
 class MouseService : Service() {

@@ -1,10 +1,10 @@
-package cn.wycode.control_server.wrappers;
+package cn.wycode.control.server.wrappers;
 
 
 import android.os.IInterface;
 
-import cn.wycode.control_server.model.DisplayInfo;
-import cn.wycode.control_server.model.Size;
+import cn.wycode.control.server.model.DisplayInfo;
+import cn.wycode.control.server.model.Size;
 
 public final class DisplayManager {
     private final IInterface manager;

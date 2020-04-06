@@ -1,0 +1,4 @@
+rootProject.name = 'Control'
+include ':app'
+include ':control-server'
+include ':control-client'

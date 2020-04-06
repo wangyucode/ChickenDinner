@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox fx:id="hBox" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.wycode.control_client.Controller">
+    <children>
+        <Canvas fx:id="canvas" height="200.0" onMouseDragged="#onMouseDragged" onMouseMoved="#onMouseMoved" onMousePressed="#onMousePressed" onMouseReleased="#onMouseReleased" width="200.0" />
+        <ToolBar maxWidth="65.0" orientation="VERTICAL">
+            <items>
+            <Label fx:id="info" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" text="1111" wrapText="true" />
+                <Button mnemonicParsing="false" text="Button" />
+            </items>
+        </ToolBar>
+    </children>
+</HBox>

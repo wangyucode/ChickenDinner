@@ -77,18 +77,28 @@ class Controller : Initializable {
 
                         canvas.scene.window.height = canvas.height
                         canvas.scene.window.width = canvas.width + 70
+
                     }
                     Thread(readTask).start()
                 }
                 5 -> {
-                    println("client::connected to mouse service!")
+                    println("client::connected to control service!")
                     controlConnected = true
                     controlOutputStream = initialTask.controlSocket.getOutputStream()
+                    canvas.scene.setOnKeyPressed {
+                        this.keyDown(it)
+                    }
+
+                    canvas.scene.setOnKeyReleased {
+                        this.keyUp(it)
+                    }
                 }
             }
         }
 
         Thread(initialTask).start()
+
+
     }
 
     @FXML
@@ -122,19 +132,17 @@ class Controller : Initializable {
         if (controlConnected) sendKey(KEY_BACK)
     }
 
-    @FXML
-    fun keyDown(keyEvent: KeyEvent) {
+    private fun keyDown(keyEvent: KeyEvent) {
         if (!controlConnected) return
         //TODO read keymap
     }
 
-    @FXML
-    fun keyUp(keyEvent: KeyEvent) {
+    private fun keyUp(keyEvent: KeyEvent) {
         if (!controlConnected) return
         when (keyEvent.code) {
             KeyCode.PAGE_UP -> sendKey(KEY_VOLUME_UP)
             KeyCode.PAGE_DOWN -> sendKey(KEY_VOLUME_DOWN)
-            KeyCode.HOME -> sendKey(KEY_HOME)
+            KeyCode.END -> sendKey(KEY_HOME)
             KeyCode.DELETE -> sendKey(KEY_BACK)
             else -> return //TODO read keymap
         }
@@ -145,7 +153,7 @@ class Controller : Initializable {
             keyBuffer.clear()
             keyBuffer.put(HEAD_KEY)
             keyBuffer.put(key)
-            mouseOutputStream.write(keyBuffer.array())
+            controlOutputStream.write(keyBuffer.array())
         }
     }
 

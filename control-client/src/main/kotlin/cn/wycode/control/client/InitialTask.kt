@@ -53,7 +53,9 @@ class InitialTask : Task<Int>() {
             println(command)
             runtime.exec(command)
 
+            Thread.sleep(1000)
             command = "adb shell am start-activity cn.wycode.control/.MainActivity"
+            println(command)
             val process = runtime.exec(command)
             val result = process.inputStream.bufferedReader().readText()
             println(result)
@@ -66,11 +68,26 @@ class InitialTask : Task<Int>() {
 
     private fun startController(): Boolean {
         try {
-            val command = "adb shell CLASSPATH=$CONTROL_PATH app_process / $CONTROL_SERVER"
+            var command = "adb shell killall $CONTROL_SERVER"
+            println(command)
+            var result = runtime.exec(command).inputStream.bufferedReader().readText()
+            println(result)
+
+            Thread.sleep(1000)
+            //vm-options – VM 选项
+            //cmd-dir –父目录 (/system/bin)
+            //options –运行的参数 :
+            //    –zygote
+            //    –start-system-server
+            //    –application (api>=14)
+            //    –nice-name=nice_proc_name (api>=14)
+            //start-class-name –包含main方法的主类  (com.android.commands.am.Am)
+            //main-options –启动时候传递到main方法中的参数
+            command = "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER"
             println(command)
             val process = runtime.exec(command)
             val error = process.errorStream.bufferedReader().readText()
-            val result = process.inputStream.bufferedReader().readText()
+            result = process.inputStream.bufferedReader().readText()
             println(result)
             println(error)
             return !result.contains("ERROR")

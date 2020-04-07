@@ -12,7 +12,7 @@ import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.WindowManager
-import androidx.core.app.NotificationCompat
+import android.view.WindowManager.LayoutParams.*
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
@@ -32,7 +32,7 @@ class MouseService : Service() {
 
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
 
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notification: Notification = Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("Android Controller")
             .setContentText("running").build()
 
@@ -45,17 +45,17 @@ class MouseService : Service() {
         windowManager.defaultDisplay.getRealSize(size)
 
         val layoutParams = WindowManager.LayoutParams()
-        layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        layoutParams.type = TYPE_APPLICATION_OVERLAY
         layoutParams.format = PixelFormat.RGBA_8888
-        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.or(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT
-        layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT
+        layoutParams.flags = FLAG_NOT_TOUCHABLE.or(FLAG_KEEP_SCREEN_ON)
+        layoutParams.width = MATCH_PARENT
+        layoutParams.height = MATCH_PARENT
         val mouse = LayoutInflater.from(this).inflate(R.layout.mouse, null) as ViewGroup
         windowManager.addView(mouse, layoutParams)
         val pointer = mouse.getChildAt(0)
         val server = MouseServer(object : ServerCallBack {
             override fun onConnected(outputStream: OutputStream) {
-                val buffer= ByteBuffer.allocate(8)
+                val buffer = ByteBuffer.allocate(8)
 
                 buffer.putInt(size.x)
                 buffer.putInt(size.y)

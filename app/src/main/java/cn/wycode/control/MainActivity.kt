@@ -1,16 +1,14 @@
 package cn.wycode.control
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
-
 const val OVERLAY_PERMISSION_REQUEST_CODE = 300
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,40 +1,24 @@
 package cn.wycode.control.server
 
 import android.os.SystemClock
-import android.view.*
-import android.view.MotionEvent.PointerCoords
-import android.view.MotionEvent.PointerProperties
+import android.view.InputDevice
+import android.view.InputEvent
+import android.view.KeyCharacterMap
+import android.view.KeyEvent
 import cn.wycode.control.common.*
+import cn.wycode.control.server.utils.Ln
 import cn.wycode.control.server.wrappers.InputManager.INJECT_INPUT_EVENT_MODE_ASYNC
 import cn.wycode.control.server.wrappers.ServiceManager
 import java.io.InputStream
 import java.nio.ByteBuffer
 
 
-const val MAX_POINTERS = 10
-
 class Controller(private val inputStream: InputStream) : Thread() {
 
     private val event: Event = Event(0, 0, 0, 0, 0)
     private val pointBuffer = ByteBuffer.allocate(8)
     private val serviceManager = ServiceManager()
-    private var touchCount = 1
-    private var lastTouchDown = 0L
-    private val pointerProperties = arrayOfNulls<MotionEvent.PointerProperties>(MAX_POINTERS)
-    private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
-
-    init {
-        for (i in 0 until MAX_POINTERS) {
-            val props = PointerProperties()
-            props.id = i
-            props.toolType = MotionEvent.TOOL_TYPE_FINGER
-            val coords = PointerCoords()
-            coords.orientation = -1f
-            coords.size = 128f
-            pointerProperties[i] = props
-            pointerCoords[i] = coords
-        }
-    }
+    private val touchConverter = TouchConverter()
 
     override fun run() {
         while (true) {
@@ -51,50 +35,9 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectTouch() {
-        val now = SystemClock.uptimeMillis()
-
-        var action = MotionEvent.ACTION_MOVE
-        if (event.type == HEAD_TOUCH_DOWN) {
-            if (touchCount == 1) {
-                lastTouchDown = now
-                action = MotionEvent.ACTION_DOWN
-            } else {
-                action = MotionEvent.ACTION_POINTER_DOWN or (event.index.toInt() shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
-            }
-            touchCount++
-        } else if (event.type == HEAD_TOUCH_UP) {
-            // secondary pointers must use ACTION_POINTER_* ORed with the pointerIndex
-            action = if (touchCount > 1) {
-                MotionEvent.ACTION_POINTER_UP or (event.index.toInt() shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
-            } else {
-                MotionEvent.ACTION_UP
-            }
-            touchCount--
-        }
-
-        val coords = pointerCoords[event.index.toInt()]
-        coords!!.x = event.x.toFloat()
-        coords.y = event.y.toFloat()
-
-        val event = MotionEvent.obtain(
-            lastTouchDown,
-            now,
-            action,
-            touchCount,
-            pointerProperties,
-            pointerCoords,
-            0,
-            0,
-            1f,
-            1f,
-            -1,
-            0,
-            InputDevice.SOURCE_TOUCHSCREEN,
-            0
-        )
-
-        injectEvent(event)
-        event.recycle()
+        val motionEvent = touchConverter.convert(this.event)
+        injectEvent(motionEvent)
+        motionEvent.recycle()
     }
 
 
@@ -121,6 +64,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectEvent(event: InputEvent): Boolean {
+        Ln.d("eventReceived->${this.event},\neventInjected->$event")
         return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC);
     }
 

@@ -17,6 +17,7 @@ class Server {
     @Throws(IOException::class)
     fun start() {
         val serverSocket = LocalServerSocket(CONTROL_SOCKET)
+        Ln.d("started!")
         controlSocket = serverSocket.accept()
         controlSocket.outputStream.write(1)
 

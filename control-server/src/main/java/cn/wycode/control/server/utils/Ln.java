@@ -8,8 +8,7 @@ import android.util.Log;
  */
 public final class Ln {
 
-    private static final String TAG = "wycode";
-    private static final String PREFIX = "[server] ";
+    private static final String TAG = "[wycs]";
 
 
     private Ln() {
@@ -18,22 +17,22 @@ public final class Ln {
 
     public static void d(String message) {
         Log.d(TAG, message);
-        System.out.println(PREFIX + "DEBUG: " + message);
+        System.out.println(TAG + "DEBUG: " + message);
     }
 
     public static void i(String message) {
         Log.i(TAG, message);
-        System.out.println(PREFIX + "INFO: " + message);
+        System.out.println(TAG + "INFO: " + message);
     }
 
     public static void w(String message) {
         Log.w(TAG, message);
-        System.out.println(PREFIX + "WARN: " + message);
+        System.out.println(TAG + "WARN: " + message);
     }
 
     public static void e(String message, Throwable throwable) {
         Log.e(TAG, message, throwable);
-        System.out.println(PREFIX + "ERROR: " + message);
+        System.out.println(TAG + "ERROR: " + message);
         if (throwable != null) {
             throwable.printStackTrace();
         }

@@ -47,7 +47,7 @@ class MouseService : Service() {
         val layoutParams = WindowManager.LayoutParams()
         layoutParams.type = TYPE_APPLICATION_OVERLAY
         layoutParams.format = PixelFormat.RGBA_8888
-        layoutParams.flags = FLAG_NOT_TOUCHABLE.or(FLAG_KEEP_SCREEN_ON)
+        layoutParams.flags = FLAG_NOT_TOUCHABLE.or(FLAG_KEEP_SCREEN_ON).or(FLAG_NOT_FOCUSABLE).or(FLAG_NOT_TOUCH_MODAL)
         layoutParams.width = MATCH_PARENT
         layoutParams.height = MATCH_PARENT
         val mouse = LayoutInflater.from(this).inflate(R.layout.mouse, null) as ViewGroup

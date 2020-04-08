@@ -70,7 +70,7 @@ class InitialTask : Task<Int>() {
         try {
             var command = "adb shell killall $CONTROL_SERVER"
             println(command)
-            var result = runtime.exec(command).inputStream.bufferedReader().readText()
+            val result = runtime.exec(command).inputStream.bufferedReader().readText()
             println(result)
 
             Thread.sleep(1000)
@@ -86,11 +86,11 @@ class InitialTask : Task<Int>() {
             command = "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER"
             println(command)
             val process = runtime.exec(command)
-            val error = process.errorStream.bufferedReader().readText()
-            result = process.inputStream.bufferedReader().readText()
-            println(result)
-            println(error)
-            return !result.contains("ERROR")
+            while (process.isAlive){
+                println(process.inputStream.bufferedReader().readLine())
+            }
+
+            println(process.errorStream.bufferedReader().readText())
         } catch (e: Exception) {
             e.printStackTrace()
         }

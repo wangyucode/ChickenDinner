@@ -16,7 +16,7 @@ import java.util.*
 import java.util.concurrent.Executors
 
 
-const val RATIO = 4.0
+const val RATIO = 3.0
 
 class Controller : Initializable {
 
@@ -28,6 +28,8 @@ class Controller : Initializable {
 
     @FXML
     lateinit var info: Label
+
+    private val screenInfo = ScreenInfo(0, 0)
 
     private val mouseEventExecutor = Executors.newSingleThreadExecutor()
     private val controlEventExecutor = Executors.newSingleThreadExecutor()
@@ -70,8 +72,8 @@ class Controller : Initializable {
                     println("client::connected to mouse service!")
                     mouseConnected = true
                     mouseOutputStream = initialTask.mouseSocket.getOutputStream()
-                    val readTask = ReadTask(initialTask.mouseSocket)
-                    readTask.valueProperty().addListener { _, _, screenInfo ->
+                    val readTask = ReadTask(initialTask.mouseSocket, screenInfo)
+                    readTask.valueProperty().addListener { _, _, _ ->
                         canvas.width = screenInfo.width / RATIO
                         canvas.height = screenInfo.height.toDouble() / RATIO
 
@@ -97,8 +99,6 @@ class Controller : Initializable {
         }
 
         Thread(initialTask).start()
-
-
     }
 
     @FXML

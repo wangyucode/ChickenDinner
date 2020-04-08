@@ -4,12 +4,11 @@ import javafx.concurrent.Task
 import java.net.Socket
 import java.nio.ByteBuffer
 
-class ReadTask(private val mouseSocket: Socket) : Task<ScreenInfo>() {
+class ReadTask(private val mouseSocket: Socket, private val screenInfo: ScreenInfo) : Task<ScreenInfo>() {
 
     override fun call(): ScreenInfo {
         val inputStream = mouseSocket.getInputStream()
         val buffer = ByteArray(8)
-        val screenInfo = ScreenInfo(0, 0)
         while (true) {
             if (inputStream.read(buffer) > 0) {
                 screenInfo.width = ByteBuffer.wrap(buffer).getInt(0)

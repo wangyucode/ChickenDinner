@@ -8,7 +8,7 @@ data class Button(val key: String, val position: Position)
 
 data class Position(val x: Int, val y: Int)
 
-data class Joystick(val left: Button, val right: Button, val up: Button, val down: Button)
+data class Joystick(val center: Position, val radius: Int)
 
 fun initButtons(keymap: Keymap, buttonMap: HashMap<KeyCode, Button>) {
     for (button in keymap.buttons) {

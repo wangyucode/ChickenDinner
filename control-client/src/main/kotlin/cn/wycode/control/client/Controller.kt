@@ -14,6 +14,7 @@ import java.net.URL
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.collections.HashMap
 
 
 const val RATIO = 3.0
@@ -35,6 +36,8 @@ class Controller : Initializable {
     private val controlEventExecutor = Executors.newSingleThreadExecutor()
     private lateinit var mouseOutputStream: OutputStream
     private lateinit var controlOutputStream: OutputStream
+
+    private val buttonMap = HashMap<KeyCode, Button>()
 
     private var mouseConnected = false
     private var controlConnected = false
@@ -95,11 +98,16 @@ class Controller : Initializable {
                         this.keyUp(it)
                     }
                 }
+
+                6 -> {
+                    initButtons(initialTask.keymap, buttonMap)
+                }
             }
         }
 
         Thread(initialTask).start()
     }
+
 
     @FXML
     fun onMousePressed(event: MouseEvent) {
@@ -134,7 +142,8 @@ class Controller : Initializable {
 
     private fun keyDown(keyEvent: KeyEvent) {
         if (!controlConnected) return
-        //TODO read keymap
+        val button = buttonMap[keyEvent.code]
+        if (button != null) sendTouch(HEAD_TOUCH_DOWN, button.position.x, button.position.y)
     }
 
     private fun keyUp(keyEvent: KeyEvent) {
@@ -144,11 +153,16 @@ class Controller : Initializable {
             KeyCode.PAGE_DOWN -> sendKey(KEY_VOLUME_DOWN)
             KeyCode.END -> sendKey(KEY_HOME)
             KeyCode.DELETE -> sendKey(KEY_BACK)
-            else -> return //TODO read keymap
+            else -> {
+                val button = buttonMap[keyEvent.code]
+                if (button != null) sendTouch(HEAD_TOUCH_UP, button.position.x, button.position.y)
+            }
         }
+
     }
 
     private fun sendKey(key: Byte) {
+        println("sendKey::$key")
         controlEventExecutor.submit {
             keyBuffer.clear()
             keyBuffer.put(HEAD_KEY)

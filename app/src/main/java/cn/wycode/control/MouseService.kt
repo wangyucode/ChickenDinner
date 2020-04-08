@@ -53,7 +53,7 @@ class MouseService : Service() {
         val mouse = LayoutInflater.from(this).inflate(R.layout.mouse, null) as ViewGroup
         windowManager.addView(mouse, layoutParams)
         val pointer = mouse.getChildAt(0)
-        val server = MouseServer(object : ServerCallBack {
+        MouseServer(object : ServerCallBack {
             override fun onConnected(outputStream: OutputStream) {
                 val buffer = ByteBuffer.allocate(8)
 

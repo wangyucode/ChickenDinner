@@ -4,6 +4,8 @@ import android.graphics.Point
 import android.net.LocalServerSocket
 import android.net.LocalSocket
 import android.os.AsyncTask
+import android.util.Log
+import cn.wycode.control.common.LOG_TAG
 import cn.wycode.control.common.MOUSE_SOCKET
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -19,6 +21,7 @@ class MouseServer(private val callBack: ServerCallBack) : AsyncTask<Int, Point, 
         val inputStream = mouseSocket.inputStream
         val outputStream = mouseSocket.outputStream
         outputStream.write(1)
+        Log.d(LOG_TAG, "Mouse client connected!")
         callBack.onConnected(outputStream)
         val point = Point()
         while (true) {

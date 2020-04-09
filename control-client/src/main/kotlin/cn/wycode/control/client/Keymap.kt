@@ -2,6 +2,9 @@ package cn.wycode.control.client
 
 import javafx.scene.input.KeyCode
 
+const val TOUCH_ID_MOUSE: Byte = 0
+const val TOUCH_ID_BUTTON: Byte = 1
+
 data class Keymap(val buttons: List<Button> = emptyList(), val joystick: Joystick?)
 
 data class Button(val key: String, val position: Position)

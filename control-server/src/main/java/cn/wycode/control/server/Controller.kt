@@ -16,7 +16,15 @@ import java.nio.ByteBuffer
 class Controller(private val inputStream: InputStream) : Thread() {
 
     private val event: Event = Event(0, 0, 0, 0, 0)
-    private val pointBuffer = ByteBuffer.allocate(8)
+    /**
+     * 1 byte id, 4 byte x , 4 byte y
+     *   id      x         y
+     * | . | . . . . | . . . . |
+     * touchDown -> head = 1
+     * touchMove -> head = 2
+     * touchUP   -> head = 3
+     */
+    private val touchBuffer = ByteBuffer.allocate(9)
     private val serviceManager = ServiceManager()
     private val touchConverter = TouchConverter()
 
@@ -36,8 +44,10 @@ class Controller(private val inputStream: InputStream) : Thread() {
 
     private fun injectTouch() {
         val motionEvent = touchConverter.convert(this.event)
-        injectEvent(motionEvent)
-        motionEvent.recycle()
+        if (motionEvent != null) {
+            injectEvent(motionEvent)
+            motionEvent.recycle()
+        }
     }
 
 
@@ -64,7 +74,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectEvent(event: InputEvent): Boolean {
-        Ln.d("eventReceived->${this.event},\neventInjected->$event")
+        //Ln.d("eventReceived->${this.event},eventInjected->$event")
         return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC);
     }
 
@@ -73,11 +83,13 @@ class Controller(private val inputStream: InputStream) : Thread() {
         if (event.type == HEAD_KEY) {
             event.key = inputStream.read().toByte()
         } else {
-            inputStream.read(pointBuffer.array())
-            event.x = pointBuffer.getInt(0)
-            event.y = pointBuffer.getInt(4)
+            touchBuffer.clear()
+            inputStream.read(touchBuffer.array())
+            event.id = touchBuffer.get()
+            event.x = touchBuffer.getInt(1)
+            event.y = touchBuffer.getInt(5)
         }
     }
 }
 
-data class Event(var type: Byte, var index: Byte, var x: Int, var y: Int, var key: Byte)
+data class Event(var type: Byte, var id: Byte, var x: Int, var y: Int, var key: Byte)

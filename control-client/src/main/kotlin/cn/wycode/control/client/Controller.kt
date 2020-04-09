@@ -42,15 +42,17 @@ class Controller : Initializable {
     private var mouseConnected = false
     private var controlConnected = false
 
+    private var lastKeyDown = KeyCode.UNDEFINED
+
     /**
-     * 1 byte head, 4 byte x , 4 byte y
-     * head     x         y
-     * | . | . . . . | . . . . |
+     * 1 byte head, 1 byte id, 4 byte x , 4 byte y
+     * head  id      x         y
+     * | . | . | . . . . | . . . . |
      * touchDown -> head = 1
      * touchMove -> head = 2
      * touchUP   -> head = 3
      */
-    private val touchBuffer = ByteBuffer.allocate(9)
+    private val touchBuffer = ByteBuffer.allocate(10)
 
     /**
      * 4 byte x , 4 byte y
@@ -111,7 +113,12 @@ class Controller : Initializable {
 
     @FXML
     fun onMousePressed(event: MouseEvent) {
-        if (controlConnected) sendTouch(HEAD_TOUCH_DOWN, (event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        if (controlConnected) sendTouch(
+            HEAD_TOUCH_DOWN,
+            TOUCH_ID_MOUSE,
+            (event.x * RATIO).toInt(),
+            (event.y * RATIO).toInt()
+        )
     }
 
     @FXML
@@ -121,13 +128,23 @@ class Controller : Initializable {
 
     @FXML
     fun onMouseReleased(event: MouseEvent) {
-        if (controlConnected) sendTouch(HEAD_TOUCH_UP, (event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        if (controlConnected) sendTouch(
+            HEAD_TOUCH_UP,
+            TOUCH_ID_MOUSE,
+            (event.x * RATIO).toInt(),
+            (event.y * RATIO).toInt()
+        )
     }
 
     @FXML
     fun onMouseDragged(event: MouseEvent) {
         if (mouseConnected) sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
-        if (controlConnected) sendTouch(HEAD_TOUCH_MOVE, (event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        if (controlConnected) sendTouch(
+            HEAD_TOUCH_MOVE,
+            TOUCH_ID_MOUSE,
+            (event.x * RATIO).toInt(),
+            (event.y * RATIO).toInt()
+        )
     }
 
     @FXML
@@ -142,12 +159,17 @@ class Controller : Initializable {
 
     private fun keyDown(keyEvent: KeyEvent) {
         if (!controlConnected) return
+        // fix long press
+        if (keyEvent.code == lastKeyDown) return
+        lastKeyDown = keyEvent.code
         val button = buttonMap[keyEvent.code]
-        if (button != null) sendTouch(HEAD_TOUCH_DOWN, button.position.x, button.position.y)
+        if (button != null) sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_BUTTON, button.position.x, button.position.y)
     }
 
     private fun keyUp(keyEvent: KeyEvent) {
         if (!controlConnected) return
+        // fix long press
+        if (keyEvent.code == lastKeyDown) lastKeyDown = KeyCode.UNDEFINED
         when (keyEvent.code) {
             KeyCode.PAGE_UP -> sendKey(KEY_VOLUME_UP)
             KeyCode.PAGE_DOWN -> sendKey(KEY_VOLUME_DOWN)
@@ -155,7 +177,7 @@ class Controller : Initializable {
             KeyCode.DELETE -> sendKey(KEY_BACK)
             else -> {
                 val button = buttonMap[keyEvent.code]
-                if (button != null) sendTouch(HEAD_TOUCH_UP, button.position.x, button.position.y)
+                if (button != null) sendTouch(HEAD_TOUCH_UP, TOUCH_ID_BUTTON, button.position.x, button.position.y)
             }
         }
 
@@ -180,10 +202,11 @@ class Controller : Initializable {
         }
     }
 
-    private fun sendTouch(head: Byte, x: Int, y: Int) {
+    private fun sendTouch(head: Byte, id: Byte, x: Int, y: Int) {
         controlEventExecutor.submit {
             touchBuffer.clear()
             touchBuffer.put(head)
+            touchBuffer.put(id)
             touchBuffer.putInt(x)
             touchBuffer.putInt(y)
             controlOutputStream.write(touchBuffer.array())

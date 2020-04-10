@@ -1,4 +1,11 @@
 {
+  "joystick": {
+    "center": {
+      "x": 300,
+      "y": 600
+    },
+    "radius": 200
+  },
   "buttons": [
     {
       "key": "Q",

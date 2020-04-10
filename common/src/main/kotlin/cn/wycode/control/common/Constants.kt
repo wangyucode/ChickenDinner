@@ -2,6 +2,8 @@ package cn.wycode.control.common
 
 const val LOG_TAG = "[wycs]"
 
+const val ZERO_BYTE: Byte = 0
+
 const val MOUSE_PORT = 15940
 const val CONTROL_PORT = 15941
 const val MOUSE_SOCKET = "mouse-socket"

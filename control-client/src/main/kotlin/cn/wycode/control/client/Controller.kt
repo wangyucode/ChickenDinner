@@ -40,7 +40,10 @@ class Controller : Initializable {
             when (value) {
                 3 -> onMouseServiceConnected()
                 5 -> onControlServiceConnected()
-                6 -> initButtons(initialTask.keymap, keyHandler.buttonMap, keyHandler.joystick)
+                6 -> {
+                    keyHandler.joystick = initialTask.keymap.joystick
+                    initButtons(initialTask.keymap, keyHandler.buttonMap)
+                }
             }
         }
 

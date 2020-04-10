@@ -16,6 +16,7 @@ import java.nio.ByteBuffer
 class Controller(private val inputStream: InputStream) : Thread() {
 
     private val event: Event = Event(0, 0, 0, 0, 0)
+
     /**
      * 1 byte id, 4 byte x , 4 byte y
      *   id      x         y
@@ -74,7 +75,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectEvent(event: InputEvent): Boolean {
-        //Ln.d("eventReceived->${this.event},eventInjected->$event")
+        Ln.d("eventReceived->${this.event},eventInjected->$event")
         return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC);
     }
 

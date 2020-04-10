@@ -4,14 +4,16 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<HBox fx:id="hBox" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.wycode.control.client.Controller">
+<HBox fx:id="hBox" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="cn.wycode.control.client.Controller">
     <children>
-        <Canvas fx:id="canvas" height="200.0" onMouseDragged="#onMouseDragged" onMouseMoved="#onMouseMoved" onMousePressed="#onMousePressed" onMouseReleased="#onMouseReleased" width="200.0" />
+        <Canvas fx:id="canvas" height="200.0" width="200.0"/>
         <ToolBar maxWidth="65.0" orientation="VERTICAL">
             <items>
-                <Label fx:id="info" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" text="1111" wrapText="true" />
-                <Button mnemonicParsing="false" onAction="#home" text="Home" />
-                <Button mnemonicParsing="false" onAction="#back" text="Back" />
+                <Label fx:id="info" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" text="1111"
+                       wrapText="true"/>
+                <Button onAction="#home" mnemonicParsing="false" text="Home"/>
+                <Button onAction="#back" mnemonicParsing="false" text="Back"/>
             </items>
         </ToolBar>
     </children>

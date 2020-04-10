@@ -13,7 +13,11 @@ data class Position(val x: Int, val y: Int)
 
 data class Joystick(val center: Position, val radius: Int)
 
-fun initButtons(keymap: Keymap, buttonMap: HashMap<KeyCode, Button>) {
+fun initButtons(
+    keymap: Keymap,
+    buttonMap: HashMap<KeyCode, Button>,
+    joystick: Joystick?
+) {
     for (button in keymap.buttons) {
         buttonMap[KeyCode.getKeyCode(button.key)] = button
     }

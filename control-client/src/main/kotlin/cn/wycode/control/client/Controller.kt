@@ -15,6 +15,7 @@ import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.HashMap
+import kotlin.random.Random
 
 
 const val RATIO = 3.0
@@ -117,7 +118,8 @@ class Controller : Initializable {
             HEAD_TOUCH_DOWN,
             TOUCH_ID_MOUSE,
             (event.x * RATIO).toInt(),
-            (event.y * RATIO).toInt()
+            (event.y * RATIO).toInt(),
+            false
         )
     }
 
@@ -132,7 +134,8 @@ class Controller : Initializable {
             HEAD_TOUCH_UP,
             TOUCH_ID_MOUSE,
             (event.x * RATIO).toInt(),
-            (event.y * RATIO).toInt()
+            (event.y * RATIO).toInt(),
+            false
         )
     }
 
@@ -143,7 +146,8 @@ class Controller : Initializable {
             HEAD_TOUCH_MOVE,
             TOUCH_ID_MOUSE,
             (event.x * RATIO).toInt(),
-            (event.y * RATIO).toInt()
+            (event.y * RATIO).toInt(),
+            false
         )
     }
 
@@ -163,7 +167,7 @@ class Controller : Initializable {
         if (keyEvent.code == lastKeyDown) return
         lastKeyDown = keyEvent.code
         val button = buttonMap[keyEvent.code]
-        if (button != null) sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_BUTTON, button.position.x, button.position.y)
+        if (button != null) sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_BUTTON, button.position.x, button.position.y, true)
     }
 
     private fun keyUp(keyEvent: KeyEvent) {
@@ -177,7 +181,13 @@ class Controller : Initializable {
             KeyCode.DELETE -> sendKey(KEY_BACK)
             else -> {
                 val button = buttonMap[keyEvent.code]
-                if (button != null) sendTouch(HEAD_TOUCH_UP, TOUCH_ID_BUTTON, button.position.x, button.position.y)
+                if (button != null) sendTouch(
+                    HEAD_TOUCH_UP,
+                    TOUCH_ID_BUTTON,
+                    button.position.x,
+                    button.position.y,
+                    true
+                )
             }
         }
 
@@ -202,13 +212,15 @@ class Controller : Initializable {
         }
     }
 
-    private fun sendTouch(head: Byte, id: Byte, x: Int, y: Int) {
+    private fun sendTouch(head: Byte, id: Byte, x: Int, y: Int, shake: Boolean) {
+        val shakeX = if (shake) x + Random.nextInt(-5, 5) else x
+        val shakeY = if (shake) y + Random.nextInt(-5, 5) else y
         controlEventExecutor.submit {
             touchBuffer.clear()
             touchBuffer.put(head)
             touchBuffer.put(id)
-            touchBuffer.putInt(x)
-            touchBuffer.putInt(y)
+            touchBuffer.putInt(shakeX)
+            touchBuffer.putInt(shakeY)
             controlOutputStream.write(touchBuffer.array())
         }
     }

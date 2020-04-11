@@ -6,6 +6,7 @@ import android.net.LocalSocket
 import android.os.AsyncTask
 import android.util.Log
 import android.view.View
+import cn.wycode.control.common.HEAD_MOUSE_MOVE
 import cn.wycode.control.common.LOG_TAG
 import cn.wycode.control.common.MOUSE_SOCKET
 import java.io.OutputStream
@@ -31,11 +32,15 @@ class MouseServer(private val size: Point, private val pointerView: View) : Asyn
         screenInfoExecutor.submit { this.sendScreenInfo() }
         val point = Point()
         while (true) {
-            if (inputStream.read(inputPointBuffer.array()) > 0) {
-                point.x = inputPointBuffer.getInt(0)
-                point.y = inputPointBuffer.getInt(4)
-                publishProgress(point)
+            when (inputStream.read().toByte()) {
+                HEAD_MOUSE_MOVE -> {
+                    inputStream.read(inputPointBuffer.array())
+                    point.x = inputPointBuffer.getInt(0)
+                    point.y = inputPointBuffer.getInt(4)
+                    publishProgress(point)
+                }
             }
+
         }
     }
 

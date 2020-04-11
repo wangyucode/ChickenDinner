@@ -21,11 +21,11 @@ class Connections {
     private val touchBuffer = ByteBuffer.allocate(10)
 
     /**
-     * 4 byte x , 4 byte y
-     * |    x    |    y    |
-     * | . . . . | . . . . |
+     * 1 byte head , 4 byte x , 4 byte y
+     * | head |    x    |    y    |
+     * |  .   | . . . . | . . . . |
      */
-    private val mouseMoveBuffer = ByteBuffer.allocate(8)
+    private val mouseMoveBuffer = ByteBuffer.allocate(9)
 
     /**
      * 1 byte head , 1 byte key
@@ -56,6 +56,7 @@ class Connections {
     fun sendMouseMove(x: Int, y: Int) {
         mouseEventExecutor.submit {
             mouseMoveBuffer.clear()
+            mouseMoveBuffer.put(HEAD_MOUSE_MOVE)
             mouseMoveBuffer.putInt(x)
             mouseMoveBuffer.putInt(y)
             mouseOutputStream.write(mouseMoveBuffer.array())

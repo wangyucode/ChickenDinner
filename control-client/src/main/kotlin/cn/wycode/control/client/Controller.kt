@@ -9,6 +9,7 @@ import javafx.scene.control.Label
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
+import javafx.scene.paint.Color
 import javafx.stage.Screen
 import java.net.URL
 import java.util.*
@@ -70,8 +71,13 @@ class Controller : Initializable {
         println("client::connected to overlay service!")
         mouseHandler.mouseConnected = true
         connections.mouseOutputStream = initialTask.mouseSocket.getOutputStream()
+
         val screen = Screen.getPrimary()
         val visualBounds = screen.visualBounds
+
+        val graphics = canvas.graphicsContext2D
+        graphics.fill = Color.DARKOLIVEGREEN
+
         val readTask = ReadTask(initialTask.mouseSocket, screenInfo)
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
@@ -85,9 +91,13 @@ class Controller : Initializable {
             canvas.width = screenInfo.width / RATIO
             canvas.height = screenInfo.height / RATIO
 
-            canvas.scene.window.height = canvas.height
-            canvas.scene.window.width = canvas.width + PANEL_WIDTH
+            val window = canvas.scene.window
+            window.height = canvas.height
+            window.width = canvas.width + PANEL_WIDTH
+            window.y = 0.0
+            window.x = visualBounds.width / 2 - window.width / 2
 
+            graphics.fillRect(0.0, 0.0, canvas.width, canvas.height)
         }
         Thread(readTask).start()
         canvas.addEventHandler(MouseEvent.ANY, mouseHandler)

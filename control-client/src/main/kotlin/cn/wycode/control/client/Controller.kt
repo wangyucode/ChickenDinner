@@ -9,11 +9,13 @@ import javafx.scene.control.Label
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
+import javafx.stage.Screen
 import java.net.URL
 import java.util.*
 
+var RATIO = 3.0
 
-const val RATIO = 3.0
+const val PANEL_WIDTH = 70
 
 class Controller : Initializable {
 
@@ -71,13 +73,23 @@ class Controller : Initializable {
         println("client::connected to overlay service!")
         mouseHandler.mouseConnected = true
         connections.mouseOutputStream = initialTask.mouseSocket.getOutputStream()
+        val screen = Screen.getPrimary()
+        val visualBounds = screen.visualBounds
         val readTask = ReadTask(initialTask.mouseSocket, screenInfo)
         readTask.valueProperty().addListener { _, _, _ ->
+            // The client screen is wider than the server
+            RATIO =
+                if (visualBounds.width - PANEL_WIDTH / visualBounds.height > screenInfo.width.toDouble() / screenInfo.height) {
+                    screenInfo.height / visualBounds.height
+                } else {
+                    screenInfo.width - PANEL_WIDTH / visualBounds.width
+                }
+
             canvas.width = screenInfo.width / RATIO
-            canvas.height = screenInfo.height.toDouble() / RATIO
+            canvas.height = screenInfo.height / RATIO
 
             canvas.scene.window.height = canvas.height
-            canvas.scene.window.width = canvas.width + 70
+            canvas.scene.window.width = canvas.width + PANEL_WIDTH
 
         }
         Thread(readTask).start()

@@ -6,6 +6,13 @@ import javafx.application.Platform
 import javafx.concurrent.Task
 import java.net.Socket
 
+const val INIT_PROCESS_START_MOUSE_SERVICE = 1
+const val INIT_PROCESS_ENABLE_MOUSE_TUNNEL = 2
+const val INIT_PROCESS_READ_KEYMAP = 3
+const val INIT_PROCESS_CONNECT_MOUSE_SERVICE = 4
+const val INIT_PROCESS_ENABLE_CONTROL_TUNNEL = 5
+const val INIT_PROCESS_CONNECT_CONTROL_SERVICE = 6
+
 class InitialTask : Task<Int>() {
 
     private val runtime = Runtime.getRuntime()
@@ -14,15 +21,19 @@ class InitialTask : Task<Int>() {
     lateinit var keymap: Keymap
 
     override fun call(): Int {
-        updateMessage("start overlay service")
+        updateMessage("start mouse service")
         if (!startMouseService()) return get()
-        updateValue(1)
+        updateValue(INIT_PROCESS_START_MOUSE_SERVICE)
 
-        updateMessage("enable overlay tunnel")
+        updateMessage("enable mouse tunnel")
         if (!enableTunnel(MOUSE_PORT, MOUSE_SOCKET)) return get()
-        updateValue(2)
+        updateValue(INIT_PROCESS_ENABLE_MOUSE_TUNNEL)
 
-        updateMessage("connect to overlay")
+        updateMessage("read keymap")
+        keymap = JSON.parseObject(javaClass.classLoader.getResource("keymap.json")!!.readText(), Keymap::class.java)
+        updateValue(INIT_PROCESS_READ_KEYMAP)
+
+        updateMessage("connect to mouse")
         while (true) {
             mouseSocket = Socket("localhost", MOUSE_PORT)
             val signal = mouseSocket.getInputStream().read()
@@ -30,11 +41,11 @@ class InitialTask : Task<Int>() {
             if (signal == 1) break
             Thread.sleep(200)
         }
-        updateValue(3)
+        updateValue(INIT_PROCESS_CONNECT_MOUSE_SERVICE)
 
         updateMessage("enable control tunnel")
         if (!enableTunnel(CONTROL_PORT, CONTROL_SOCKET)) return get()
-        updateValue(4)
+        updateValue(INIT_PROCESS_ENABLE_CONTROL_TUNNEL)
 
         updateMessage("start control service")
         Thread(Runnable {
@@ -49,11 +60,9 @@ class InitialTask : Task<Int>() {
             if (signal == 1) break
             Thread.sleep(200)
         }
-        updateValue(5)
+        updateValue(INIT_PROCESS_CONNECT_CONTROL_SERVICE)
 
-        updateMessage("read keymap")
-        keymap = JSON.parseObject(javaClass.classLoader.getResource("keymap.json")!!.readText(), Keymap::class.java)
-        updateValue(6)
+
         return get()
     }
 

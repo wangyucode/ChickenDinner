@@ -41,9 +41,9 @@ class Controller : Initializable {
 
         initialTask.valueProperty().addListener { _, _, value ->
             when (value) {
-                3 -> onMouseServiceConnected()
-                5 -> onControlServiceConnected()
-                6 -> keyHandler.initButtons(initialTask.keymap)
+                INIT_PROCESS_READ_KEYMAP -> keyHandler.initButtons(initialTask.keymap)
+                INIT_PROCESS_CONNECT_MOUSE_SERVICE -> onMouseServiceConnected()
+                INIT_PROCESS_CONNECT_CONTROL_SERVICE -> onControlServiceConnected()
             }
         }
 

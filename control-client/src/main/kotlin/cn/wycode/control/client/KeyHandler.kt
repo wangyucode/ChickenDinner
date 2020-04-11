@@ -18,8 +18,17 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private var joystickByte: Byte = 0
 
     private var lastKeyDown = KeyCode.UNDEFINED
-    val buttonMap = HashMap<KeyCode, Button>()
-    var joystick: Joystick? = null
+    private val buttonMap = HashMap<KeyCode, Button>()
+    private var joystick: Joystick? = null
+
+    fun initButtons(
+        keymap: Keymap
+    ) {
+        joystick = keymap.joystick
+        for (button in keymap.buttons) {
+            buttonMap[KeyCode.getKeyCode(button.key)] = button
+        }
+    }
 
     override fun handle(event: KeyEvent) {
         when (event.eventType) {

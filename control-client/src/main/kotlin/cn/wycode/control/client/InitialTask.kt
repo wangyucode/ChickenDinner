@@ -14,19 +14,19 @@ class InitialTask : Task<Int>() {
     lateinit var keymap: Keymap
 
     override fun call(): Int {
-        updateMessage("start mouse service")
+        updateMessage("start overlay service")
         if (!startMouseService()) return get()
         updateValue(1)
 
-        updateMessage("enable mouse tunnel")
+        updateMessage("enable overlay tunnel")
         if (!enableTunnel(MOUSE_PORT, MOUSE_SOCKET)) return get()
         updateValue(2)
 
-        updateMessage("connect to mouse")
+        updateMessage("connect to overlay")
         while (true) {
             mouseSocket = Socket("localhost", MOUSE_PORT)
             val signal = mouseSocket.getInputStream().read()
-            println("mouse signal->$signal")
+            println("overlay signal->$signal")
             if (signal == 1) break
             Thread.sleep(200)
         }

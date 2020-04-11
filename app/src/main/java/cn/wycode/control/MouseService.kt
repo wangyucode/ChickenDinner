@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Point
 import android.os.IBinder
@@ -13,13 +14,13 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.*
-import java.io.OutputStream
-import java.nio.ByteBuffer
 
 const val CHANNEL_ID = "cn.wycode.control_channel"
 
 class MouseService : Service() {
 
+
+    private var currentOrientation = Configuration.ORIENTATION_PORTRAIT
 
     override fun onCreate() {
         super.onCreate()
@@ -41,8 +42,8 @@ class MouseService : Service() {
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         val size = Point()
-
         windowManager.defaultDisplay.getRealSize(size)
+        currentOrientation = resources.configuration.orientation
 
         val layoutParams = WindowManager.LayoutParams()
         layoutParams.type = TYPE_APPLICATION_OVERLAY
@@ -50,24 +51,20 @@ class MouseService : Service() {
         layoutParams.flags = FLAG_NOT_TOUCHABLE.or(FLAG_KEEP_SCREEN_ON).or(FLAG_NOT_FOCUSABLE).or(FLAG_NOT_TOUCH_MODAL)
         layoutParams.width = MATCH_PARENT
         layoutParams.height = MATCH_PARENT
-        val mouse = LayoutInflater.from(this).inflate(R.layout.mouse, null) as ViewGroup
-        windowManager.addView(mouse, layoutParams)
-        val pointer = mouse.getChildAt(0)
-        MouseServer(object : ServerCallBack {
-            override fun onConnected(outputStream: OutputStream) {
-                val buffer = ByteBuffer.allocate(8)
+        val overlay = LayoutInflater.from(this).inflate(R.layout.overlay, null) as ViewGroup
+        windowManager.addView(overlay, layoutParams)
+        val pointer = overlay.getChildAt(0)
 
-                buffer.putInt(size.x)
-                buffer.putInt(size.y)
+        val server = MouseServer(size, pointer)
+        server.execute()
 
-                outputStream.write(buffer.array())
+        overlay.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            if (currentOrientation != resources.configuration.orientation) {
+                currentOrientation = resources.configuration.orientation
+                windowManager.defaultDisplay.getRealSize(size)
+                server.screenInfoExecutor.submit { server.sendScreenInfo() }
             }
-
-            override fun onUpdate(point: Point) {
-                pointer.x = point.x.toFloat()
-                pointer.y = point.y.toFloat()
-            }
-        }).execute()
+        }
     }
 
     override fun onBind(intent: Intent): IBinder? {

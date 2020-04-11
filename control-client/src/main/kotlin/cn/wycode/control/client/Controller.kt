@@ -68,7 +68,7 @@ class Controller : Initializable {
     }
 
     private fun onMouseServiceConnected() {
-        println("client::connected to mouse service!")
+        println("client::connected to overlay service!")
         mouseHandler.mouseConnected = true
         connections.mouseOutputStream = initialTask.mouseSocket.getOutputStream()
         val readTask = ReadTask(initialTask.mouseSocket, screenInfo)

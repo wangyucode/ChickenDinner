@@ -76,7 +76,6 @@ class Connections {
     }
 
     fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
-        println("sendJoystick::${joystickByte.toString(2)}")
         var x = joystick.center.x + Random.nextInt(-5, 5)
         var y = joystick.center.y + Random.nextInt(-5, 5)
         when {

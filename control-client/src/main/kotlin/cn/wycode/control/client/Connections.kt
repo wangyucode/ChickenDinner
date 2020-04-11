@@ -4,9 +4,12 @@ import cn.wycode.control.common.*
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
+
+const val JOYSTICK_STEP_COUNT = 5
 
 class Connections {
 
@@ -43,105 +46,119 @@ class Connections {
 
     private var lastJoystickByte: Byte = 0
 
+    private var lastJoystickX = 0
+    private var lastJoystickY = 0
+
     fun sendKey(key: Byte) {
-        println("sendKey::$key")
-        controlEventExecutor.submit {
-            keyBuffer.clear()
-            keyBuffer.put(HEAD_KEY)
-            keyBuffer.put(key)
-            controlOutputStream.write(keyBuffer.array())
-        }
+        keyBuffer.clear()
+        keyBuffer.put(HEAD_KEY)
+        keyBuffer.put(key)
+        controlEventExecutor.submit(WriteRunnable(controlOutputStream, keyBuffer.array().copyOf()))
     }
 
     fun sendMouseMove(x: Int, y: Int) {
-        mouseEventExecutor.submit {
-            mouseMoveBuffer.clear()
-            mouseMoveBuffer.put(HEAD_MOUSE_MOVE)
-            mouseMoveBuffer.putInt(x)
-            mouseMoveBuffer.putInt(y)
-            mouseOutputStream.write(mouseMoveBuffer.array())
-        }
+        mouseMoveBuffer.clear()
+        mouseMoveBuffer.put(HEAD_MOUSE_MOVE)
+        mouseMoveBuffer.putInt(x)
+        mouseMoveBuffer.putInt(y)
+        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, mouseMoveBuffer.array().copyOf()))
     }
 
     fun sendTouch(head: Byte, id: Byte, x: Int, y: Int, shake: Boolean) {
         val shakeX = if (shake) x + Random.nextInt(-5, 5) else x
         val shakeY = if (shake) y + Random.nextInt(-5, 5) else y
-        controlEventExecutor.submit {
-            touchBuffer.clear()
-            touchBuffer.put(head)
-            touchBuffer.put(id)
-            touchBuffer.putInt(shakeX)
-            touchBuffer.putInt(shakeY)
-            controlOutputStream.write(touchBuffer.array())
-        }
+        touchBuffer.clear()
+        touchBuffer.put(head)
+        touchBuffer.put(id)
+        touchBuffer.putInt(shakeX)
+        touchBuffer.putInt(shakeY)
+        controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
     }
 
     fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
-        var x = joystick.center.x + Random.nextInt(-5, 5)
-        var y = joystick.center.y + Random.nextInt(-5, 5)
-        when {
-            lastJoystickByte == joystickByte -> {
+        val joystickCenterX = joystick.center.x + Random.nextInt(-5, 5)
+        val joystickCenterY = joystick.center.y + Random.nextInt(-5, 5)
+
+        if (lastJoystickX == 0) lastJoystickX = joystickCenterX
+        if (lastJoystickY == 0) lastJoystickY = joystickCenterY
+
+        when (lastJoystickByte) {
+            joystickByte -> {
                 // no change
                 return
             }
-            joystickByte == ZERO_BYTE -> {
-                // up
-                controlEventExecutor.submit {
-                    touchBuffer.clear()
-                    touchBuffer.put(HEAD_TOUCH_UP)
-                    touchBuffer.put(TOUCH_ID_JOYSTICK)
-                    touchBuffer.putInt(x)
-                    touchBuffer.putInt(y)
-                    controlOutputStream.write(touchBuffer.array())
-                }
-                lastJoystickByte = joystickByte
-                return
-            }
-            lastJoystickByte == ZERO_BYTE -> {
+            ZERO_BYTE -> {
                 // down
-                controlEventExecutor.submit {
-                    touchBuffer.clear()
-                    touchBuffer.put(HEAD_TOUCH_DOWN)
-                    touchBuffer.put(TOUCH_ID_JOYSTICK)
-                    touchBuffer.putInt(x)
-                    touchBuffer.putInt(y)
-                    controlOutputStream.write(touchBuffer.array())
-                }
+                touchBuffer.clear()
+                touchBuffer.put(HEAD_TOUCH_DOWN)
+                touchBuffer.put(TOUCH_ID_JOYSTICK)
+                touchBuffer.putInt(joystickCenterX)
+                touchBuffer.putInt(joystickCenterY)
+                controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
             }
         }
-        lastJoystickByte = joystickByte
+
+        var destX = joystickCenterX
+        var destY = joystickCenterY
 
         val sin45 = (joystick.radius * sin(PI / 4)).toInt()
         when (joystickByte) {
-            JoystickDirection.TOP.joystickByte -> y -= joystick.radius
+            JoystickDirection.TOP.joystickByte -> destY -= joystick.radius
             JoystickDirection.TOP_RIGHT.joystickByte -> {
-                x += sin45
-                y -= sin45
+                destX += sin45
+                destY -= sin45
             }
-            JoystickDirection.RIGHT.joystickByte -> x += joystick.radius
+            JoystickDirection.RIGHT.joystickByte -> destX += joystick.radius
             JoystickDirection.RIGHT_BOTTOM.joystickByte -> {
-                x += sin45
-                y += sin45
+                destX += sin45
+                destY += sin45
             }
-            JoystickDirection.BOTTOM.joystickByte -> y += joystick.radius
+            JoystickDirection.BOTTOM.joystickByte -> destY += joystick.radius
             JoystickDirection.BOTTOM_LEFT.joystickByte -> {
-                x -= sin45
-                y += sin45
+                destX -= sin45
+                destY += sin45
             }
-            JoystickDirection.LEFT.joystickByte -> x -= joystick.radius
+            JoystickDirection.LEFT.joystickByte -> destX -= joystick.radius
             JoystickDirection.LEFT_TOP.joystickByte -> {
-                x -= sin45
-                y -= sin45
+                destX -= sin45
+                destY -= sin45
             }
         }
-        controlEventExecutor.submit {
+
+        val dx = (destX - lastJoystickX) / JOYSTICK_STEP_COUNT
+        val dy = (destY - lastJoystickY) / JOYSTICK_STEP_COUNT
+        for (i in 1..JOYSTICK_STEP_COUNT) {
             touchBuffer.clear()
             touchBuffer.put(HEAD_TOUCH_MOVE)
             touchBuffer.put(TOUCH_ID_JOYSTICK)
-            touchBuffer.putInt(x)
-            touchBuffer.putInt(y)
-            controlOutputStream.write(touchBuffer.array())
+            touchBuffer.putInt(lastJoystickX + dx * i)
+            touchBuffer.putInt(lastJoystickY + dy * i)
+            controlEventExecutor.schedule(
+                WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()),
+                i * 20L,
+                TimeUnit.MILLISECONDS
+            )
         }
+
+
+        if (joystickByte == ZERO_BYTE) {
+            touchBuffer.clear()
+            touchBuffer.put(HEAD_TOUCH_UP)
+            touchBuffer.put(TOUCH_ID_JOYSTICK)
+            touchBuffer.putInt(joystickCenterX)
+            touchBuffer.putInt(joystickCenterY)
+            controlEventExecutor.schedule(
+                WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()),
+                (JOYSTICK_STEP_COUNT + 1) * 20L,
+                TimeUnit.MILLISECONDS
+            )
+        }
+
+        lastJoystickByte = joystickByte
+        lastJoystickX = destX
+        lastJoystickY = destY
+
+        println("xxxxx::joystickByte->${joystickByte.toString(2)},lastJoystickX->$lastJoystickX,lastJoystickY->$lastJoystickY")
     }
 
     fun sendKeymap(keymapString: String) {
@@ -152,8 +169,13 @@ class Connections {
         buffer.put(HEAD_KEYMAP)
         buffer.putInt(data.size)
         buffer.put(data)
-        mouseEventExecutor.submit {
-            mouseOutputStream.write(buffer.array())
-        }
+        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, buffer.array()))
     }
 }
+
+class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
+    override fun run() {
+        outputStream.write(data)
+    }
+}
+

@@ -16,6 +16,7 @@ const val HEAD_TOUCH_MOVE: Byte = 2
 const val HEAD_TOUCH_UP: Byte = 3
 const val HEAD_KEY: Byte = 4
 const val HEAD_MOUSE_MOVE: Byte = 5
+const val HEAD_KEYMAP: Byte = 6
 
 const val KEY_HOME: Byte = 1
 const val KEY_BACK: Byte = 2

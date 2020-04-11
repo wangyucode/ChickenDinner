@@ -143,4 +143,17 @@ class Connections {
             controlOutputStream.write(touchBuffer.array())
         }
     }
+
+    fun sendKeymap(keymapString: String) {
+        val data = keymapString.toByteArray()
+        // |   .  | . . . . | . . . (...) . . . |
+        // | head |  size   |        data       |
+        val buffer = ByteBuffer.allocate(data.size + 5)
+        buffer.put(HEAD_KEYMAP)
+        buffer.putInt(data.size)
+        buffer.put(data)
+        mouseEventExecutor.submit {
+            mouseOutputStream.write(buffer.array())
+        }
+    }
 }

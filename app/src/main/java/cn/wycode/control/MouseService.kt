@@ -53,9 +53,10 @@ class MouseService : Service() {
         layoutParams.height = MATCH_PARENT
         val overlay = LayoutInflater.from(this).inflate(R.layout.overlay, null) as ViewGroup
         windowManager.addView(overlay, layoutParams)
-        val pointer = overlay.getChildAt(0)
+        val keymapView = overlay.getChildAt(0) as KeymapView
+        val pointer = overlay.getChildAt(1)
 
-        val server = MouseServer(size, pointer)
+        val server = MouseServer(size, pointer, keymapView)
         server.execute()
 
         overlay.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->

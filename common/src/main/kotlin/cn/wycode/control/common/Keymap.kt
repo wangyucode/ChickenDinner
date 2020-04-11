@@ -1,6 +1,4 @@
-package cn.wycode.control.client
-
-import javafx.scene.input.KeyCode
+package cn.wycode.control.common
 
 const val TOUCH_ID_MOUSE: Byte = 0
 const val TOUCH_ID_BUTTON: Byte = 1

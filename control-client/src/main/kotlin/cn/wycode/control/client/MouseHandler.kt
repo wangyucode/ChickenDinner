@@ -1,8 +1,6 @@
 package cn.wycode.control.client
 
-import cn.wycode.control.common.HEAD_TOUCH_DOWN
-import cn.wycode.control.common.HEAD_TOUCH_MOVE
-import cn.wycode.control.common.HEAD_TOUCH_UP
+import cn.wycode.control.common.*
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 

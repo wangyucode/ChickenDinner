@@ -19,6 +19,7 @@ class InitialTask : Task<Int>() {
     lateinit var mouseSocket: Socket
     lateinit var controlSocket: Socket
     lateinit var keymap: Keymap
+    lateinit var keymapString: String
 
     override fun call(): Int {
         updateMessage("start mouse service")
@@ -30,7 +31,8 @@ class InitialTask : Task<Int>() {
         updateValue(INIT_PROCESS_ENABLE_MOUSE_TUNNEL)
 
         updateMessage("read keymap")
-        keymap = JSON.parseObject(javaClass.classLoader.getResource("keymap.json")!!.readText(), Keymap::class.java)
+        keymapString = javaClass.classLoader.getResource("keymap.json")!!.readText()
+        keymap = JSON.parseObject(keymapString, Keymap::class.java)
         updateValue(INIT_PROCESS_READ_KEYMAP)
 
         updateMessage("connect to mouse")

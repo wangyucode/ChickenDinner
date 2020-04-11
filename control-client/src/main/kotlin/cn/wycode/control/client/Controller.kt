@@ -72,6 +72,8 @@ class Controller : Initializable {
         mouseHandler.mouseConnected = true
         connections.mouseOutputStream = initialTask.mouseSocket.getOutputStream()
 
+        connections.sendKeymap(initialTask.keymapString)
+
         val screen = Screen.getPrimary()
         val visualBounds = screen.visualBounds
 

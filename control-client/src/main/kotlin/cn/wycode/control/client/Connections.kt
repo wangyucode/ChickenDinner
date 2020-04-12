@@ -1,6 +1,7 @@
 package cn.wycode.control.client
 
 import cn.wycode.control.common.*
+import java.awt.Robot
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
@@ -58,6 +59,8 @@ class Connections {
 
     var mouseVisible = true
 
+    private val robot = Robot()
+
     fun sendKey(key: Byte) {
         keyBuffer.clear()
         keyBuffer.put(HEAD_KEY)
@@ -85,13 +88,32 @@ class Connections {
     }
 
 
-    fun sendMoveFov(x: Int, y: Int) {
+    fun sendMoveFov(x: Int, y: Int, reset: Position) {
         touchBuffer.clear()
         touchBuffer.put(HEAD_TOUCH_MOVE)
         touchBuffer.put(TOUCH_ID_MOUSE)
         touchBuffer.putInt(x)
         touchBuffer.putInt(y)
         controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
+
+        if (x < 100 || x > SCREEN.x - 100 || y < 100 || y > SCREEN.y - 100) {
+            sendTouch(
+                HEAD_TOUCH_UP,
+                TOUCH_ID_MOUSE,
+                x,
+                y,
+                false
+            )
+            robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
+
+            sendTouch(
+                HEAD_TOUCH_DOWN,
+                TOUCH_ID_MOUSE,
+                reset.x,
+                reset.y,
+                false
+            )
+        }
     }
 
     fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
@@ -215,6 +237,7 @@ class Connections {
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
+        robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
     }
 
     inner class JoystickWriteRunnable(

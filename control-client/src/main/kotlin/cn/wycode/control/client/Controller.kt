@@ -13,13 +13,12 @@ import java.util.*
 
 var RATIO = 3.0
 var OFFSET = Position(0, 0)
+var SCREEN = Position(0, 0)
 
 class Controller : Initializable {
 
     @FXML
     lateinit var canvas: Canvas
-
-    private val screenInfo = ScreenInfo(0, 0)
 
     private val initialTask = InitialTask()
     private val connections = Connections()
@@ -61,17 +60,17 @@ class Controller : Initializable {
         val graphics = canvas.graphicsContext2D
         graphics.fill = Color.DARKOLIVEGREEN
 
-        val readTask = ReadTask(initialTask.mouseSocket, screenInfo)
+        val readTask = ReadTask(initialTask.mouseSocket)
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
             RATIO =
-                if (visualBounds.width / visualBounds.height > screenInfo.width.toDouble() / screenInfo.height) {
-                    screenInfo.height / visualBounds.height
+                if (visualBounds.width / visualBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
+                    SCREEN.y / visualBounds.height
                 } else {
-                    screenInfo.width / visualBounds.width
+                    SCREEN.x / visualBounds.width
                 }
-            canvas.width = screenInfo.width / RATIO
-            canvas.height = screenInfo.height / RATIO
+            canvas.width = SCREEN.x / RATIO
+            canvas.height = SCREEN.y / RATIO
 
             val window = canvas.scene.window
             window.sizeToScene()

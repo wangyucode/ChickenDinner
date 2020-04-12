@@ -23,9 +23,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private lateinit var mouse: Mouse
 
 
-    fun initButtons(
-        keymap: Keymap
-    ) {
+    fun initButtons(keymap: Keymap) {
         mouse = keymap.mouse
         joystick = keymap.joystick
         for (button in keymap.buttons) {
@@ -89,7 +87,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
-            KeyCode.getKeyCode(mouse.switch) -> connections.sendSwitchMouse()
+            KeyCode.getKeyCode(mouse.switch) -> connections.sendSwitchMouse(mouse.reset)
             KeyCode.W -> {
                 if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())

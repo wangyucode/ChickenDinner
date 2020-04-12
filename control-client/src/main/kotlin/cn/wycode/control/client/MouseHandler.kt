@@ -2,12 +2,19 @@ package cn.wycode.control.client
 
 import cn.wycode.control.common.*
 import javafx.event.EventHandler
+import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 
 class MouseHandler(private val connections: Connections) : EventHandler<MouseEvent> {
 
     var mouseConnected = false
     var controlConnected = false
+
+    private lateinit var mouse: Mouse
+
+    fun initButtons(keymap: Keymap) {
+        mouse = keymap.mouse
+    }
 
     override fun handle(event: MouseEvent) {
         when (event.eventType) {
@@ -19,37 +26,89 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
     }
 
     private fun onMouseDragged(event: MouseEvent) {
-        if (mouseConnected) connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
-        if (controlConnected) connections.sendTouch(
-            HEAD_TOUCH_MOVE,
-            TOUCH_ID_MOUSE,
-            (event.x * RATIO).toInt(),
-            (event.y * RATIO).toInt(),
-            false
-        )
+        if (connections.mouseVisible && mouseConnected) {
+            connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        }
+        if (controlConnected) {
+            if (connections.mouseVisible) {
+                connections.sendTouch(
+                    HEAD_TOUCH_MOVE,
+                    TOUCH_ID_MOUSE,
+                    (event.x * RATIO).toInt(),
+                    (event.y * RATIO).toInt(),
+                    false
+                )
+            } else {
+                connections.sendMoveFov((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+            }
+        }
     }
 
     private fun onMouseMoved(event: MouseEvent) {
-        if (mouseConnected) connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        if (connections.mouseVisible && mouseConnected) {
+            connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        } else if (!connections.mouseVisible && controlConnected) {
+            connections.sendMoveFov((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+        }
     }
 
     private fun onMouseReleased(event: MouseEvent) {
-        if (controlConnected) connections.sendTouch(
-            HEAD_TOUCH_UP,
-            TOUCH_ID_MOUSE,
-            (event.x * RATIO).toInt(),
-            (event.y * RATIO).toInt(),
-            false
-        )
+        if (!controlConnected) return
+        if (connections.mouseVisible) {
+            connections.sendTouch(
+                HEAD_TOUCH_UP,
+                TOUCH_ID_MOUSE,
+                (event.x * RATIO).toInt(),
+                (event.y * RATIO).toInt(),
+                false
+            )
+        } else {
+            val position: Position
+            val id: Byte
+            if (event.button == MouseButton.PRIMARY) {
+                position = mouse.left
+                id = TOUCH_ID_MOUSE_LEFT
+            } else {
+                position = mouse.right
+                id = TOUCH_ID_MOUSE_RIGHT
+            }
+            connections.sendTouch(
+                HEAD_TOUCH_UP,
+                id,
+                position.x,
+                position.y,
+                false
+            )
+        }
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        if (controlConnected) connections.sendTouch(
-            HEAD_TOUCH_DOWN,
-            TOUCH_ID_MOUSE,
-            (event.x * RATIO).toInt(),
-            (event.y * RATIO).toInt(),
-            false
-        )
+        if (!controlConnected) return
+        if (connections.mouseVisible) {
+            connections.sendTouch(
+                HEAD_TOUCH_DOWN,
+                TOUCH_ID_MOUSE,
+                (event.x * RATIO).toInt(),
+                (event.y * RATIO).toInt(),
+                false
+            )
+        } else {
+            val position: Position
+            val id: Byte
+            if (event.button == MouseButton.PRIMARY) {
+                position = mouse.left
+                id = TOUCH_ID_MOUSE_LEFT
+            } else {
+                position = mouse.right
+                id = TOUCH_ID_MOUSE_RIGHT
+            }
+            connections.sendTouch(
+                HEAD_TOUCH_DOWN,
+                id,
+                position.x,
+                position.y,
+                false
+            )
+        }
     }
 }

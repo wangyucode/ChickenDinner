@@ -14,4 +14,11 @@ data class Position(var x: Int, var y: Int)
 
 data class Joystick(val center: Position, val radius: Int)
 
-data class Mouse(val switch: String, val reset: Position, val left: Position, val right: Position)
+data class Mouse(
+    val switch: String,
+    val sensitivityX: Double,
+    val sensitivityY: Double,
+    val reset: Position,
+    val left: Position,
+    val right: Position
+)

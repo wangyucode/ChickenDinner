@@ -6,8 +6,10 @@
     },
     "radius": 300
   },
-  "mouse":{
+  "mouse": {
     "switch": "Ctrl",
+    "sensitivityX": 0.5,
+    "sensitivityY": 1.0,
     "reset": {
       "x": 1179,
       "y": 333
@@ -48,6 +50,13 @@
       "position": {
         "x": 1985,
         "y": 1001
+      }
+    },
+    {
+      "key": "M",
+      "position": {
+        "x": 2232,
+        "y": 52
       }
     },
     {
@@ -104,6 +113,62 @@
       "position": {
         "x": 189,
         "y": 983
+      }
+    },
+    {
+      "key": "F",
+      "position": {
+        "x": 1553,
+        "y": 265
+      }
+    },
+    {
+      "key": "G",
+      "position": {
+        "x": 1553,
+        "y": 339
+      }
+    },
+    {
+      "key": "H",
+      "position": {
+        "x": 1573,
+        "y": 454
+      }
+    },
+    {
+      "key": "Back Quote",
+      "position": {
+        "x": 1695,
+        "y": 155
+      }
+    },
+    {
+      "key": "X",
+      "position": {
+        "x": 1795,
+        "y": 259
+      }
+    },
+    {
+      "key": "5",
+      "position": {
+        "x": 795,
+        "y": 1007
+      }
+    },
+    {
+      "key": "4",
+      "position": {
+        "x": 1499,
+        "y": 1007
+      }
+    },
+    {
+      "key": "3",
+      "position": {
+        "x": 1387,
+        "y": 877
       }
     }
   ]

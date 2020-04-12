@@ -88,9 +88,9 @@ class Connections {
     }
 
 
-    fun sendMoveFov(x: Int, y: Int, reset: Position) {
+    fun sendMoveFov(x: Int, y: Int, canvasX: Double, canvasY: Double, reset: Position) {
 
-        if (x < 100 || x > SCREEN.x - 100 || y < 100 || y > SCREEN.y - 100) {
+        if (canvasX < 100 || canvasX > CANVAS.x - 100 || canvasY < 100 || canvasY > CANVAS.y - 100) {
             sendTouch(
                 HEAD_TOUCH_UP,
                 TOUCH_ID_MOUSE,
@@ -238,6 +238,21 @@ class Connections {
         }
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
         robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
+    }
+
+    fun checkReachEdge(x: Double, y: Double) {
+        if (x < 10) {
+            robot.mouseMove(OFFSET.x + 10, (OFFSET.y + y).toInt())
+        }
+        if (x > CANVAS.x - 10) {
+            robot.mouseMove(OFFSET.x + CANVAS.x - 10, (OFFSET.y + y).toInt())
+        }
+        if (y < 10) {
+            robot.mouseMove((OFFSET.x + x).toInt(), OFFSET.y + 10)
+        }
+        if (y > CANVAS.y - 10) {
+            robot.mouseMove((OFFSET.x + x).toInt(), OFFSET.y + CANVAS.y - 10)
+        }
     }
 
     inner class JoystickWriteRunnable(

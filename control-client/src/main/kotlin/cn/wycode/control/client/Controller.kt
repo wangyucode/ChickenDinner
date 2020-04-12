@@ -14,6 +14,7 @@ import java.util.*
 var RATIO = 3.0
 var OFFSET = Position(0, 0)
 var SCREEN = Position(0, 0)
+var CANVAS = Position(0, 0)
 
 class Controller : Initializable {
 
@@ -64,13 +65,16 @@ class Controller : Initializable {
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
             RATIO =
-                if (visualBounds.width / visualBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
-                    SCREEN.y / visualBounds.height
+                if (visualBounds.width / (visualBounds.height - 50) > SCREEN.x.toDouble() / SCREEN.y) {
+                    SCREEN.y / (visualBounds.height - 50)
                 } else {
                     SCREEN.x / visualBounds.width
                 }
             canvas.width = SCREEN.x / RATIO
             canvas.height = SCREEN.y / RATIO
+
+            CANVAS.x = canvas.width.toInt()
+            CANVAS.y = canvas.height.toInt()
 
             val window = canvas.scene.window
             window.sizeToScene()

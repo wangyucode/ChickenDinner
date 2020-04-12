@@ -20,6 +20,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private var lastKeyDown = KeyCode.UNDEFINED
     private val buttonMap = HashMap<KeyCode, Button>()
     private var joystick: Joystick? = null
+    private var mouseVisible = true
 
     fun initButtons(
         keymap: Keymap
@@ -86,6 +87,10 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
+            KeyCode.CONTROL -> {
+                mouseVisible = !mouseVisible
+                connections.sendSwitchMouse(if(mouseVisible) HEAD_MOUSE_VISIBLE else HEAD_MOUSE_INVISIBLE)
+            }
             KeyCode.W -> {
                 if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())

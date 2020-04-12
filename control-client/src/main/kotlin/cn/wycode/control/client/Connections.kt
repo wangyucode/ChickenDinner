@@ -192,6 +192,10 @@ class Connections {
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, buffer.array()))
     }
 
+    fun sendSwitchMouse(byte: Byte) {
+        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(byte)))
+    }
+
 
     inner class JoystickWriteRunnable(
         private val id: Int,

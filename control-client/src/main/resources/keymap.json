@@ -4,7 +4,14 @@
       "x": 375,
       "y": 781
     },
-    "radius": 300
+    "radius": 100
+  },
+  "mouseSwitch":{
+    "key": "Ctrl",
+    "position": {
+      "x": 1179,
+      "y": 333
+    }
   },
   "buttons": [
     {

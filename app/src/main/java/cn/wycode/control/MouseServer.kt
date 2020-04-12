@@ -74,6 +74,8 @@ class MouseServer(
                 keymapView.keymap = keymap
                 keymapView.invalidate()
             }
+            HEAD_MOUSE_VISIBLE -> pointerView.visibility = View.VISIBLE
+            HEAD_MOUSE_INVISIBLE -> pointerView.visibility = View.INVISIBLE
         }
     }
 

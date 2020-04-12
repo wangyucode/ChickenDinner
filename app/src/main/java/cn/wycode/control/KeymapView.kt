@@ -43,5 +43,9 @@ class KeymapView : View {
         for (button in buttons) {
             canvas.drawText(button.key, button.position.x.toFloat(), button.position.y.toFloat(), mPaint)
         }
+
+        mPaint.color = 0x335555ff
+        val mouseSwitch = keymap!!.mouseSwitch
+        canvas.drawText(mouseSwitch.key, mouseSwitch.position.x.toFloat(), mouseSwitch.position.y.toFloat(), mPaint)
     }
 }

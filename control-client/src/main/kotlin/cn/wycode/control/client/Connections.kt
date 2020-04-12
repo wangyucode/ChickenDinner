@@ -58,9 +58,6 @@ class Connections {
 
     var mouseVisible = true
 
-    private val deviceMousePosition = Position(0, 0)
-    private val deltaMousePosition = Position(0, 0)
-
     fun sendKey(key: Byte) {
         keyBuffer.clear()
         keyBuffer.put(HEAD_KEY)
@@ -69,9 +66,6 @@ class Connections {
     }
 
     fun sendMouseMove(x: Int, y: Int) {
-        deviceMousePosition.x = x
-        deviceMousePosition.y = y
-
         mouseMoveBuffer.clear()
         mouseMoveBuffer.put(HEAD_MOUSE_MOVE)
         mouseMoveBuffer.putInt(x)
@@ -80,11 +74,6 @@ class Connections {
     }
 
     fun sendTouch(head: Byte, id: Byte, x: Int, y: Int, shake: Boolean) {
-        if (head == HEAD_TOUCH_MOVE && mouseVisible) {
-            deviceMousePosition.x = x
-            deviceMousePosition.y = y
-        }
-
         val shakeX = if (shake) x + Random.nextInt(-5, 5) else x
         val shakeY = if (shake) y + Random.nextInt(-5, 5) else y
         touchBuffer.clear()
@@ -100,8 +89,8 @@ class Connections {
         touchBuffer.clear()
         touchBuffer.put(HEAD_TOUCH_MOVE)
         touchBuffer.put(TOUCH_ID_MOUSE)
-        touchBuffer.putInt(x + deltaMousePosition.x)
-        touchBuffer.putInt(y + deltaMousePosition.y)
+        touchBuffer.putInt(x)
+        touchBuffer.putInt(y)
         controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
     }
 
@@ -219,11 +208,10 @@ class Connections {
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, reset.x, reset.y, false)
+            sendMouseMove(reset.x, reset.y)
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, reset.x, reset.y, false)
-            deltaMousePosition.x = reset.x - deviceMousePosition.x
-            deltaMousePosition.y = reset.y - deviceMousePosition.y
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(head)))

@@ -2,6 +2,7 @@ package cn.wycode.control.client
 
 import cn.wycode.control.common.KEY_BACK
 import cn.wycode.control.common.KEY_HOME
+import cn.wycode.control.common.Position
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.canvas.Canvas
@@ -15,6 +16,7 @@ import java.net.URL
 import java.util.*
 
 var RATIO = 3.0
+var OFFSET = Position(0, 0)
 
 const val PANEL_WIDTH = 70
 
@@ -92,7 +94,6 @@ class Controller : Initializable {
                 } else {
                     screenInfo.width - PANEL_WIDTH / visualBounds.width
                 }
-
             canvas.width = screenInfo.width / RATIO
             canvas.height = screenInfo.height / RATIO
 
@@ -101,6 +102,9 @@ class Controller : Initializable {
             window.width = canvas.width + PANEL_WIDTH
             window.y = 0.0
             window.x = visualBounds.width / 2 - window.width / 2
+
+            OFFSET.x = (window.x + canvas.scene.x + canvas.layoutX).toInt()
+            OFFSET.y = (window.y + canvas.scene.y + canvas.layoutY).toInt()
 
             graphics.fillRect(0.0, 0.0, canvas.width, canvas.height)
         }

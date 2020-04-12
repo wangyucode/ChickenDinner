@@ -4,6 +4,7 @@ import cn.wycode.control.common.*
 import javafx.event.EventHandler
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
+import java.awt.Robot
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
@@ -21,7 +22,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private val buttonMap = HashMap<KeyCode, Button>()
     private var joystick: Joystick? = null
     private lateinit var mouse: Mouse
-
+    private val robot = Robot()
 
     fun initButtons(keymap: Keymap) {
         mouse = keymap.mouse
@@ -87,7 +88,10 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
-            KeyCode.getKeyCode(mouse.switch) -> connections.sendSwitchMouse(mouse.reset)
+            KeyCode.getKeyCode(mouse.switch) -> {
+                connections.sendSwitchMouse(mouse.reset)
+                robot.mouseMove((OFFSET.x + mouse.reset.x / RATIO).toInt(), (OFFSET.y + mouse.reset.y / RATIO).toInt())
+            }
             KeyCode.W -> {
                 if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())

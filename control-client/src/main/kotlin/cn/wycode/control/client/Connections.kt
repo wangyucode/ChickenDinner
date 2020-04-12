@@ -56,6 +56,8 @@ class Connections {
     @Volatile
     private var joystickId = 0
 
+    var mouseVisible = true
+
     fun sendKey(key: Byte) {
         keyBuffer.clear()
         keyBuffer.put(HEAD_KEY)
@@ -192,8 +194,10 @@ class Connections {
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, buffer.array()))
     }
 
-    fun sendSwitchMouse(byte: Byte) {
-        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(byte)))
+    fun sendSwitchMouse() {
+        mouseVisible = !mouseVisible
+        val head = if(mouseVisible) HEAD_MOUSE_VISIBLE else HEAD_MOUSE_INVISIBLE
+        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
     }
 
 

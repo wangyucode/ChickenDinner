@@ -45,7 +45,9 @@ class KeymapView : View {
         }
 
         mPaint.color = 0x335555ff
-        val mouseSwitch = keymap!!.mouseSwitch
-        canvas.drawText(mouseSwitch.key, mouseSwitch.position.x.toFloat(), mouseSwitch.position.y.toFloat(), mPaint)
+        val mouse = keymap!!.mouse
+        canvas.drawText(mouse.switch, mouse.reset.x.toFloat(),  mouse.reset.y.toFloat(), mPaint)
+        canvas.drawText("LM", mouse.left.x.toFloat(),  mouse.left.y.toFloat(), mPaint)
+        canvas.drawText("RM", mouse.right.x.toFloat(),  mouse.right.y.toFloat(), mPaint)
     }
 }

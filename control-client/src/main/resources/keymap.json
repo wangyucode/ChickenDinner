@@ -6,11 +6,19 @@
     },
     "radius": 100
   },
-  "mouseSwitch":{
-    "key": "Ctrl",
-    "position": {
+  "mouse":{
+    "switch": "Ctrl",
+    "reset": {
       "x": 1179,
       "y": 333
+    },
+    "left": {
+      "x": 497,
+      "y": 159
+    },
+    "right": {
+      "x": 2207,
+      "y": 553
     }
   },
   "buttons": [

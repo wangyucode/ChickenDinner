@@ -10,8 +10,8 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
-const val JOYSTICK_STEP_COUNT = 5
-const val JOYSTICK_STEP_DELAY = 20L
+const val JOYSTICK_STEP_COUNT = 8
+const val JOYSTICK_STEP_DELAY = 40L
 
 class Connections {
 
@@ -89,12 +89,6 @@ class Connections {
 
 
     fun sendMoveFov(x: Int, y: Int, reset: Position) {
-        touchBuffer.clear()
-        touchBuffer.put(HEAD_TOUCH_MOVE)
-        touchBuffer.put(TOUCH_ID_MOUSE)
-        touchBuffer.putInt(x)
-        touchBuffer.putInt(y)
-        controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
 
         if (x < 100 || x > SCREEN.x - 100 || y < 100 || y > SCREEN.y - 100) {
             sendTouch(
@@ -113,13 +107,21 @@ class Connections {
                 reset.y,
                 false
             )
+            return
         }
+
+        touchBuffer.clear()
+        touchBuffer.put(HEAD_TOUCH_MOVE)
+        touchBuffer.put(TOUCH_ID_MOUSE)
+        touchBuffer.putInt(x)
+        touchBuffer.putInt(y)
+        controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
     }
 
     fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
         joystickId++
-        val joystickCenterX = joystick.center.x + Random.nextInt(-5, 5)
-        val joystickCenterY = joystick.center.y + Random.nextInt(-5, 5)
+        val joystickCenterX = joystick.center.x
+        val joystickCenterY = joystick.center.y
 
         if (lastJoystickX == 0) lastJoystickX = joystickCenterX
         if (lastJoystickY == 0) lastJoystickY = joystickCenterY
@@ -146,6 +148,25 @@ class Connections {
                     )
                 )
             }
+        }
+
+        if (joystickByte == ZERO_BYTE) {
+            touchBuffer.clear()
+            touchBuffer.put(HEAD_TOUCH_UP)
+            touchBuffer.put(TOUCH_ID_JOYSTICK)
+            touchBuffer.putInt(joystickCenterX)
+            touchBuffer.putInt(joystickCenterY)
+            controlEventExecutor.submit(
+                JoystickWriteRunnable(
+                    joystickId,
+                    joystickCenterX + Random.nextInt(-5, 5),
+                    joystickCenterY + Random.nextInt(-5, 5),
+                    controlOutputStream,
+                    touchBuffer.array().copyOf()
+                )
+            )
+            lastJoystickByte = joystickByte
+            return
         }
 
         var destX = joystickCenterX
@@ -181,8 +202,8 @@ class Connections {
             touchBuffer.clear()
             touchBuffer.put(HEAD_TOUCH_MOVE)
             touchBuffer.put(TOUCH_ID_JOYSTICK)
-            val x = lastJoystickX + dx * i
-            val y = lastJoystickY + dy * i
+            val x = lastJoystickX + dx * i + Random.nextInt(-5, 5)
+            val y = lastJoystickY + dy * i + Random.nextInt(-5, 5)
             touchBuffer.putInt(x)
             touchBuffer.putInt(y)
             controlEventExecutor.schedule(
@@ -191,27 +212,6 @@ class Connections {
                 TimeUnit.MILLISECONDS
             )
         }
-
-
-        if (joystickByte == ZERO_BYTE) {
-            touchBuffer.clear()
-            touchBuffer.put(HEAD_TOUCH_UP)
-            touchBuffer.put(TOUCH_ID_JOYSTICK)
-            touchBuffer.putInt(joystickCenterX)
-            touchBuffer.putInt(joystickCenterY)
-            controlEventExecutor.schedule(
-                JoystickWriteRunnable(
-                    joystickId,
-                    joystickCenterX,
-                    joystickCenterY,
-                    controlOutputStream,
-                    touchBuffer.array().copyOf()
-                ),
-                (JOYSTICK_STEP_COUNT + 1) * JOYSTICK_STEP_DELAY,
-                TimeUnit.MILLISECONDS
-            )
-        }
-
         lastJoystickByte = joystickByte
     }
 

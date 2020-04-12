@@ -56,11 +56,13 @@ class TouchConverter {
                     }
                     inputIdToPointerIdMap[input.id] != null -> {
                         pointerId = inputIdToPointerIdMap[input.id]!!
-                        action = MotionEvent.ACTION_POINTER_DOWN or (pointerId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                        action =
+                            MotionEvent.ACTION_POINTER_DOWN or (pointerId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                     }
                     else -> {
                         pointerId = pointerIdsPool.removeFirst()
-                        action = MotionEvent.ACTION_POINTER_DOWN or (pointerId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                        action =
+                            MotionEvent.ACTION_POINTER_DOWN or (pointerId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                     }
                 }
                 inputIdToPointerIdMap[input.id] = pointerId
@@ -115,7 +117,7 @@ class TouchConverter {
             }
         }
 
-        return MotionEvent.obtain(
+        val event = MotionEvent.obtain(
             lastTouchDown,
             now,
             action,
@@ -131,5 +133,7 @@ class TouchConverter {
             InputDevice.SOURCE_TOUCHSCREEN,
             0
         )
+        Ln.d("injectEvent::input->${input},inject->${event},touchCount=${touchCount},pointerIdsPoolwwpointerId=${pointerIdsPool}")
+        return event
     }
 }

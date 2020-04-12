@@ -18,7 +18,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private var joystickByte: Byte = 0
 
     private var lastKeyDown = KeyCode.UNDEFINED
-    private val buttonMap = HashMap<KeyCode, Button>()
+    private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
     private var joystick: Joystick? = null
     private lateinit var mouse: Mouse
 
@@ -26,8 +26,8 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     fun initButtons(keymap: Keymap) {
         mouse = keymap.mouse
         joystick = keymap.joystick
-        for (button in keymap.buttons) {
-            buttonMap[KeyCode.getKeyCode(button.key)] = button
+        for ((index, button) in keymap.buttons.withIndex()) {
+            buttonMap[KeyCode.getKeyCode(button.key)] = ButtonWithId(index, button)
         }
     }
 
@@ -66,12 +66,12 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             }
             else -> {
                 // screen button
-                val button = buttonMap[event.code]
-                if (button != null) return connections.sendTouch(
+                val buttonWithId = buttonMap[event.code]
+                if (buttonWithId != null) return connections.sendTouch(
                     HEAD_TOUCH_DOWN,
-                    TOUCH_ID_BUTTON,
-                    button.position.x,
-                    button.position.y,
+                    (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
+                    buttonWithId.button.position.x,
+                    buttonWithId.button.position.y,
                     true
                 )
             }
@@ -110,18 +110,20 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             }
 
             else -> {
-                val button = buttonMap[event.code]
-                if (button != null) connections.sendTouch(
+                val buttonWithId = buttonMap[event.code]
+                if (buttonWithId != null) connections.sendTouch(
                     HEAD_TOUCH_UP,
-                    TOUCH_ID_BUTTON,
-                    button.position.x,
-                    button.position.y,
+                    (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
+                    buttonWithId.button.position.x,
+                    buttonWithId.button.position.y,
                     true
                 )
             }
         }
     }
 }
+
+data class ButtonWithId(val id: Int, val button: Button)
 
 /**
  * 4 bit -> 4 direction

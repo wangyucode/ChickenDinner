@@ -1,10 +1,10 @@
 {
   "joystick": {
     "center": {
-      "x": 375,
-      "y": 781
+      "x": 373,
+      "y": 790
     },
-    "radius": 100
+    "radius": 300
   },
   "mouse":{
     "switch": "Ctrl",
@@ -55,6 +55,55 @@
       "position": {
         "x": 2167,
         "y": 961
+      }
+    },
+    {
+      "key": "Space",
+      "position": {
+        "x": 2211,
+        "y": 757
+      }
+    },
+    {
+      "key": "F1",
+      "position": {
+        "x": 2103,
+        "y": 359
+      }
+    },
+    {
+      "key": "B",
+      "position": {
+        "x": 1041,
+        "y": 883
+      }
+    },
+    {
+      "key": "N",
+      "position": {
+        "x": 1251,
+        "y": 883
+      }
+    },
+    {
+      "key": "1",
+      "position": {
+        "x": 1017,
+        "y": 949
+      }
+    },
+    {
+      "key": "2",
+      "position": {
+        "x": 1285,
+        "y": 949
+      }
+    },
+    {
+      "key": "Tab",
+      "position": {
+        "x": 189,
+        "y": 983
       }
     }
   ]

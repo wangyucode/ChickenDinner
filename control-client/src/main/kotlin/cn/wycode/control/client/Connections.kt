@@ -10,6 +10,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 const val JOYSTICK_STEP_COUNT = 5
+const val JOYSTICK_STEP_DELAY = 20L
 
 class Connections {
 
@@ -46,8 +47,14 @@ class Connections {
 
     private var lastJoystickByte: Byte = 0
 
+    @Volatile
     private var lastJoystickX = 0
+
+    @Volatile
     private var lastJoystickY = 0
+
+    @Volatile
+    private var joystickId = 0
 
     fun sendKey(key: Byte) {
         keyBuffer.clear()
@@ -76,6 +83,7 @@ class Connections {
     }
 
     fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
+        joystickId++
         val joystickCenterX = joystick.center.x + Random.nextInt(-5, 5)
         val joystickCenterY = joystick.center.y + Random.nextInt(-5, 5)
 
@@ -94,7 +102,15 @@ class Connections {
                 touchBuffer.put(TOUCH_ID_JOYSTICK)
                 touchBuffer.putInt(joystickCenterX)
                 touchBuffer.putInt(joystickCenterY)
-                controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
+                controlEventExecutor.submit(
+                    JoystickWriteRunnable(
+                        joystickId,
+                        joystickCenterX,
+                        joystickCenterY,
+                        controlOutputStream,
+                        touchBuffer.array().copyOf()
+                    )
+                )
             }
         }
 
@@ -131,11 +147,13 @@ class Connections {
             touchBuffer.clear()
             touchBuffer.put(HEAD_TOUCH_MOVE)
             touchBuffer.put(TOUCH_ID_JOYSTICK)
-            touchBuffer.putInt(lastJoystickX + dx * i)
-            touchBuffer.putInt(lastJoystickY + dy * i)
+            val x = lastJoystickX + dx * i
+            val y = lastJoystickY + dy * i
+            touchBuffer.putInt(x)
+            touchBuffer.putInt(y)
             controlEventExecutor.schedule(
-                WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()),
-                i * 20L,
+                JoystickWriteRunnable(joystickId, x, y, controlOutputStream, touchBuffer.array().copyOf()),
+                i * JOYSTICK_STEP_DELAY,
                 TimeUnit.MILLISECONDS
             )
         }
@@ -148,17 +166,19 @@ class Connections {
             touchBuffer.putInt(joystickCenterX)
             touchBuffer.putInt(joystickCenterY)
             controlEventExecutor.schedule(
-                WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()),
-                (JOYSTICK_STEP_COUNT + 1) * 20L,
+                JoystickWriteRunnable(
+                    joystickId,
+                    joystickCenterX,
+                    joystickCenterY,
+                    controlOutputStream,
+                    touchBuffer.array().copyOf()
+                ),
+                (JOYSTICK_STEP_COUNT + 1) * JOYSTICK_STEP_DELAY,
                 TimeUnit.MILLISECONDS
             )
         }
 
         lastJoystickByte = joystickByte
-        lastJoystickX = destX
-        lastJoystickY = destY
-
-        println("xxxxx::joystickByte->${joystickByte.toString(2)},lastJoystickX->$lastJoystickX,lastJoystickY->$lastJoystickY")
     }
 
     fun sendKeymap(keymapString: String) {
@@ -171,9 +191,26 @@ class Connections {
         buffer.put(data)
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, buffer.array()))
     }
+
+
+    inner class JoystickWriteRunnable(
+        private val id: Int,
+        private val x: Int,
+        private val y: Int,
+        private val outputStream: OutputStream,
+        private val data: ByteArray
+    ) : WriteRunnable(outputStream, data) {
+        override fun run() {
+            if (joystickId == id) {
+                outputStream.write(data)
+                lastJoystickX = x
+                lastJoystickY = y
+            }
+        }
+    }
 }
 
-class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
+open class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
     override fun run() {
         outputStream.write(data)
     }

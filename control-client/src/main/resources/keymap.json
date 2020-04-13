@@ -8,8 +8,6 @@
   },
   "mouse": {
     "switch": "Ctrl",
-    "sensitivityX": 0.5,
-    "sensitivityY": 1.0,
     "reset": {
       "x": 1179,
       "y": 333

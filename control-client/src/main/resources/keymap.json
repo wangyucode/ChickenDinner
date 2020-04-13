@@ -18,6 +18,13 @@
   },
   "buttons": [
     {
+      "key": "T",
+      "position": {
+        "x": 1973,
+        "y": 197
+      }
+    },
+    {
       "name": "repeat",
       "key": "F5",
       "position": {

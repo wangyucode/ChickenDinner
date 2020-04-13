@@ -111,13 +111,19 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
 
             else -> {
                 val buttonWithId = buttonMap[event.code]
-                if (buttonWithId != null) connections.sendTouch(
-                    HEAD_TOUCH_UP,
-                    (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
-                    buttonWithId.button.position.x,
-                    buttonWithId.button.position.y,
-                    true
-                )
+                if (buttonWithId != null) {
+                    connections.sendTouch(
+                        HEAD_TOUCH_UP,
+                        (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
+                        buttonWithId.button.position.x,
+                        buttonWithId.button.position.y,
+                        true
+                    )
+                    if (event.code == KeyCode.TAB) {
+                        if (!connections.mouseVisible)
+                            connections.sendSwitchMouse(Position(2103, 359))
+                    }
+                }
             }
         }
     }

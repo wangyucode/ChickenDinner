@@ -260,6 +260,7 @@ class Connections {
     }
 
     fun sendSwitchMouse(reset: Position) {
+        scheduledUp?.cancel(false)
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX, lastFovY, false)

@@ -76,6 +76,14 @@ class MouseServer(
             }
             HEAD_MOUSE_VISIBLE -> pointerView.visibility = View.VISIBLE
             HEAD_MOUSE_INVISIBLE -> pointerView.visibility = View.INVISIBLE
+            HEAD_REPEAT_ENABLE -> {
+                keymapView.repeat = true
+                keymapView.invalidate()
+            }
+            HEAD_REPEAT_DISABLE -> {
+                keymapView.repeat = false
+                keymapView.invalidate()
+            }
         }
     }
 

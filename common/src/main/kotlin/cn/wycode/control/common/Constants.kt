@@ -19,6 +19,8 @@ const val HEAD_MOUSE_MOVE: Byte = 5
 const val HEAD_KEYMAP: Byte = 6
 const val HEAD_MOUSE_VISIBLE: Byte = 7
 const val HEAD_MOUSE_INVISIBLE: Byte = 8
+const val HEAD_REPEAT_ENABLE: Byte = 9
+const val HEAD_REPEAT_DISABLE: Byte = 10
 
 const val KEY_HOME: Byte = 1
 const val KEY_BACK: Byte = 2

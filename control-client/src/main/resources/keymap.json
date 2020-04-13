@@ -7,11 +7,6 @@
     "radius": 300
   },
   "mouse": {
-    "switch": "Ctrl",
-    "reset": {
-      "x": 1179,
-      "y": 333
-    },
     "left": {
       "x": 497,
       "y": 159
@@ -22,6 +17,46 @@
     }
   },
   "buttons": [
+    {
+      "name": "repeat",
+      "key": "F5",
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "name": "switch",
+      "key": "Ctrl",
+      "position": {
+        "x": 1179,
+        "y": 333
+      }
+    },
+    {
+      "name": "two",
+      "key": "2",
+      "position": {
+        "x": 1285,
+        "y": 949
+      }
+    },
+    {
+      "name": "one",
+      "key": "1",
+      "position": {
+        "x": 1017,
+        "y": 949
+      }
+    },
+    {
+      "name": "bag",
+      "key": "Tab",
+      "position": {
+        "x": 189,
+        "y": 983
+      }
+    },
     {
       "key": "Q",
       "position": {
@@ -93,27 +128,6 @@
       }
     },
     {
-      "key": "1",
-      "position": {
-        "x": 1017,
-        "y": 949
-      }
-    },
-    {
-      "key": "2",
-      "position": {
-        "x": 1285,
-        "y": 949
-      }
-    },
-    {
-      "key": "Tab",
-      "position": {
-        "x": 189,
-        "y": 983
-      }
-    },
-    {
       "key": "F",
       "position": {
         "x": 1553,
@@ -135,6 +149,7 @@
       }
     },
     {
+      "name": "~",
       "key": "Back Quote",
       "position": {
         "x": 1695,

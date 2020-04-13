@@ -19,13 +19,10 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
 
     private var lastKeyDown = KeyCode.UNDEFINED
     private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
-    private var joystick: Joystick? = null
-    private lateinit var mouse: Mouse
-
+    private lateinit var keymap: Keymap
 
     fun initButtons(keymap: Keymap) {
-        mouse = keymap.mouse
-        joystick = keymap.joystick
+        this.keymap = keymap
         for ((index, button) in keymap.buttons.withIndex()) {
             buttonMap[KeyCode.getKeyCode(button.key)] = ButtonWithId(index, button)
         }
@@ -45,35 +42,36 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
 
         when (event.code) {
             KeyCode.W -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.or(JoystickDirection.TOP.joystickByte)
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             KeyCode.S -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.or(JoystickDirection.BOTTOM.joystickByte)
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             KeyCode.A -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.or(JoystickDirection.LEFT.joystickByte)
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             KeyCode.D -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.or(JoystickDirection.RIGHT.joystickByte)
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             else -> {
                 // screen button
                 val buttonWithId = buttonMap[event.code]
-                if (buttonWithId != null) return connections.sendTouch(
-                    HEAD_TOUCH_DOWN,
-                    (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
-                    buttonWithId.button.position.x,
-                    buttonWithId.button.position.y,
-                    true
-                )
+                if (buttonWithId != null) {
+                    when (buttonWithId.button.name) {
+                        KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return
+                    }
+                    connections.sendTouch(
+                        HEAD_TOUCH_DOWN,
+                        (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
+                        buttonWithId.button.position.x,
+                        buttonWithId.button.position.y,
+                        true
+                    )
+                }
             }
         }
     }
@@ -87,31 +85,42 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
-            KeyCode.getKeyCode(mouse.switch) -> connections.sendSwitchMouse(mouse.reset)
             KeyCode.W -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             KeyCode.S -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.BOTTOM.joystickByte.inv())
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             KeyCode.A -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.LEFT.joystickByte.inv())
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
             KeyCode.D -> {
-                if (joystick == null) return
                 joystickByte = joystickByte.and(JoystickDirection.RIGHT.joystickByte.inv())
-                connections.sendJoystick(joystick!!, joystickByte)
+                connections.sendJoystick(keymap.joystick, joystickByte)
             }
-
             else -> {
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
+                    when (buttonWithId.button.name) {
+                        KEY_NAME_SWITCH -> {
+                            connections.sendSwitchMouse(buttonWithId.button.position)
+                            return
+                        }
+                        KEY_NAME_REPEAT -> {
+                            connections.enableRepeatFire = !connections.enableRepeatFire
+                            connections.sendEnableRepeat()
+                            return
+                        }
+                        KEY_NAME_BAG -> {
+                            if (!connections.mouseVisible)
+                                connections.sendSwitchMouse(Position(2103, 359))
+                        }
+                        KEY_NAME_ONE -> connections.weaponNumber = 1
+                        KEY_NAME_TWO -> connections.weaponNumber = 2
+                    }
                     connections.sendTouch(
                         HEAD_TOUCH_UP,
                         (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
@@ -119,10 +128,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                         buttonWithId.button.position.y,
                         true
                     )
-                    if (event.code == KeyCode.TAB) {
-                        if (!connections.mouseVisible)
-                            connections.sendSwitchMouse(Position(2103, 359))
-                    }
                 }
             }
         }

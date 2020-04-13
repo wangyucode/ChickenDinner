@@ -11,9 +11,11 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
     var controlConnected = false
 
     private lateinit var mouse: Mouse
+    private lateinit var resetPosition: Position
 
     fun initButtons(keymap: Keymap) {
         mouse = keymap.mouse
+        resetPosition = keymap.buttons.find { it.name == KEY_NAME_SWITCH }!!.position
     }
 
     override fun handle(event: MouseEvent) {
@@ -44,7 +46,7 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                     (event.y * RATIO).toInt(),
                     event.x,
                     event.y,
-                    mouse.reset
+                    resetPosition
                 )
             }
         }
@@ -60,7 +62,7 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                 (event.y * RATIO).toInt(),
                 event.x,
                 event.y,
-                mouse.reset
+                resetPosition
             )
         }
         connections.checkReachEdge(event.x, event.y)
@@ -82,10 +84,13 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
             if (event.button == MouseButton.PRIMARY) {
                 position = mouse.left
                 id = TOUCH_ID_MOUSE_LEFT
+                // repeat stop
+                connections.stopRepeatFire()
             } else {
                 position = mouse.right
                 id = TOUCH_ID_MOUSE_RIGHT
             }
+            // normal click
             connections.sendTouch(
                 HEAD_TOUCH_UP,
                 id,
@@ -99,6 +104,7 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
     private fun onMousePressed(event: MouseEvent) {
 //        println("${(event.x * RATIO).toInt()},${(event.y * RATIO).toInt()}")
         if (!controlConnected) return
+        // mouse touch down
         if (connections.mouseVisible) {
             connections.sendTouch(
                 HEAD_TOUCH_DOWN,
@@ -108,21 +114,27 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                 false
             )
         } else {
+            // fire
             val position: Position
             val id: Byte
             if (event.button == MouseButton.PRIMARY) {
                 position = mouse.left
                 id = TOUCH_ID_MOUSE_LEFT
+                if (connections.enableRepeatFire && connections.weaponNumber == 1) {
+                    connections.startRepeatFire(mouse.left)
+                    return
+                }
             } else {
                 position = mouse.right
                 id = TOUCH_ID_MOUSE_RIGHT
             }
+            // normal click
             connections.sendTouch(
                 HEAD_TOUCH_DOWN,
                 id,
                 position.x,
                 position.y,
-                false
+                true
             )
         }
     }

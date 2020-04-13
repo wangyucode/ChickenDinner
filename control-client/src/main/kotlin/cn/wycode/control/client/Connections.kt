@@ -44,6 +44,7 @@ class Connections {
 
     private val mouseEventExecutor = Executors.newSingleThreadExecutor()
     private val controlEventExecutor = Executors.newSingleThreadScheduledExecutor()
+    private val controlRepeatFireEventExecutor = Executors.newSingleThreadScheduledExecutor()
 
     lateinit var mouseOutputStream: OutputStream
     lateinit var controlOutputStream: OutputStream
@@ -69,6 +70,11 @@ class Connections {
     private val robot = Robot()
 
     private var scheduledUp: ScheduledFuture<*>? = null
+    private var repeatFuture: ScheduledFuture<*>? = null
+
+    var enableRepeatFire = false
+
+    var weaponNumber = 1
 
     fun sendKey(key: Byte) {
         keyBuffer.clear()
@@ -289,6 +295,24 @@ class Connections {
         }
     }
 
+    fun startRepeatFire(left: Position) {
+        repeatFuture = controlRepeatFireEventExecutor.scheduleAtFixedRate(
+            WriteRepeatClickRunnable(controlOutputStream, left.x, left.y),
+            0,
+            Random.nextLong(110, 120),
+            TimeUnit.MILLISECONDS
+        )
+    }
+
+    fun stopRepeatFire() {
+        repeatFuture?.cancel(false)
+    }
+
+    fun sendEnableRepeat() {
+        val head = if (enableRepeatFire) HEAD_REPEAT_ENABLE else HEAD_REPEAT_DISABLE
+        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
+    }
+
     inner class JoystickWriteRunnable(
         private val id: Int,
         private val x: Int,
@@ -322,6 +346,28 @@ class Connections {
 open class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
     override fun run() {
         outputStream.write(data)
+    }
+}
+
+class WriteRepeatClickRunnable(private val outputStream: OutputStream, private val x: Int, private val y: Int) :
+    Runnable {
+
+    private val touchBuffer = ByteBuffer.allocate(10)
+
+    override fun run() {
+        val shakeX = x + Random.nextInt(-5, 5)
+        val shakeY = y + Random.nextInt(-5, 5)
+        touchBuffer.clear()
+        touchBuffer.put(HEAD_TOUCH_DOWN)
+        touchBuffer.put(TOUCH_ID_MOUSE_LEFT)
+        touchBuffer.putInt(shakeX)
+        touchBuffer.putInt(shakeY)
+        outputStream.write(touchBuffer.array())
+
+        touchBuffer.put(0, HEAD_TOUCH_UP)
+        Thread.sleep(Random.nextInt(20, 30).toLong())
+
+        outputStream.write(touchBuffer.array())
     }
 }
 

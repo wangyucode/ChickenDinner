@@ -16,6 +16,7 @@ import kotlin.random.Random
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
+const val SENSITIVITY_X = 0.5f
 
 class Connections {
 
@@ -68,7 +69,11 @@ class Connections {
     lateinit var scene: Scene
 
     var mouseVisible = true
+
+    @Volatile
     var lastFovX = 0
+
+    @Volatile
     var lastFovY = 0
 
     private val robot = Robot()
@@ -107,7 +112,7 @@ class Connections {
     }
 
 
-    fun sendMoveFov(x: Int, y: Int, canvasX: Double, canvasY: Double, reset: Position) {
+    fun sendMoveFov(canvasX: Double, canvasY: Double, reset: Position) {
         if (scheduledUp != null && (scheduledUp as ScheduledFuture<*>).cancel(false) && isFovAutoUp) {
             sendTouch(
                 HEAD_TOUCH_DOWN,
@@ -124,8 +129,8 @@ class Connections {
             sendTouch(
                 HEAD_TOUCH_UP,
                 TOUCH_ID_MOUSE,
-                x,
-                y,
+                (canvasX * RATIO).toInt(),
+                (canvasY * RATIO).toInt(),
                 false
             )
             robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
@@ -137,18 +142,22 @@ class Connections {
                 reset.y,
                 false
             )
+            lastFovX = (canvasX * RATIO).toInt()
+            lastFovY = (canvasY * RATIO).toInt()
             return
         }
+        lastFovX = (canvasX * RATIO).toInt()
+        lastFovY = (canvasY * RATIO).toInt()
 
-        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, x, y, false)
-        lastFovX = x
-        lastFovY = y
+        val dx = ((lastFovX - reset.x) * SENSITIVITY_X).toInt()
+
+        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, reset.x + dx, lastFovY, false)
 
         touchBuffer.clear()
         touchBuffer.put(HEAD_TOUCH_UP)
         touchBuffer.put(TOUCH_ID_MOUSE)
-        touchBuffer.putInt(x)
-        touchBuffer.putInt(y)
+        touchBuffer.putInt(lastFovX)
+        touchBuffer.putInt(lastFovY)
         scheduledUp = controlEventExecutor.schedule(
             WriteAndMoveMouseRunnable(
                 (OFFSET.x + reset.x / RATIO).toInt(),
@@ -345,6 +354,8 @@ class Connections {
             super.run()
             robot.mouseMove(mouseX, mouseY)
             isFovAutoUp = true
+            lastFovX = mouseX
+            lastFovY = mouseY
         }
     }
 }

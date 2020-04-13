@@ -42,8 +42,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                 )
             } else {
                 connections.sendMoveFov(
-                    (event.x * RATIO).toInt(),
-                    (event.y * RATIO).toInt(),
                     event.x,
                     event.y,
                     resetPosition
@@ -58,8 +56,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
             connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
         } else if (!connections.mouseVisible && controlConnected) {
             connections.sendMoveFov(
-                (event.x * RATIO).toInt(),
-                (event.y * RATIO).toInt(),
                 event.x,
                 event.y,
                 resetPosition

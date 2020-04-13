@@ -1,6 +1,8 @@
 package cn.wycode.control.client
 
 import cn.wycode.control.common.*
+import javafx.scene.Cursor
+import javafx.scene.Scene
 import java.awt.Robot
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -62,6 +64,8 @@ class Connections {
 
     @Volatile
     private var isFovAutoUp = false
+
+    lateinit var scene: Scene
 
     var mouseVisible = true
     var lastFovX = 0
@@ -271,9 +275,11 @@ class Connections {
         val head = if (mouseVisible) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX, lastFovY, false)
             sendMouseMove(reset.x, reset.y)
+            scene.cursor = Cursor.DEFAULT
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, reset.x, reset.y, false)
+            scene.cursor = Cursor.NONE
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, byteArrayOf(head)))

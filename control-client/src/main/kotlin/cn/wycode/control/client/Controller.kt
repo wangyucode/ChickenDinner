@@ -46,6 +46,7 @@ class Controller : Initializable {
         mouseHandler.controlConnected = true
         connections.controlOutputStream = initialTask.controlSocket.getOutputStream()
         canvas.scene.addEventHandler(KeyEvent.ANY, keyHandler)
+        connections.scene = canvas.scene
     }
 
     private fun onMouseServiceConnected() {

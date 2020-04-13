@@ -40,8 +40,8 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                 )
             } else {
                 connections.sendMoveFov(
-                    (event.x * RATIO * mouse.sensitivityX).toInt(),
-                    (event.y * RATIO * mouse.sensitivityY).toInt(),
+                    (event.x * RATIO).toInt(),
+                    (event.y * RATIO).toInt(),
                     event.x,
                     event.y,
                     mouse.reset
@@ -56,8 +56,8 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
             connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
         } else if (!connections.mouseVisible && controlConnected) {
             connections.sendMoveFov(
-                (event.x * RATIO * mouse.sensitivityX).toInt(),
-                (event.y * RATIO * mouse.sensitivityY).toInt(),
+                (event.x * RATIO).toInt(),
+                (event.y * RATIO).toInt(),
                 event.x,
                 event.y,
                 mouse.reset
@@ -97,8 +97,7 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        //TODO debug only
-        println("${(event.x * RATIO).toInt()},${(event.y * RATIO).toInt()}")
+//        println("${(event.x * RATIO).toInt()},${(event.y * RATIO).toInt()}")
         if (!controlConnected) return
         if (connections.mouseVisible) {
             connections.sendTouch(

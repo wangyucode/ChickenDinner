@@ -5,6 +5,7 @@ import java.awt.Robot
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.PI
 import kotlin.math.sin
@@ -12,6 +13,7 @@ import kotlin.random.Random
 
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
+const val SCREEN_EDGE = 5
 
 class Connections {
 
@@ -57,9 +59,16 @@ class Connections {
     @Volatile
     private var joystickId = 0
 
+    @Volatile
+    private var isFovAutoUp = false
+
     var mouseVisible = true
+    var lastFovX = 0
+    var lastFovY = 0
 
     private val robot = Robot()
+
+    private var scheduledUp: ScheduledFuture<*>? = null
 
     fun sendKey(key: Byte) {
         keyBuffer.clear()
@@ -89,7 +98,18 @@ class Connections {
 
 
     fun sendMoveFov(x: Int, y: Int, canvasX: Double, canvasY: Double, reset: Position) {
+        if (scheduledUp != null && (scheduledUp as ScheduledFuture<*>).cancel(false) && isFovAutoUp) {
+            sendTouch(
+                HEAD_TOUCH_DOWN,
+                TOUCH_ID_MOUSE,
+                reset.x,
+                reset.y,
+                false
+            )
 
+            robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
+            isFovAutoUp = false
+        }
         if (canvasX < 100 || canvasX > CANVAS.x - 100 || canvasY < 100 || canvasY > CANVAS.y - 100) {
             sendTouch(
                 HEAD_TOUCH_UP,
@@ -110,12 +130,25 @@ class Connections {
             return
         }
 
+        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, x, y, false)
+        lastFovX = x
+        lastFovY = y
+
         touchBuffer.clear()
-        touchBuffer.put(HEAD_TOUCH_MOVE)
+        touchBuffer.put(HEAD_TOUCH_UP)
         touchBuffer.put(TOUCH_ID_MOUSE)
         touchBuffer.putInt(x)
         touchBuffer.putInt(y)
-        controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
+        scheduledUp = controlEventExecutor.schedule(
+            WriteAndMoveMouseRunnable(
+                (OFFSET.x + reset.x / RATIO).toInt(),
+                (OFFSET.y + reset.y / RATIO).toInt(),
+                controlOutputStream,
+                touchBuffer.array().copyOf()
+            ),
+            1000L,
+            TimeUnit.MILLISECONDS
+        )
     }
 
     fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
@@ -229,7 +262,7 @@ class Connections {
     fun sendSwitchMouse(reset: Position) {
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
-            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, reset.x, reset.y, false)
+            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX, lastFovY, false)
             sendMouseMove(reset.x, reset.y)
             HEAD_MOUSE_VISIBLE
         } else {
@@ -241,17 +274,17 @@ class Connections {
     }
 
     fun checkReachEdge(x: Double, y: Double) {
-        if (x < 10) {
-            robot.mouseMove(OFFSET.x + 10, (OFFSET.y + y).toInt())
+        if (x < SCREEN_EDGE) {
+            robot.mouseMove(OFFSET.x + SCREEN_EDGE, (OFFSET.y + y).toInt())
         }
-        if (x > CANVAS.x - 10) {
-            robot.mouseMove(OFFSET.x + CANVAS.x - 10, (OFFSET.y + y).toInt())
+        if (x > CANVAS.x - SCREEN_EDGE) {
+            robot.mouseMove(OFFSET.x + CANVAS.x - SCREEN_EDGE, (OFFSET.y + y).toInt())
         }
-        if (y < 10) {
-            robot.mouseMove((OFFSET.x + x).toInt(), OFFSET.y + 10)
+        if (y < SCREEN_EDGE) {
+            robot.mouseMove((OFFSET.x + x).toInt(), OFFSET.y + SCREEN_EDGE)
         }
-        if (y > CANVAS.y - 10) {
-            robot.mouseMove((OFFSET.x + x).toInt(), OFFSET.y + CANVAS.y - 10)
+        if (y > CANVAS.y - SCREEN_EDGE) {
+            robot.mouseMove((OFFSET.x + x).toInt(), OFFSET.y + CANVAS.y - SCREEN_EDGE)
         }
     }
 
@@ -268,6 +301,19 @@ class Connections {
                 lastJoystickX = x
                 lastJoystickY = y
             }
+        }
+    }
+
+    inner class WriteAndMoveMouseRunnable(
+        private val mouseX: Int,
+        private val mouseY: Int,
+        outputStream: OutputStream,
+        data: ByteArray
+    ) : WriteRunnable(outputStream, data) {
+        override fun run() {
+            super.run()
+            robot.mouseMove(mouseX, mouseY)
+            isFovAutoUp = true
         }
     }
 }

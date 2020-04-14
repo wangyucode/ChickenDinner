@@ -1,7 +1,10 @@
 package cn.wycode.control.server
 
 import android.os.SystemClock
-import android.view.*
+import android.view.InputDevice
+import android.view.InputEvent
+import android.view.KeyCharacterMap
+import android.view.KeyEvent
 import cn.wycode.control.common.*
 import cn.wycode.control.server.utils.Ln
 import cn.wycode.control.server.wrappers.InputManager.INJECT_INPUT_EVENT_MODE_ASYNC
@@ -72,6 +75,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectEvent(event: InputEvent): Boolean {
+        if (ENABLE_LOG) Ln.d("inject->${event}")
         return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC);
     }
 
@@ -86,6 +90,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
             event.x = touchBuffer.getInt(1)
             event.y = touchBuffer.getInt(5)
         }
+        if (ENABLE_LOG) Ln.d("revive->${event}")
     }
 }
 

@@ -1,9 +1,9 @@
 package cn.wycode.control.common
 
-const val TOUCH_ID_MOUSE: Byte = 0
-const val TOUCH_ID_JOYSTICK: Byte = 1
-const val TOUCH_ID_MOUSE_LEFT: Byte = 2
-const val TOUCH_ID_MOUSE_RIGHT: Byte = 3
+const val TOUCH_ID_MOUSE: Byte = 1
+const val TOUCH_ID_JOYSTICK: Byte = 2
+const val TOUCH_ID_MOUSE_LEFT: Byte = 3
+const val TOUCH_ID_MOUSE_RIGHT: Byte = 4
 
 const val TOUCH_ID_BUTTON: Byte = 10
 

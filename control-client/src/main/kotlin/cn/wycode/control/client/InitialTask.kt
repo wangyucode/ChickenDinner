@@ -13,6 +13,8 @@ const val INIT_PROCESS_CONNECT_MOUSE_SERVICE = 4
 const val INIT_PROCESS_ENABLE_CONTROL_TUNNEL = 5
 const val INIT_PROCESS_CONNECT_CONTROL_SERVICE = 6
 
+var ENABLE_LOG = false
+
 class InitialTask : Task<Int>() {
 
     private val runtime = Runtime.getRuntime()
@@ -108,7 +110,8 @@ class InitialTask : Task<Int>() {
             //    –nice-name=nice_proc_name (api>=14)
             //start-class-name –包含main方法的主类  (com.android.commands.am.Am)
             //main-options –启动时候传递到main方法中的参数
-            command = "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER"
+            val args = if (ENABLE_LOG) "--debug" else ""
+            command = "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER $args"
             println(command)
             process = runtime.exec(command)
             while (process.isAlive) {

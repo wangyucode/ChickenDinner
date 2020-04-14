@@ -1,4 +1,5 @@
 @file:JvmName("ControlServer")
+
 package cn.wycode.control.server
 
 import android.net.LocalServerSocket
@@ -9,6 +10,8 @@ import java.io.IOException
 
 const val CONTROL_PATH = "/data/local/tmp/controller.jar"
 const val CONTROL_SOCKET = "control-socket"
+
+var ENABLE_LOG = false
 
 class Server {
 
@@ -31,7 +34,14 @@ fun main(args: Array<String>) {
         Ln.e("Exception on thread $t", e)
     }
     //deleteSelf()
+    resolveArguments(args)
     Server().start()
+}
+
+fun resolveArguments(args: Array<String>) {
+    if (args.isEmpty()) return
+    if (args[0] == "--debug") ENABLE_LOG = true
+
 }
 
 fun deleteSelf() {

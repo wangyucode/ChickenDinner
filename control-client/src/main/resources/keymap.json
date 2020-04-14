@@ -18,6 +18,13 @@
   },
   "buttons": [
     {
+      "key": "V",
+      "position": {
+        "x": 525,
+        "y": 441
+      }
+    },
+    {
       "key": "T",
       "position": {
         "x": 1973,

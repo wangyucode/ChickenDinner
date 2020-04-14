@@ -16,7 +16,7 @@ import kotlin.random.Random
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
-const val SENSITIVITY_X = 0.3
+const val SENSITIVITY_X = 0.47
 const val SENSITIVITY_Y = 1.0
 
 class Connections {
@@ -30,6 +30,7 @@ class Connections {
      * touchUP   -> head = 3
      */
     private val touchBuffer = ByteBuffer.allocate(10)
+    private val repeatBuffer = ByteBuffer.allocate(10)
 
     /**
      * 1 byte head , 4 byte x , 4 byte y
@@ -50,7 +51,7 @@ class Connections {
     private val controlEventExecutor = Executors.newSingleThreadExecutor()
     private val resetEventExecutor = Executors.newSingleThreadScheduledExecutor()
     private val joystickEventExecutor = Executors.newSingleThreadScheduledExecutor()
-    private val controlRepeatFireEventExecutor = Executors.newSingleThreadScheduledExecutor()
+    private val repeatFireEventExecutor = Executors.newSingleThreadScheduledExecutor()
 
     lateinit var mouseOutputStream: OutputStream
     lateinit var controlOutputStream: OutputStream
@@ -81,7 +82,7 @@ class Connections {
 
     private val robot = Robot()
 
-    private var scheduledUp: ScheduledFuture<*>? = null
+    private var resetFuture: ScheduledFuture<*>? = null
     private var repeatFuture: ScheduledFuture<*>? = null
 
     var enableRepeatFire = false
@@ -92,7 +93,7 @@ class Connections {
         keyBuffer.clear()
         keyBuffer.put(HEAD_KEY)
         keyBuffer.put(key)
-        controlEventExecutor.submit(WriteRunnable(controlOutputStream, keyBuffer.array().copyOf()))
+        controlEventExecutor.execute(WriteRunnable(controlOutputStream, keyBuffer.array().copyOf()))
     }
 
     fun sendMouseMove(x: Int, y: Int) {
@@ -100,7 +101,7 @@ class Connections {
         mouseMoveBuffer.put(HEAD_MOUSE_MOVE)
         mouseMoveBuffer.putInt(x)
         mouseMoveBuffer.putInt(y)
-        mouseEventExecutor.submit(WriteRunnable(mouseOutputStream, mouseMoveBuffer.array().copyOf()))
+        mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, mouseMoveBuffer.array().copyOf()))
     }
 
     fun sendTouch(head: Byte, id: Byte, x: Int, y: Int, shake: Boolean) {
@@ -111,12 +112,12 @@ class Connections {
         touchBuffer.put(id)
         touchBuffer.putInt(shakeX)
         touchBuffer.putInt(shakeY)
-        controlEventExecutor.submit(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
+        controlEventExecutor.execute(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
     }
 
 
     fun sendMoveFov(canvasX: Double, canvasY: Double, reset: Position) {
-        if (scheduledUp != null && (scheduledUp as ScheduledFuture<*>).cancel(false) && isFovAutoUp) {
+        if (resetFuture != null && (resetFuture as ScheduledFuture<*>).cancel(false) && isFovAutoUp) {
             sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
@@ -127,6 +128,7 @@ class Connections {
 
             robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
             isFovAutoUp = false
+            return
         }
         if (canvasX < 100 || canvasX > CANVAS.x - 100 || canvasY < 100 || canvasY > CANVAS.y - 100) {
             sendTouch(
@@ -162,11 +164,10 @@ class Connections {
         touchBuffer.put(TOUCH_ID_MOUSE)
         touchBuffer.putInt(reset.x + dx)
         touchBuffer.putInt(reset.y + dy)
-        scheduledUp = resetEventExecutor.schedule(
-            WriteAndMoveMouseRunnable(
+        resetFuture = resetEventExecutor.schedule(
+            ResetMouseRunnable(
                 (OFFSET.x + reset.x / RATIO).toInt(),
                 (OFFSET.y + reset.y / RATIO).toInt(),
-                controlOutputStream,
                 touchBuffer.array().copyOf()
             ),
             1000L,
@@ -194,12 +195,11 @@ class Connections {
                 touchBuffer.put(TOUCH_ID_JOYSTICK)
                 touchBuffer.putInt(joystickCenterX)
                 touchBuffer.putInt(joystickCenterY)
-                controlEventExecutor.submit(
+                controlEventExecutor.execute(
                     JoystickWriteRunnable(
                         joystickId,
                         joystickCenterX,
                         joystickCenterY,
-                        controlOutputStream,
                         touchBuffer.array().copyOf()
                     )
                 )
@@ -217,7 +217,6 @@ class Connections {
                     joystickId,
                     joystickCenterX + Random.nextInt(-5, 5),
                     joystickCenterY + Random.nextInt(-5, 5),
-                    controlOutputStream,
                     touchBuffer.array().copyOf()
                 )
             )
@@ -263,7 +262,7 @@ class Connections {
             touchBuffer.putInt(x)
             touchBuffer.putInt(y)
             joystickEventExecutor.schedule(
-                JoystickWriteRunnable(joystickId, x, y, controlOutputStream, touchBuffer.array().copyOf()),
+                JoystickWriteRunnable(joystickId, x, y, touchBuffer.array().copyOf()),
                 i * JOYSTICK_STEP_DELAY,
                 TimeUnit.MILLISECONDS
             )
@@ -283,7 +282,7 @@ class Connections {
     }
 
     fun sendSwitchMouse(reset: Position) {
-        scheduledUp?.cancel(false)
+        resetFuture?.cancel(false)
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX, lastFovY, false)
@@ -292,7 +291,7 @@ class Connections {
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, reset.x, reset.y, false)
-            scene.cursor = Cursor.NONE
+//            scene.cursor = Cursor.NONE
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
@@ -315,8 +314,8 @@ class Connections {
     }
 
     fun startRepeatFire(left: Position) {
-        repeatFuture = controlRepeatFireEventExecutor.scheduleAtFixedRate(
-            WriteRepeatClickRunnable(controlOutputStream, left.x, left.y),
+        repeatFuture = repeatFireEventExecutor.scheduleAtFixedRate(
+            WriteRepeatClickRunnable(left.x, left.y),
             0,
             115,
             TimeUnit.MILLISECONDS
@@ -336,60 +335,59 @@ class Connections {
         private val id: Int,
         private val x: Int,
         private val y: Int,
-        private val outputStream: OutputStream,
         private val data: ByteArray
-    ) : WriteRunnable(outputStream, data) {
+    ) : Runnable {
         override fun run() {
             if (joystickId == id) {
-                outputStream.write(data)
+                controlOutputStream.write(data)
                 lastJoystickX = x
                 lastJoystickY = y
             }
         }
     }
 
-    inner class WriteAndMoveMouseRunnable(
+    inner class ResetMouseRunnable(
         private val mouseX: Int,
         private val mouseY: Int,
-        outputStream: OutputStream,
-        data: ByteArray
-    ) : WriteRunnable(outputStream, data) {
+        private val data: ByteArray
+    ) : Runnable {
         override fun run() {
-            super.run()
-            robot.mouseMove(mouseX, mouseY)
+            controlOutputStream.write(data)
             isFovAutoUp = true
             lastFovX = mouseX
             lastFovY = mouseY
         }
     }
-}
 
-open class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
-    override fun run() {
-        outputStream.write(data)
+    inner class WriteRepeatClickRunnable(private val x: Int, private val y: Int) :
+        Runnable {
+
+        override fun run() {
+            Thread.sleep(Random.nextInt(20).toLong())
+            val shakeX = x + Random.nextInt(-5, 5)
+            val shakeY = y + Random.nextInt(-5, 5)
+            repeatBuffer.clear()
+            repeatBuffer.put(HEAD_TOUCH_DOWN)
+            repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
+            repeatBuffer.putInt(shakeX)
+            repeatBuffer.putInt(shakeY)
+            controlOutputStream.write(repeatBuffer.array())
+
+            repeatBuffer.put(0, HEAD_TOUCH_UP)
+            Thread.sleep(Random.nextInt(20, 30).toLong())
+
+            controlOutputStream.write(repeatBuffer.array())
+        }
+    }
+
+    class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
+        override fun run() {
+            outputStream.write(data)
+        }
     }
 }
 
-class WriteRepeatClickRunnable(private val outputStream: OutputStream, private val x: Int, private val y: Int) :
-    Runnable {
 
-    private val touchBuffer = ByteBuffer.allocate(10)
 
-    override fun run() {
-        Thread.sleep(Random.nextInt(20).toLong())
-        val shakeX = x + Random.nextInt(-5, 5)
-        val shakeY = y + Random.nextInt(-5, 5)
-        touchBuffer.clear()
-        touchBuffer.put(HEAD_TOUCH_DOWN)
-        touchBuffer.put(TOUCH_ID_MOUSE_LEFT)
-        touchBuffer.putInt(shakeX)
-        touchBuffer.putInt(shakeY)
-        outputStream.write(touchBuffer.array())
 
-        touchBuffer.put(0, HEAD_TOUCH_UP)
-        Thread.sleep(Random.nextInt(20, 30).toLong())
-
-        outputStream.write(touchBuffer.array())
-    }
-}
 

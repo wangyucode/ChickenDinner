@@ -106,7 +106,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                 if (buttonWithId != null) {
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
-                            connections.sendSwitchMouse(buttonWithId.button.position)
+                            connections.sendSwitchMouse()
                             return
                         }
                         KEY_NAME_REPEAT -> {
@@ -114,10 +114,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             connections.sendEnableRepeat()
                             return
                         }
-                        KEY_NAME_BAG -> {
-                            if (!connections.mouseVisible)
-                                connections.sendSwitchMouse(Position(2103, 359))
-                        }
+                        KEY_NAME_BAG -> if (!connections.mouseVisible) connections.sendBagOpen(Position(2103, 359))
                         KEY_NAME_ONE -> connections.weaponNumber = 1
                         KEY_NAME_TWO -> connections.weaponNumber = 2
                     }

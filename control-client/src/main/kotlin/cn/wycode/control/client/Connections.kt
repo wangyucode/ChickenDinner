@@ -130,12 +130,19 @@ class Connections {
             isFovAutoUp = false
             return
         }
+
+        lastFovX = (canvasX * RATIO).toInt()
+        lastFovY = (canvasY * RATIO).toInt()
+
+        val dx = ((lastFovX - reset.x) * SENSITIVITY_X).toInt()
+        val dy = ((lastFovY - reset.y) * SENSITIVITY_Y).toInt()
+
         if (canvasX < 100 || canvasX > CANVAS.x - 100 || canvasY < 100 || canvasY > CANVAS.y - 100) {
             sendTouch(
                 HEAD_TOUCH_UP,
                 TOUCH_ID_MOUSE,
-                (canvasX * RATIO).toInt(),
-                (canvasY * RATIO).toInt(),
+                reset.x + dx,
+                reset.y + dy,
                 false
             )
             robot.mouseMove((OFFSET.x + reset.x / RATIO).toInt(), (OFFSET.y + reset.y / RATIO).toInt())
@@ -147,15 +154,8 @@ class Connections {
                 reset.y,
                 false
             )
-            lastFovX = (canvasX * RATIO).toInt()
-            lastFovY = (canvasY * RATIO).toInt()
             return
         }
-        lastFovX = (canvasX * RATIO).toInt()
-        lastFovY = (canvasY * RATIO).toInt()
-
-        val dx = ((lastFovX - reset.x) * SENSITIVITY_X).toInt()
-        val dy = ((lastFovY - reset.y) * SENSITIVITY_Y).toInt()
 
         sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, reset.x + dx, reset.y + dy, false)
 

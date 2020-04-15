@@ -43,19 +43,19 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         when (event.code) {
             KeyCode.W -> {
                 joystickByte = joystickByte.or(JoystickDirection.TOP.joystickByte)
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             KeyCode.S -> {
                 joystickByte = joystickByte.or(JoystickDirection.BOTTOM.joystickByte)
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             KeyCode.A -> {
                 joystickByte = joystickByte.or(JoystickDirection.LEFT.joystickByte)
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             KeyCode.D -> {
                 joystickByte = joystickByte.or(JoystickDirection.RIGHT.joystickByte)
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             else -> {
                 // screen button
@@ -87,19 +87,19 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
             KeyCode.W -> {
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             KeyCode.S -> {
                 joystickByte = joystickByte.and(JoystickDirection.BOTTOM.joystickByte.inv())
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             KeyCode.A -> {
                 joystickByte = joystickByte.and(JoystickDirection.LEFT.joystickByte.inv())
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             KeyCode.D -> {
                 joystickByte = joystickByte.and(JoystickDirection.RIGHT.joystickByte.inv())
-                connections.sendJoystick(keymap.joystick, joystickByte)
+                connections.sendJoystick(joystickByte)
             }
             else -> {
                 val buttonWithId = buttonMap[event.code]

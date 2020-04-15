@@ -87,8 +87,10 @@ class Connections {
     var weaponNumber = 1
 
     private lateinit var resetPosition: Position
+    private lateinit var joystick: Joystick
 
     fun initButtons(keymap: Keymap) {
+        joystick = keymap.joystick
         resetPosition = keymap.buttons.find { it.name == KEY_NAME_SWITCH }!!.position
     }
 
@@ -177,7 +179,7 @@ class Connections {
         )
     }
 
-    fun sendJoystick(joystick: Joystick, joystickByte: Byte) {
+    fun sendJoystick(joystickByte: Byte) {
         joystickId++
         val joystickCenterX = joystick.center.x
         val joystickCenterY = joystick.center.y
@@ -295,7 +297,7 @@ class Connections {
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
-//            scene.cursor = Cursor.NONE
+            scene.cursor = Cursor.NONE
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))

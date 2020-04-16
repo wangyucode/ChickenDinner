@@ -64,25 +64,26 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                 // screen button
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
+                    var position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return
                         KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
                             val index = buttonWithId.button.name!!.toInt()
                             if (connections.isDropsOpen) {
-                                buttonWithId.button.position = keymap.drops.buttons[index]
+                                position = keymap.drops.buttons[index]
                             } else if (connections.isDrugsOpen) {
-                                buttonWithId.button.position = keymap.drugs.buttons[index]
+                                position = keymap.drugs.buttons[index]
                             }
                         }
                         KEY_NAME_FOUR -> {
-                            buttonWithId.button.position = when {
+                            position = when {
                                 connections.isDropsOpen -> keymap.drops.buttons[0]
                                 connections.isDrugsOpen -> keymap.drugs.buttons[4]
                                 else -> keymap.drops.open
                             }
                         }
                         KEY_NAME_FIVE -> {
-                            buttonWithId.button.position = when {
+                            position = when {
                                 connections.isDropsOpen -> keymap.drops.buttons[4]
                                 connections.isDrugsOpen -> keymap.drugs.buttons[0]
                                 else -> keymap.drugs.open
@@ -90,7 +91,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                         }
                         KEY_NAME_SIX -> {
                             if (connections.isDrugsOpen) {
-                                buttonWithId.button.position = keymap.drugs.buttons[5]
+                                position = keymap.drugs.buttons[5]
                             } else {
                                 return
                             }
@@ -99,8 +100,8 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                     connections.sendTouch(
                         HEAD_TOUCH_DOWN,
                         (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
-                        buttonWithId.button.position.x,
-                        buttonWithId.button.position.y,
+                        position.x,
+                        position.y,
                         true
                     )
                 }
@@ -136,6 +137,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             else -> {
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
+                    var position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
                             connections.sendSwitchMouse()
@@ -151,18 +153,18 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             val index = buttonWithId.button.name!!.toInt()
                             when {
                                 connections.isDropsOpen -> {
-                                    buttonWithId.button.position = keymap.drops.buttons[index]
+                                    position = keymap.drops.buttons[index]
                                     connections.sendDropsOpen(false)
                                 }
                                 connections.isDrugsOpen -> {
-                                    buttonWithId.button.position = keymap.drugs.buttons[index]
+                                    position = keymap.drugs.buttons[index]
                                     connections.sendDrugsOpen(false)
                                 }
                                 else -> connections.weaponNumber = index
                             }
                         }
                         KEY_NAME_FOUR -> {
-                            buttonWithId.button.position = when {
+                            position = when {
                                 connections.isDropsOpen -> {
                                     connections.sendDropsOpen(false)
                                     keymap.drops.buttons[0]
@@ -179,7 +181,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             }
                         }
                         KEY_NAME_FIVE -> {
-                            buttonWithId.button.position = when {
+                            position = when {
                                 connections.isDropsOpen -> {
                                     connections.sendDropsOpen(false)
                                     keymap.drops.buttons[4]
@@ -198,7 +200,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                         KEY_NAME_SIX -> {
                             if (connections.isDrugsOpen) {
                                 connections.sendDrugsOpen(false)
-                                buttonWithId.button.position = keymap.drugs.buttons[5]
+                                position = keymap.drugs.buttons[5]
                             } else {
                                 return
                             }
@@ -207,8 +209,8 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                     connections.sendTouch(
                         HEAD_TOUCH_UP,
                         (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
-                        buttonWithId.button.position.x,
-                        buttonWithId.button.position.y,
+                        position.x,
+                        position.y,
                         true
                     )
                 }

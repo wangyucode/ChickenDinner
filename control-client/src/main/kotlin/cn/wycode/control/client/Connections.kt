@@ -73,6 +73,9 @@ class Connections {
     @Volatile
     var isDropsOpen = false
 
+    @Volatile
+    var isDrugsOpen = false
+
     lateinit var scene: Scene
 
     var mouseVisible = true
@@ -84,6 +87,8 @@ class Connections {
 
     private var resetFuture: ScheduledFuture<*>? = null
     private var repeatFuture: ScheduledFuture<*>? = null
+    private var closeDropFuture: ScheduledFuture<*>? = null
+    private var closeDrugFuture: ScheduledFuture<*>? = null
 
     var enableRepeatFire = false
 
@@ -353,8 +358,26 @@ class Connections {
     }
 
     fun sendDropsOpen(open: Boolean) {
-        val head = if (open) HEAD_DROPS_OPEN else HEAD_DROPS_CLOSE
+        val head = if (open) {
+            closeDropFuture = resetEventExecutor.schedule({ sendDropsOpen(false) }, 3000, TimeUnit.MILLISECONDS)
+            HEAD_DROPS_OPEN
+        } else {
+            closeDropFuture?.cancel(false)
+            HEAD_DROPS_CLOSE
+        }
         isDropsOpen = open
+        mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
+    }
+
+    fun sendDrugsOpen(open: Boolean) {
+        val head = if (open) {
+            closeDrugFuture = resetEventExecutor.schedule({ sendDrugsOpen(false) }, 3000, TimeUnit.MILLISECONDS)
+            HEAD_DRUGS_OPEN
+        } else {
+            closeDrugFuture?.cancel(false)
+            HEAD_DRUGS_CLOSE
+        }
+        isDrugsOpen = open
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
     }
 

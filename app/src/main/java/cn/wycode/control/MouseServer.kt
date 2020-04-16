@@ -85,11 +85,19 @@ class MouseServer(
                 keymapView.invalidate()
             }
             HEAD_DROPS_OPEN -> {
-                keymapView.throwsOpen = true
+                keymapView.dropsOpen = true
                 keymapView.invalidate()
             }
             HEAD_DROPS_CLOSE -> {
-                keymapView.throwsOpen = false
+                keymapView.dropsOpen = false
+                keymapView.invalidate()
+            }
+            HEAD_DRUGS_OPEN -> {
+                keymapView.drugsOpen = true
+                keymapView.invalidate()
+            }
+            HEAD_DRUGS_CLOSE -> {
+                keymapView.drugsOpen = false
                 keymapView.invalidate()
             }
         }

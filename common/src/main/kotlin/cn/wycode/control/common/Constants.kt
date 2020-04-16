@@ -23,6 +23,8 @@ const val HEAD_REPEAT_ENABLE: Byte = 9
 const val HEAD_REPEAT_DISABLE: Byte = 10
 const val HEAD_DROPS_OPEN: Byte = 11
 const val HEAD_DROPS_CLOSE: Byte = 12
+const val HEAD_DRUGS_OPEN: Byte = 13
+const val HEAD_DRUGS_CLOSE: Byte = 14
 
 const val KEY_HOME: Byte = 1
 const val KEY_BACK: Byte = 2

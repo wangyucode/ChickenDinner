@@ -26,6 +26,9 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         for ((index, button) in keymap.buttons.withIndex()) {
             buttonMap[KeyCode.getKeyCode(button.key)] = ButtonWithId(index, button)
         }
+        buttonMap[KeyCode.DIGIT4] = ButtonWithId(buttonMap.size, Button("4", keymap.drops.open, KEY_NAME_FOUR))
+        buttonMap[KeyCode.DIGIT5] = ButtonWithId(buttonMap.size + 1, Button("5", keymap.drugs.open, KEY_NAME_FIVE))
+        buttonMap[KeyCode.DIGIT6] = ButtonWithId(buttonMap.size + 2, Button("6", keymap.drugs.buttons[5], KEY_NAME_SIX))
     }
 
     override fun handle(event: KeyEvent) {
@@ -63,6 +66,35 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                 if (buttonWithId != null) {
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return
+                        KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
+                            val index = buttonWithId.button.name!!.toInt()
+                            if (connections.isDropsOpen) {
+                                buttonWithId.button.position = keymap.drops.buttons[index]
+                            } else if (connections.isDrugsOpen) {
+                                buttonWithId.button.position = keymap.drugs.buttons[index]
+                            }
+                        }
+                        KEY_NAME_FOUR -> {
+                            buttonWithId.button.position = when {
+                                connections.isDropsOpen -> keymap.drops.buttons[0]
+                                connections.isDrugsOpen -> keymap.drugs.buttons[4]
+                                else -> keymap.drops.open
+                            }
+                        }
+                        KEY_NAME_FIVE -> {
+                            buttonWithId.button.position = when {
+                                connections.isDropsOpen -> keymap.drops.buttons[4]
+                                connections.isDrugsOpen -> keymap.drugs.buttons[0]
+                                else -> keymap.drugs.open
+                            }
+                        }
+                        KEY_NAME_SIX -> {
+                            if (connections.isDrugsOpen) {
+                                buttonWithId.button.position = keymap.drugs.buttons[5]
+                            } else {
+                                return
+                            }
+                        }
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_DOWN,
@@ -85,16 +117,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
-            KeyCode.DIGIT4 -> {
-                if (!connections.isDropsOpen) {
-                    connections.sendDropsOpen(true)
-                } else {
-                    val mainPosition = keymap.drops.buttons[0]
-                    connections.sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_DROPS, mainPosition.x, mainPosition.y, true)
-                    connections.sendTouch(HEAD_TOUCH_UP, TOUCH_ID_DROPS, mainPosition.x, mainPosition.y, true)
-                    connections.sendDropsOpen(false)
-                }
-            }
             KeyCode.W -> {
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
                 connections.sendJoystick(joystickByte)
@@ -125,8 +147,62 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             return
                         }
                         KEY_NAME_BAG -> if (!connections.mouseVisible) connections.sendBagOpen(Position(2103, 359))
-                        KEY_NAME_ONE -> connections.weaponNumber = 1
-                        KEY_NAME_TWO -> connections.weaponNumber = 2
+                        KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
+                            val index = buttonWithId.button.name!!.toInt()
+                            when {
+                                connections.isDropsOpen -> {
+                                    buttonWithId.button.position = keymap.drops.buttons[index]
+                                    connections.sendDropsOpen(false)
+                                }
+                                connections.isDrugsOpen -> {
+                                    buttonWithId.button.position = keymap.drugs.buttons[index]
+                                    connections.sendDrugsOpen(false)
+                                }
+                                else -> connections.weaponNumber = index
+                            }
+                        }
+                        KEY_NAME_FOUR -> {
+                            buttonWithId.button.position = when {
+                                connections.isDropsOpen -> {
+                                    connections.sendDropsOpen(false)
+                                    keymap.drops.buttons[0]
+                                }
+                                connections.isDrugsOpen -> {
+                                    connections.sendDrugsOpen(false)
+                                    keymap.drugs.buttons[4]
+                                }
+                                else -> {
+                                    connections.sendDropsOpen(true)
+                                    connections.sendDrugsOpen(false)
+                                    keymap.drops.open
+                                }
+                            }
+                        }
+                        KEY_NAME_FIVE -> {
+                            buttonWithId.button.position = when {
+                                connections.isDropsOpen -> {
+                                    connections.sendDropsOpen(false)
+                                    keymap.drops.buttons[4]
+                                }
+                                connections.isDrugsOpen -> {
+                                    connections.sendDrugsOpen(false)
+                                    keymap.drugs.buttons[0]
+                                }
+                                else -> {
+                                    connections.sendDrugsOpen(true)
+                                    connections.sendDropsOpen(false)
+                                    keymap.drugs.open
+                                }
+                            }
+                        }
+                        KEY_NAME_SIX -> {
+                            if (connections.isDrugsOpen) {
+                                connections.sendDrugsOpen(false)
+                                buttonWithId.button.position = keymap.drugs.buttons[5]
+                            } else {
+                                return
+                            }
+                        }
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_UP,

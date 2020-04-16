@@ -11,7 +11,8 @@ import cn.wycode.control.common.Keymap
 class KeymapView : View {
 
     var repeat: Boolean = false
-    var throwsOpen: Boolean = false
+    var dropsOpen: Boolean = false
+    var drugsOpen: Boolean = false
     var keymap: Keymap? = null
 
     private val mPaint = Paint()
@@ -43,25 +44,38 @@ class KeymapView : View {
         for (button in buttons) {
             drawButton(canvas, button)
         }
-        val drop = keymap!!.drops
-        if (!throwsOpen) {
-            drawButton(canvas, Button("4", drop.open, null))
+
+        val drops = keymap!!.drops
+        if (!dropsOpen) {
+            drawButton(canvas, Button("4", drops.open))
         } else {
             mPaint.color = 0x44ffff55
-            drawButton(canvas, Button("4", drop.buttons[0], null))
-            for (i in 1 until drop.buttons.size) {
+            drawButton(canvas, Button("4", drops.buttons[0]))
+            for (i in 1 until drops.buttons.size) {
                 val key = if (i < 4) i.toString() else (i + 1).toString()
-                drawButton(canvas, Button(key, drop.buttons[i], null))
+                drawButton(canvas, Button(key, drops.buttons[i]))
+            }
+        }
+
+        val drugs = keymap!!.drugs
+        if(!drugsOpen){
+            drawButton(canvas, Button("5", drugs.open))
+        }else{
+            mPaint.color = 0x44ffff55
+            drawButton(canvas, Button("5", drugs.buttons[0]))
+            for (i in 1 until drugs.buttons.size) {
+                val key = if (i < 5) i.toString() else (i + 1).toString()
+                drawButton(canvas, Button(key, drugs.buttons[i]))
             }
         }
 
         mPaint.color = 0x445555ff
         val mouse = keymap!!.mouse
-        drawButton(canvas, Button("RM", mouse.right, null))
+        drawButton(canvas, Button("RM", mouse.right))
         if (repeat) {
             mPaint.color = 0x44ff5555
         }
-        drawButton(canvas, Button("LM", mouse.left, null))
+        drawButton(canvas, Button("LM", mouse.left))
 
 
     }

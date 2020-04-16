@@ -16,7 +16,7 @@ import kotlin.random.Random
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
-const val SENSITIVITY_X = 0.47
+const val SENSITIVITY_X = 0.3
 const val SENSITIVITY_Y = 1.0
 
 class Connections {

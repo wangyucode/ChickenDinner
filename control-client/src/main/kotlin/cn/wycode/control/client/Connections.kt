@@ -70,6 +70,9 @@ class Connections {
     @Volatile
     private var isFovAutoUp = false
 
+    @Volatile
+    var isDropsOpen = false
+
     lateinit var scene: Scene
 
     var mouseVisible = true
@@ -349,6 +352,12 @@ class Connections {
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
     }
 
+    fun sendDropsOpen(open: Boolean) {
+        val head = if (open) HEAD_DROPS_OPEN else HEAD_DROPS_CLOSE
+        isDropsOpen = open
+        mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
+    }
+
     inner class JoystickWriteRunnable(
         private val id: Int,
         private val x: Int,
@@ -376,8 +385,8 @@ class Connections {
 
         override fun run() {
             Thread.sleep(Random.nextInt(20).toLong())
-            val shakeX = x + Random.nextInt(-5, 5)
-            val shakeY = y + Random.nextInt(-5, 5)
+            val shakeX = x + Random.nextInt(-10, 10)
+            val shakeY = y + Random.nextInt(-10, 10)
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_DOWN)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)

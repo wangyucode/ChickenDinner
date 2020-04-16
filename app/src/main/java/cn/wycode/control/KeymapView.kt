@@ -11,6 +11,7 @@ import cn.wycode.control.common.Keymap
 class KeymapView : View {
 
     var repeat: Boolean = false
+    var throwsOpen: Boolean = false
     var keymap: Keymap? = null
 
     private val mPaint = Paint()
@@ -42,6 +43,17 @@ class KeymapView : View {
         for (button in buttons) {
             drawButton(canvas, button)
         }
+        val drop = keymap!!.drops
+        if (!throwsOpen) {
+            drawButton(canvas, Button("4", drop.open, null))
+        } else {
+            mPaint.color = 0x44ffff55
+            drawButton(canvas, Button("4", drop.buttons[0], null))
+            for (i in 1 until drop.buttons.size) {
+                val key = if (i < 4) i.toString() else (i + 1).toString()
+                drawButton(canvas, Button(key, drop.buttons[i], null))
+            }
+        }
 
         mPaint.color = 0x445555ff
         val mouse = keymap!!.mouse
@@ -50,6 +62,8 @@ class KeymapView : View {
             mPaint.color = 0x44ff5555
         }
         drawButton(canvas, Button("LM", mouse.left, null))
+
+
     }
 
     private fun drawButton(canvas: Canvas, button: Button) {

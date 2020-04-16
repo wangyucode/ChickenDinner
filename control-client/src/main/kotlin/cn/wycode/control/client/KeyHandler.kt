@@ -85,6 +85,16 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
+            KeyCode.DIGIT4 -> {
+                if (!connections.isDropsOpen) {
+                    connections.sendDropsOpen(true)
+                } else {
+                    val mainPosition = keymap.drops.buttons[0]
+                    connections.sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_DROPS, mainPosition.x, mainPosition.y, true)
+                    connections.sendTouch(HEAD_TOUCH_UP, TOUCH_ID_DROPS, mainPosition.x, mainPosition.y, true)
+                    connections.sendDropsOpen(false)
+                }
+            }
             KeyCode.W -> {
                 joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
                 connections.sendJoystick(joystickByte)

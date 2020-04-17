@@ -17,8 +17,8 @@ import kotlin.random.Random
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
-const val SENSITIVITY_X = 1.0
-const val SENSITIVITY_Y = 1.0
+const val SENSITIVITY_X = 0.5
+const val SENSITIVITY_Y = 0.5
 
 class Connections {
 
@@ -308,7 +308,7 @@ class Connections {
     }
 
     fun sendSwitchMouse() {
-//        resetFuture?.cancel(false)
+        resetFuture?.cancel(false)
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
@@ -317,7 +317,7 @@ class Connections {
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
-//            scene.cursor = Cursor.NONE
+            scene.cursor = Cursor.NONE
             resetLastFov()
             HEAD_MOUSE_INVISIBLE
         }

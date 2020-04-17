@@ -151,7 +151,10 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             connections.sendEnableRepeat()
                             return
                         }
-                        KEY_NAME_BAG -> if (!connections.mouseVisible) connections.sendBagOpen(Position(2103, 359))
+                        KEY_NAME_BAG -> if (!connections.mouseVisible){
+                            fovHandler.stop()
+                            connections.sendBagOpen(Position(2103, 359))
+                        }
                         KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
                             val index = buttonWithId.button.name!!.toInt()
                             when {

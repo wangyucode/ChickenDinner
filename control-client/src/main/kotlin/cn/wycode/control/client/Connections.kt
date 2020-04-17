@@ -328,9 +328,7 @@ class Connections {
     fun sendBagOpen(mousePosition: Position) {
         resetFuture?.cancel(false)
         mouseVisible = true
-        val dx = ((lastFovX - resetPosition.x) * SENSITIVITY_X).toInt()
-        val dy = ((lastFovY - resetPosition.y) * SENSITIVITY_Y).toInt()
-        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, resetPosition.x + dx, resetPosition.y + dy, false)
+        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
         sendMouseMove(mousePosition.x, mousePosition.y)
         scene.cursor = Cursor.DEFAULT
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(HEAD_MOUSE_VISIBLE)))

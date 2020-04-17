@@ -6,6 +6,7 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.stage.Stage
 
+
 class Launcher : Application() {
     override fun start(primaryStage: Stage) {
         val root = FXMLLoader(javaClass.classLoader.getResource("main.fxml")).load<Parent>()

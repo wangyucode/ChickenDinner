@@ -21,6 +21,8 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
     private lateinit var keymap: Keymap
 
+    private val fovHandler = FovHandler(connections)
+
     fun initButtons(keymap: Keymap) {
         this.keymap = keymap
         for ((index, button) in keymap.buttons.withIndex()) {
@@ -140,6 +142,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                     var position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
+                            if(connections.mouseVisible) fovHandler.start() else fovHandler.stop()
                             connections.sendSwitchMouse()
                             return
                         }

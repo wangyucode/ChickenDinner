@@ -10,13 +10,14 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.random.Random
 
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
-const val SENSITIVITY_X = 0.3
+const val SENSITIVITY_X = 1.0
 const val SENSITIVITY_Y = 1.0
 
 class Connections {
@@ -80,8 +81,8 @@ class Connections {
 
     var mouseVisible = true
 
-    var lastFovX = 0
-    var lastFovY = 0
+    var lastFovX = 0.0
+    var lastFovY = 0.0
 
     private val robot = Robot()
 
@@ -129,7 +130,7 @@ class Connections {
     }
 
 
-    fun sendMoveFov(canvasX: Double, canvasY: Double) {
+    fun sendMoveFov(dx: Int, dy: Int) {
         resetFuture?.cancel(false)
         if (isFovAutoUp) {
             sendTouch(
@@ -142,27 +143,32 @@ class Connections {
 
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             isFovAutoUp = false
+            resetLastFov()
             return
         }
 
-        lastFovX = (canvasX * RATIO).toInt()
-        lastFovY = (canvasY * RATIO).toInt()
+        if (abs(dx) > 30 || abs(dy) > 30) return
 
-        val dx = ((lastFovX - resetPosition.x) * SENSITIVITY_X).toInt()
-        val dy = ((lastFovY - resetPosition.y) * SENSITIVITY_Y).toInt()
-        val x = resetPosition.x + dx
-        val y = resetPosition.y + dy
+        if (lastFovX == 0.0 || lastFovY == 0.0) {
+            resetLastFov()
+        }
 
-        if (canvasX < 100 || canvasX > CANVAS.x - 100 || canvasY < 100 || canvasY > CANVAS.y - 100) {
+        lastFovX += dx * SENSITIVITY_X
+        lastFovY += dy * SENSITIVITY_Y
+
+        //reach the device edge
+        if (lastFovX < 100 || lastFovX > CANVAS.x - 100 || lastFovY < 100 || lastFovY > CANVAS.y - 100) {
+            // up from current position
             sendTouch(
                 HEAD_TOUCH_UP,
                 TOUCH_ID_MOUSE,
-                x,
-                y,
+                lastFovX.toInt(),
+                lastFovY.toInt(),
                 false
             )
+            // reset mouse position
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-
+            // down from reset position
             sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
@@ -170,21 +176,29 @@ class Connections {
                 resetPosition.y,
                 false
             )
+            // reset last fov
+            resetLastFov()
+            // ignore this move
             return
         }
 
-        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, x, y, false)
+        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
 
         touchBuffer.clear()
         touchBuffer.put(HEAD_TOUCH_UP)
         touchBuffer.put(TOUCH_ID_MOUSE)
-        touchBuffer.putInt(x)
-        touchBuffer.putInt(y)
+        touchBuffer.putInt(lastFovX.toInt())
+        touchBuffer.putInt(lastFovY.toInt())
         resetFuture = resetEventExecutor.schedule(
             ResetMouseRunnable(touchBuffer.array().copyOf()),
             1000L,
             TimeUnit.MILLISECONDS
         )
+    }
+
+    private fun resetLastFov() {
+        lastFovX = resetPosition.x.toDouble()
+        lastFovY = resetPosition.y.toDouble()
     }
 
     fun sendJoystick(joystickByte: Byte) {
@@ -294,18 +308,17 @@ class Connections {
     }
 
     fun sendSwitchMouse() {
-        resetFuture?.cancel(false)
+//        resetFuture?.cancel(false)
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
-            val dx = ((lastFovX - resetPosition.x) * SENSITIVITY_X).toInt()
-            val dy = ((lastFovY - resetPosition.y) * SENSITIVITY_Y).toInt()
-            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, resetPosition.x + dx, resetPosition.y + dy, false)
+            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
             sendMouseMove(resetPosition.x, resetPosition.y)
             scene.cursor = Cursor.DEFAULT
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
-            scene.cursor = Cursor.NONE
+//            scene.cursor = Cursor.NONE
+            resetLastFov()
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))

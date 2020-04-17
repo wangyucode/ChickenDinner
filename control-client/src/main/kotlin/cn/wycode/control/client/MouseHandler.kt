@@ -38,8 +38,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                     (event.y * RATIO).toInt(),
                     false
                 )
-            } else {
-                connections.sendMoveFov(event.x, event.y)
             }
         }
         connections.checkReachEdge(event.x, event.y)
@@ -48,8 +46,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
     private fun onMouseMoved(event: MouseEvent) {
         if (connections.mouseVisible && mouseConnected) {
             connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
-        } else if (!connections.mouseVisible && controlConnected) {
-            connections.sendMoveFov(event.x, event.y)
         }
         connections.checkReachEdge(event.x, event.y)
     }

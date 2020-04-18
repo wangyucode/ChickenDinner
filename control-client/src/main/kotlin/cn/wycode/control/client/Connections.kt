@@ -17,9 +17,7 @@ import kotlin.random.Random
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
-const val SENSITIVITY_X = 0.6
-const val SENSITIVITY_Y = 0.6
-const val REPEAT_TIME_MIN = 10L
+const val SCREEN_FOV_EDGE = 100
 
 class Connections {
 
@@ -33,6 +31,7 @@ class Connections {
      */
     private val touchBuffer = ByteBuffer.allocate(10)
     private val repeatBuffer = ByteBuffer.allocate(10)
+    private val joystickBuffer = ByteBuffer.allocate(10)
 
     /**
      * 1 byte head , 4 byte x , 4 byte y
@@ -98,10 +97,16 @@ class Connections {
 
     private lateinit var resetPosition: Position
     private lateinit var joystick: Joystick
+    private var sensitivityX= 1.0
+    private var sensitivityY= 1.0
+    private var repeatDelay  = 10L
 
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
         resetPosition = keymap.buttons.find { it.name == KEY_NAME_SWITCH }!!.position
+        sensitivityX = keymap.sensitivityX
+        sensitivityY = keymap.sensitivityY
+        repeatDelay = keymap.repeatDelay
     }
 
     fun sendKey(key: Byte) {
@@ -154,11 +159,11 @@ class Connections {
             resetLastFov()
         }
 
-        lastFovX += dx * SENSITIVITY_X
-        lastFovY += dy * SENSITIVITY_Y
+        lastFovX += dx * sensitivityX
+        lastFovY += dy * sensitivityY
 
         //reach the device edge
-        if (lastFovX < 100 || lastFovX > CANVAS.x - 100 || lastFovY < 100 || lastFovY > CANVAS.y - 100) {
+        if (lastFovX < SCREEN_FOV_EDGE || lastFovY < SCREEN_FOV_EDGE || lastFovX > SCREEN.x - SCREEN_FOV_EDGE || lastFovY > SCREEN.y - SCREEN_FOV_EDGE) {
             // up from current position
             sendTouch(
                 HEAD_TOUCH_UP,
@@ -217,34 +222,34 @@ class Connections {
             }
             ZERO_BYTE -> {
                 // down
-                touchBuffer.clear()
-                touchBuffer.put(HEAD_TOUCH_DOWN)
-                touchBuffer.put(TOUCH_ID_JOYSTICK)
-                touchBuffer.putInt(joystickCenterX)
-                touchBuffer.putInt(joystickCenterY)
+                joystickBuffer.clear()
+                joystickBuffer.put(HEAD_TOUCH_DOWN)
+                joystickBuffer.put(TOUCH_ID_JOYSTICK)
+                joystickBuffer.putInt(joystickCenterX)
+                joystickBuffer.putInt(joystickCenterY)
                 controlEventExecutor.execute(
                     JoystickWriteRunnable(
                         joystickId,
                         joystickCenterX,
                         joystickCenterY,
-                        touchBuffer.array().copyOf()
+                        joystickBuffer.array().copyOf()
                     )
                 )
             }
         }
 
         if (joystickByte == ZERO_BYTE) {
-            touchBuffer.clear()
-            touchBuffer.put(HEAD_TOUCH_UP)
-            touchBuffer.put(TOUCH_ID_JOYSTICK)
-            touchBuffer.putInt(joystickCenterX)
-            touchBuffer.putInt(joystickCenterY)
+            joystickBuffer.clear()
+            joystickBuffer.put(HEAD_TOUCH_UP)
+            joystickBuffer.put(TOUCH_ID_JOYSTICK)
+            joystickBuffer.putInt(joystickCenterX)
+            joystickBuffer.putInt(joystickCenterY)
             controlEventExecutor.execute(
                 JoystickWriteRunnable(
                     joystickId,
                     joystickCenterX + Random.nextInt(-5, 5),
                     joystickCenterY + Random.nextInt(-5, 5),
-                    touchBuffer.array().copyOf()
+                    joystickBuffer.array().copyOf()
                 )
             )
             lastJoystickByte = joystickByte
@@ -281,15 +286,15 @@ class Connections {
         val dx = (destX - lastJoystickX) / JOYSTICK_STEP_COUNT
         val dy = (destY - lastJoystickY) / JOYSTICK_STEP_COUNT
         for (i in 1..JOYSTICK_STEP_COUNT) {
-            touchBuffer.clear()
-            touchBuffer.put(HEAD_TOUCH_MOVE)
-            touchBuffer.put(TOUCH_ID_JOYSTICK)
+            joystickBuffer.clear()
+            joystickBuffer.put(HEAD_TOUCH_MOVE)
+            joystickBuffer.put(TOUCH_ID_JOYSTICK)
             val x = lastJoystickX + dx * i + Random.nextInt(-5, 5)
             val y = lastJoystickY + dy * i + Random.nextInt(-5, 5)
-            touchBuffer.putInt(x)
-            touchBuffer.putInt(y)
+            joystickBuffer.putInt(x)
+            joystickBuffer.putInt(y)
             joystickEventExecutor.schedule(
-                JoystickWriteRunnable(joystickId, x, y, touchBuffer.array().copyOf()),
+                JoystickWriteRunnable(joystickId, x, y, joystickBuffer.array().copyOf()),
                 i * JOYSTICK_STEP_DELAY,
                 TimeUnit.MILLISECONDS
             )
@@ -318,7 +323,7 @@ class Connections {
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
-            scene.cursor = Cursor.NONE
+//            scene.cursor = Cursor.NONE
             resetLastFov()
             HEAD_MOUSE_INVISIBLE
         }
@@ -419,7 +424,7 @@ class Connections {
         Runnable {
 
         override fun run() {
-            Thread.sleep(Random.nextLong(REPEAT_TIME_MIN, REPEAT_TIME_MIN + 10))
+            Thread.sleep(Random.nextLong(repeatDelay, repeatDelay + 10))
             val shakeX = x + Random.nextInt(-10, 10)
             val shakeY = y + Random.nextInt(-10, 10)
             repeatBuffer.clear()

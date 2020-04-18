@@ -22,6 +22,9 @@ data class Keymap(
     val buttons: List<Button> = emptyList(),
     val joystick: Joystick,
     val mouse: Mouse,
+    val sensitivityX: Double,
+    val sensitivityY: Double,
+    val repeatDelay: Long,
     val drops: Props,
     val drugs: Props
 )

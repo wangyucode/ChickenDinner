@@ -1,13 +1,13 @@
 package cn.wycode.control.server
 
 import android.os.SystemClock
+import android.util.SparseArray
 import android.view.InputDevice
 import android.view.MotionEvent
 import cn.wycode.control.common.HEAD_TOUCH_DOWN
+import cn.wycode.control.common.HEAD_TOUCH_MOVE
 import cn.wycode.control.common.HEAD_TOUCH_UP
-import cn.wycode.control.server.model.Point
 import cn.wycode.control.server.utils.Ln
-import cn.wycode.control.server.utils.PointersState
 
 
 const val MAX_POINTERS = 10
@@ -18,8 +18,7 @@ class TouchConverter {
     private val pointerProperties = arrayOfNulls<MotionEvent.PointerProperties>(MAX_POINTERS)
     private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
 
-    private val pointersState = PointersState()
-
+    private val localIdToEvent = SparseArray<Event>(10)
 
     init {
         for (i in 0 until MAX_POINTERS) {
@@ -35,36 +34,60 @@ class TouchConverter {
 
     fun convert(input: Event): MotionEvent? {
         val now = SystemClock.uptimeMillis()
-
-        val pointerIndex: Int = pointersState.getPointerIndex(input.id.toLong())
-        if (pointerIndex == -1) {
-            Ln.w("Too many pointers for touch event");
-            return null
-        }
-
-        val pointer = pointersState[pointerIndex]
-        pointer.point = Point(input.x, input.y)
-        pointer.pressure = 128f
-        pointer.isUp = input.type == HEAD_TOUCH_UP
-
-        val pointerCount = pointersState.update(pointerProperties, pointerCoords)
-
-        var action: Int = when (input.type) {
-            HEAD_TOUCH_DOWN -> MotionEvent.ACTION_DOWN
-            HEAD_TOUCH_UP -> MotionEvent.ACTION_UP
-            else -> MotionEvent.ACTION_MOVE
-        }
-        if (pointerCount == 1) {
-            if (input.type == HEAD_TOUCH_DOWN) {
+        var localId = -1
+        var action = MotionEvent.ACTION_MOVE
+        when (input.type) {
+            HEAD_TOUCH_DOWN -> {
                 lastTouchDown = now
+                // first touch down
+                if (localIdToEvent.size() == 0) {
+                    action = MotionEvent.ACTION_DOWN
+                    localIdToEvent.put(0, input.copy())
+                } else {
+                    localId = getUnusedLocalId()
+                    if (localId == -1) {
+                        Ln.w("no localId can use")
+                        return null
+                    }
+                    localIdToEvent.put(localId, input.copy())
+                    action =
+                        MotionEvent.ACTION_POINTER_DOWN or (localId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                }
             }
-        } else {
-            // secondary pointers must use ACTION_POINTER_* ORed with the pointerIndex
-            if (input.type == HEAD_TOUCH_UP) {
-                action = MotionEvent.ACTION_POINTER_UP or (pointerIndex shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
-            } else if (input.type == HEAD_TOUCH_DOWN) {
-                action = MotionEvent.ACTION_POINTER_DOWN or (pointerIndex shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+            HEAD_TOUCH_UP -> {
+                if (localIdToEvent.size() == 1) {
+                    action = MotionEvent.ACTION_UP
+                    localId = getLocalId(input)
+                } else {
+                    localId = getLocalId(input)
+                    action =
+                        MotionEvent.ACTION_POINTER_UP or (localId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                }
+                if (localId == -1) {
+                    Ln.w("up id not found")
+                    return null
+                } else {
+                    localIdToEvent.put(localId, input.copy())
+                }
             }
+
+            HEAD_TOUCH_MOVE -> {
+                localId = getLocalId(input)
+                if (localId == -1) {
+                    Ln.w("move id not found")
+                    return null
+                } else {
+                    localIdToEvent.put(localId, input.copy())
+                }
+            }
+        }
+
+        val pointerCount = localIdToEvent.size()
+
+        updatePointerData()
+
+        if (input.type == HEAD_TOUCH_UP) {
+            localIdToEvent.remove(localId)
         }
 
         val event = MotionEvent.obtain(
@@ -83,6 +106,36 @@ class TouchConverter {
             InputDevice.SOURCE_TOUCHSCREEN,
             0
         )
+        Ln.d("localIdToEvent->${localIdToEvent}")
+        if (ENABLE_LOG && event.action != MotionEvent.ACTION_MOVE) Ln.d("inject->${event}")
         return event
+    }
+
+    private fun updatePointerData() {
+        for (i in 0 until localIdToEvent.size()) {
+            val localId = localIdToEvent.keyAt(i)
+            val input = localIdToEvent.valueAt(i)
+
+            pointerProperties[i]!!.id = localId
+            pointerCoords[i]!!.x = input.x.toFloat()
+            pointerCoords[i]!!.y = input.y.toFloat()
+        }
+    }
+
+    private fun getUnusedLocalId(): Int {
+        for (i in 1 until 10) {
+            val index = localIdToEvent.indexOfKey(i)
+            if (index < 0) return i
+        }
+        return -1
+    }
+
+    private fun getLocalId(input: Event): Int {
+        for (i in 0 until localIdToEvent.size()) {
+            if (localIdToEvent.valueAt(i).id == input.id) {
+                return localIdToEvent.keyAt(i)
+            }
+        }
+        return -1
     }
 }

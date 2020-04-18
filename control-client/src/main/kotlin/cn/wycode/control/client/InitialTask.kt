@@ -13,7 +13,7 @@ const val INIT_PROCESS_CONNECT_MOUSE_SERVICE = 4
 const val INIT_PROCESS_ENABLE_CONTROL_TUNNEL = 5
 const val INIT_PROCESS_CONNECT_CONTROL_SERVICE = 6
 
-var ENABLE_LOG = false
+var ENABLE_LOG = true
 
 class InitialTask : Task<Int>() {
 

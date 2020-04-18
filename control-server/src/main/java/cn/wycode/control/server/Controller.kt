@@ -28,6 +28,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
     private val touchBuffer = ByteBuffer.allocate(9)
     private val serviceManager = ServiceManager()
     private val touchConverter = TouchConverter()
+    private var lastType: Byte = -1
 
     override fun run() {
         while (true) {
@@ -75,7 +76,6 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectEvent(event: InputEvent): Boolean {
-        if (ENABLE_LOG) Ln.d("inject->${event}")
         return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC);
     }
 
@@ -90,7 +90,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
             event.x = touchBuffer.getInt(1)
             event.y = touchBuffer.getInt(5)
         }
-        if (ENABLE_LOG) Ln.d("revive->${event}")
+        if (ENABLE_LOG && event.type != HEAD_TOUCH_MOVE) Ln.d("revive->${event}")
     }
 }
 

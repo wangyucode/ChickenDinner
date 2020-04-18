@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Point
+import android.os.Build
 import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -48,6 +49,9 @@ class MouseService : Service() {
         val layoutParams = WindowManager.LayoutParams()
         layoutParams.type = TYPE_APPLICATION_OVERLAY
         layoutParams.format = PixelFormat.RGBA_8888
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            layoutParams.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
         layoutParams.flags = FLAG_NOT_TOUCHABLE.or(FLAG_KEEP_SCREEN_ON).or(FLAG_NOT_FOCUSABLE).or(FLAG_NOT_TOUCH_MODAL)
         layoutParams.width = MATCH_PARENT
         layoutParams.height = MATCH_PARENT

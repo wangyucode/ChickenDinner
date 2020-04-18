@@ -19,7 +19,7 @@ const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
 const val SENSITIVITY_X = 0.6
 const val SENSITIVITY_Y = 0.6
-const val REPEAT_TIME_MIN = 15L
+const val REPEAT_TIME_MIN = 10L
 
 class Connections {
 

@@ -31,7 +31,6 @@ class Controller : Initializable {
             when (value) {
                 INIT_PROCESS_READ_KEYMAP -> {
                     keyHandler.initButtons(initialTask.keymap)
-                    mouseHandler.initButtons(initialTask.keymap)
                     connections.initButtons(initialTask.keymap)
                 }
                 INIT_PROCESS_CONNECT_MOUSE_SERVICE -> onMouseServiceConnected()

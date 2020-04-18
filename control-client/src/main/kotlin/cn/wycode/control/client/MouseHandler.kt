@@ -10,12 +10,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
     var mouseConnected = false
     var controlConnected = false
 
-    private lateinit var mouse: Mouse
-
-    fun initButtons(keymap: Keymap) {
-        mouse = keymap.mouse
-    }
-
     override fun handle(event: MouseEvent) {
         when (event.eventType) {
             MouseEvent.MOUSE_PRESSED -> onMousePressed(event)
@@ -60,26 +54,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                 (event.y * RATIO).toInt(),
                 false
             )
-        } else {
-            val position: Position
-            val id: Byte
-            if (event.button == MouseButton.PRIMARY) {
-                position = mouse.left
-                id = TOUCH_ID_MOUSE_LEFT
-                // repeat stop
-                connections.stopRepeatFire()
-            } else {
-                position = mouse.right
-                id = TOUCH_ID_MOUSE_RIGHT
-            }
-            // normal click
-            connections.sendTouch(
-                HEAD_TOUCH_UP,
-                id,
-                position.x,
-                position.y,
-                false
-            )
         }
     }
 
@@ -94,29 +68,6 @@ class MouseHandler(private val connections: Connections) : EventHandler<MouseEve
                 (event.x * RATIO).toInt(),
                 (event.y * RATIO).toInt(),
                 false
-            )
-        } else {
-            // fire
-            val position: Position
-            val id: Byte
-            if (event.button == MouseButton.PRIMARY) {
-                position = mouse.left
-                id = TOUCH_ID_MOUSE_LEFT
-                if (connections.enableRepeatFire && connections.weaponNumber == 1) {
-                    connections.startRepeatFire(mouse.left)
-                    return
-                }
-            } else {
-                position = mouse.right
-                id = TOUCH_ID_MOUSE_RIGHT
-            }
-            // normal click
-            connections.sendTouch(
-                HEAD_TOUCH_DOWN,
-                id,
-                position.x,
-                position.y,
-                true
             )
         }
     }

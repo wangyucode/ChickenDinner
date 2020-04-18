@@ -31,6 +31,8 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         buttonMap[KeyCode.DIGIT4] = ButtonWithId(buttonMap.size, Button("4", keymap.drops.open, KEY_NAME_FOUR))
         buttonMap[KeyCode.DIGIT5] = ButtonWithId(buttonMap.size + 1, Button("5", keymap.drugs.open, KEY_NAME_FIVE))
         buttonMap[KeyCode.DIGIT6] = ButtonWithId(buttonMap.size + 2, Button("6", keymap.drugs.buttons[5], KEY_NAME_SIX))
+
+        fovHandler.mouse = keymap.mouse
     }
 
     override fun handle(event: KeyEvent) {

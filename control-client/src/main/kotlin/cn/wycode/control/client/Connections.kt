@@ -17,8 +17,9 @@ import kotlin.random.Random
 const val JOYSTICK_STEP_COUNT = 8
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
-const val SENSITIVITY_X = 0.5
-const val SENSITIVITY_Y = 0.5
+const val SENSITIVITY_X = 0.6
+const val SENSITIVITY_Y = 0.6
+const val REPEAT_TIME_MIN = 15L
 
 class Connections {
 
@@ -354,7 +355,7 @@ class Connections {
         repeatFuture = repeatFireEventExecutor.scheduleAtFixedRate(
             WriteRepeatClickRunnable(left.x, left.y),
             0,
-            115,
+            100,
             TimeUnit.MILLISECONDS
         )
     }
@@ -418,7 +419,7 @@ class Connections {
         Runnable {
 
         override fun run() {
-            Thread.sleep(Random.nextInt(20).toLong())
+            Thread.sleep(Random.nextLong(REPEAT_TIME_MIN, REPEAT_TIME_MIN + 10))
             val shakeX = x + Random.nextInt(-10, 10)
             val shakeY = y + Random.nextInt(-10, 10)
             repeatBuffer.clear()

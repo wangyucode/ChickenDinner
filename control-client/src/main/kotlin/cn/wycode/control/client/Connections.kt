@@ -97,9 +97,9 @@ class Connections {
 
     private lateinit var resetPosition: Position
     private lateinit var joystick: Joystick
-    private var sensitivityX= 1.0
-    private var sensitivityY= 1.0
-    private var repeatDelay  = 10L
+    private var sensitivityX = 1.0
+    private var sensitivityY = 1.0
+    private var repeatDelay = 10L
 
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
@@ -163,7 +163,7 @@ class Connections {
         lastFovY += dy * sensitivityY
 
         //reach the device edge
-        if (lastFovX < SCREEN_FOV_EDGE || lastFovY < SCREEN_FOV_EDGE || lastFovX > SCREEN.x - SCREEN_FOV_EDGE || lastFovY > SCREEN.y - SCREEN_FOV_EDGE) {
+        if (abs(lastFovX - resetPosition.x) > resetPosition.x / 3 || abs(lastFovY - resetPosition.y) > resetPosition.y - SCREEN_FOV_EDGE) {
             // up from current position
             sendTouch(
                 HEAD_TOUCH_UP,

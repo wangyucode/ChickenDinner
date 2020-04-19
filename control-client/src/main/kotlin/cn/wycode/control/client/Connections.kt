@@ -374,6 +374,10 @@ class Connections {
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
     }
 
+    fun sendClearTouch() {
+        controlOutputStream.write(byteArrayOf(HEAD_CLEAR_TOUCH))
+    }
+
     inner class JoystickWriteRunnable : Runnable {
 
         override fun run() {

@@ -18,7 +18,7 @@ class TouchConverter {
     private val pointerProperties = arrayOfNulls<MotionEvent.PointerProperties>(MAX_POINTERS)
     private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
 
-    private val localIdToEvent = SparseArray<Event>(10)
+    val localIdToEvent = SparseArray<Event>(10)
 
     init {
         for (i in 0 until MAX_POINTERS) {

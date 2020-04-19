@@ -229,8 +229,9 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     fun focusChange(focus: Boolean) {
         if(!focus && !connections.mouseVisible){
             fovHandler.stop()
-            connections.sendSwitchMouse()
             connections.sendJoystick(JoystickDirection.NONE.joystickByte)
+            connections.sendClearTouch()
+            if(!connections.mouseVisible) connections.sendSwitchMouse()
         }
     }
 }

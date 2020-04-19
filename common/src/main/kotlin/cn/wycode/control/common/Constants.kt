@@ -25,6 +25,7 @@ const val HEAD_DROPS_OPEN: Byte = 11
 const val HEAD_DROPS_CLOSE: Byte = 12
 const val HEAD_DRUGS_OPEN: Byte = 13
 const val HEAD_DRUGS_CLOSE: Byte = 14
+const val HEAD_CLEAR_TOUCH: Byte = 15
 
 const val KEY_HOME: Byte = 1
 const val KEY_BACK: Byte = 2

@@ -81,6 +81,13 @@
   },
   "buttons": [
     {
+      "key": "Shift",
+      "position": {
+        "x": 2585,
+        "y": 1007
+      }
+    },
+    {
       "key": "V",
       "position": {
         "x": 697,

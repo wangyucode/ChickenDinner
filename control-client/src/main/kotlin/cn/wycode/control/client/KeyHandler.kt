@@ -230,6 +230,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         if(!focus && !connections.mouseVisible){
             fovHandler.stop()
             connections.sendSwitchMouse()
+            connections.sendJoystick(JoystickDirection.NONE.joystickByte)
         }
     }
 }

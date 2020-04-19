@@ -44,14 +44,19 @@ class TouchConverter {
                     action = MotionEvent.ACTION_DOWN
                     localIdToEvent.put(0, input.copy())
                 } else {
-                    localId = getUnusedLocalId()
-                    if (localId == -1) {
-                        Ln.w("no localId can use")
-                        return null
+                    localId = getLocalId(input)
+                    if (localId != -1) {
+                        Ln.w("already down $input")
+                    } else {
+                        localId = getUnusedLocalId()
+                        if (localId == -1) {
+                            Ln.w("no localId can use")
+                            return null
+                        }
                     }
                     localIdToEvent.put(localId, input.copy())
                     action =
-                        MotionEvent.ACTION_POINTER_DOWN or (localId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                        MotionEvent.ACTION_POINTER_DOWN or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                 }
             }
             HEAD_TOUCH_UP -> {
@@ -61,7 +66,7 @@ class TouchConverter {
                 } else {
                     localId = getLocalId(input)
                     action =
-                        MotionEvent.ACTION_POINTER_UP or (localId shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                        MotionEvent.ACTION_POINTER_UP or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                 }
                 if (localId == -1) {
                     Ln.w("up id not found")
@@ -106,8 +111,11 @@ class TouchConverter {
             InputDevice.SOURCE_TOUCHSCREEN,
             0
         )
-        Ln.d("localIdToEvent->${localIdToEvent}")
-        if (ENABLE_LOG && event.action != MotionEvent.ACTION_MOVE) Ln.d("inject->${event}")
+
+        if (ENABLE_LOG && event.action != MotionEvent.ACTION_MOVE) {
+            Ln.d("localIdToEvent->${localIdToEvent}")
+            Ln.d("inject->${event}")
+        }
         return event
     }
 
@@ -123,7 +131,7 @@ class TouchConverter {
     }
 
     private fun getUnusedLocalId(): Int {
-        for (i in 1 until 10) {
+        for (i in 0 until 10) {
             val index = localIdToEvent.indexOfKey(i)
             if (index < 0) return i
         }

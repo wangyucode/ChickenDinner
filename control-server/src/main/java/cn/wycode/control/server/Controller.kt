@@ -28,9 +28,10 @@ class Controller(private val inputStream: InputStream) : Thread() {
     private val touchBuffer = ByteBuffer.allocate(9)
     private val serviceManager = ServiceManager()
     private val touchConverter = TouchConverter()
+    private var shutdown = false
 
     override fun run() {
-        while (true) {
+        while (!shutdown) {
             readEvent()
             injectEvent()
         }
@@ -40,6 +41,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
         when (event.type) {
             HEAD_KEY -> injectKey()
             HEAD_CLEAR_TOUCH -> touchConverter.localIdToEvent.clear()
+            HEAD_SHUT_DOWN -> return
             else -> injectTouch()
         }
     }
@@ -84,6 +86,10 @@ class Controller(private val inputStream: InputStream) : Thread() {
         when (event.type) {
             HEAD_KEY -> {
                 event.key = inputStream.read().toByte()
+            }
+            HEAD_SHUT_DOWN ->{
+                shutdown = true
+                return
             }
             else -> {
                 touchBuffer.clear()

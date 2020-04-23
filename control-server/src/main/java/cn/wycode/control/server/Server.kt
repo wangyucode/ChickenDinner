@@ -5,10 +5,8 @@ package cn.wycode.control.server
 import android.net.LocalServerSocket
 import android.net.LocalSocket
 import cn.wycode.control.server.utils.Ln
-import java.io.File
 import java.io.IOException
 
-const val CONTROL_PATH = "/data/local/tmp/controller.jar"
 const val CONTROL_SOCKET = "control-socket"
 
 var ENABLE_LOG = false
@@ -25,6 +23,10 @@ class Server {
         controlSocket.outputStream.write(1)
 
         Controller(controlSocket.inputStream).run()
+
+        Ln.d("stopped!")
+
+        controlSocket.close()
     }
 
 }
@@ -33,7 +35,6 @@ fun main(args: Array<String>) {
     Thread.setDefaultUncaughtExceptionHandler { t, e ->
         Ln.e("Exception on thread $t", e)
     }
-    //deleteSelf()
     resolveArguments(args)
     Server().start()
 }
@@ -42,10 +43,6 @@ fun resolveArguments(args: Array<String>) {
     if (args.isEmpty()) return
     if (args[0] == "--debug") ENABLE_LOG = true
 
-}
-
-fun deleteSelf() {
-    File(CONTROL_PATH).delete();
 }
 
 //        Log.d("wy---->", "start!"+ Arrays.toString(args));

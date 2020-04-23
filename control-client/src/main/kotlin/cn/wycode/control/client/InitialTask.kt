@@ -114,13 +114,15 @@ class InitialTask : Task<Int>() {
             command = "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER $args"
             println(command)
             process = runtime.exec(command)
-            while (process.isAlive) {
+            while (process.isAlive && !isCancelled) {
                 println(process.inputStream.bufferedReader().readLine())
             }
-
+            println(process.inputStream.bufferedReader().readText())
             println(process.errorStream.bufferedReader().readText())
 
-            Platform.exit()
+            mouseSocket.close()
+            controlSocket.close()
+            println("all closed!")
         } catch (e: Exception) {
             e.printStackTrace()
         }

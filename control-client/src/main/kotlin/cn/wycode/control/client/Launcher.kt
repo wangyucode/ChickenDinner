@@ -5,15 +5,27 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.stage.Stage
+import kotlin.system.exitProcess
 
 
 class Launcher : Application() {
+
+    lateinit var controller: Controller
+
     override fun start(primaryStage: Stage) {
-        val root = FXMLLoader(javaClass.classLoader.getResource("main.fxml")).load<Parent>()
+        val loader = FXMLLoader(javaClass.classLoader.getResource("main.fxml"))
+        val root = loader.load<Parent>()
+        controller = loader.getController()
         primaryStage.title = "Android Controller"
         primaryStage.scene = Scene(root)
         primaryStage.isResizable = false
         primaryStage.show()
+    }
+
+    override fun stop() {
+        controller.stop()
+        super.stop()
+        exitProcess(0)
     }
 }
 

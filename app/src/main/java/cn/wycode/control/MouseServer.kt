@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
+import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
@@ -31,6 +32,7 @@ class MouseServer(
     private val point = Point()
 
     private lateinit var keymap: Keymap
+    private var shutdown = false
 
     override fun doInBackground(vararg params: Int?): Int {
         val serverSocket = LocalServerSocket(MOUSE_SOCKET)
@@ -41,8 +43,7 @@ class MouseServer(
         Log.d(LOG_TAG, "Mouse client connected!")
 
         screenInfoExecutor.submit { this.sendScreenInfo() }
-
-        while (true) {
+        while (!shutdown) {
             val head = inputStream.read().toByte()
             when (head) {
                 HEAD_MOUSE_MOVE -> {
@@ -50,6 +51,7 @@ class MouseServer(
                     point.x = inputPointBuffer.getInt(0)
                     point.y = inputPointBuffer.getInt(4)
                 }
+                HEAD_SHUT_DOWN -> shutdown = true
                 HEAD_KEYMAP -> {
                     val sizeBuffer = ByteBuffer.allocate(4)
                     inputStream.read(sizeBuffer.array())
@@ -62,6 +64,7 @@ class MouseServer(
             }
             publishProgress(head)
         }
+        return 0
     }
 
     override fun onProgressUpdate(vararg values: Byte?) {
@@ -101,6 +104,12 @@ class MouseServer(
                 keymapView.invalidate()
             }
         }
+    }
+
+    override fun onPostExecute(result: Int?) {
+        super.onPostExecute(result)
+        mouseSocket.close()
+        android.os.Process.killProcess(android.os.Process.myPid())
     }
 
     fun sendScreenInfo() {

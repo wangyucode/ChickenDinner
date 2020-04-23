@@ -11,7 +11,7 @@ class ReadTask(private val mouseSocket: Socket) : Task<Int>() {
     override fun call(): Int {
         val inputStream = mouseSocket.getInputStream()
         val buffer = ByteArray(8)
-        while (true) {
+        while (!isCancelled) {
             if (inputStream.read(buffer) > 0) {
                 SCREEN.x = ByteBuffer.wrap(buffer).getInt(0)
                 SCREEN.y = ByteBuffer.wrap(buffer).getInt(4)
@@ -19,6 +19,7 @@ class ReadTask(private val mouseSocket: Socket) : Task<Int>() {
                 updateValue(value++)
             }
         }
+        return 0
     }
 
 }

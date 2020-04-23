@@ -22,6 +22,7 @@ class Controller : Initializable {
     lateinit var canvas: Canvas
 
     private val initialTask = InitialTask()
+    private lateinit var readTask: ReadTask
     private val connections = Connections()
     private val mouseHandler = MouseHandler(connections)
     private val keyHandler = KeyHandler(connections)
@@ -63,7 +64,7 @@ class Controller : Initializable {
         val graphics = canvas.graphicsContext2D
         graphics.fill = Color.DARKOLIVEGREEN
 
-        val readTask = ReadTask(initialTask.mouseSocket)
+        readTask = ReadTask(initialTask.mouseSocket)
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
             RATIO =
@@ -89,7 +90,14 @@ class Controller : Initializable {
             graphics.fillRect(0.0, 0.0, canvas.width, canvas.height)
         }
         Thread(readTask).start()
+
         canvas.addEventHandler(MouseEvent.ANY, mouseHandler)
+    }
+
+    fun stop() {
+        readTask.cancel()
+        connections.close()
+        initialTask.cancel()
     }
 
 }

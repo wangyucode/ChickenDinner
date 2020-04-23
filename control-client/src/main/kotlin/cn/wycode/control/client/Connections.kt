@@ -299,7 +299,7 @@ class Connections {
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
-//            scene.cursor = Cursor.NONE
+            scene.cursor = Cursor.NONE
             resetLastFov()
             HEAD_MOUSE_INVISIBLE
         }
@@ -376,6 +376,20 @@ class Connections {
 
     fun sendClearTouch() {
         controlOutputStream.write(byteArrayOf(HEAD_CLEAR_TOUCH))
+    }
+
+    fun close() {
+        joystickEventExecutor.shutdown()
+        resetEventExecutor.shutdown()
+        repeatFireEventExecutor.shutdown()
+        controlEventExecutor.shutdown()
+        mouseEventExecutor.shutdown()
+        controlOutputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
+        controlOutputStream.flush()
+        controlOutputStream.close()
+        mouseOutputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
+        mouseOutputStream.flush()
+        mouseOutputStream.close()
     }
 
     inner class JoystickWriteRunnable : Runnable {

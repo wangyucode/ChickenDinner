@@ -27,6 +27,7 @@ class Server {
         Ln.d("stopped!")
 
         controlSocket.close()
+        serverSocket.close()
     }
 
 }

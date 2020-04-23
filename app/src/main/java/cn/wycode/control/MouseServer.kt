@@ -1,5 +1,6 @@
 package cn.wycode.control
 
+import android.content.Intent
 import android.graphics.Point
 import android.net.LocalServerSocket
 import android.net.LocalSocket
@@ -8,7 +9,6 @@ import android.util.Log
 import android.view.View
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
-import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
@@ -22,6 +22,7 @@ class MouseServer(
 ) : AsyncTask<Int, Byte, Int>() {
 
     private lateinit var mouseSocket: LocalSocket
+    private lateinit var serverSocket: LocalServerSocket
     private lateinit var outputStream: OutputStream
 
     private val inputPointBuffer = ByteBuffer.allocate(8)
@@ -35,7 +36,7 @@ class MouseServer(
     private var shutdown = false
 
     override fun doInBackground(vararg params: Int?): Int {
-        val serverSocket = LocalServerSocket(MOUSE_SOCKET)
+        serverSocket = LocalServerSocket(MOUSE_SOCKET)
         mouseSocket = serverSocket.accept()
         val inputStream = mouseSocket.inputStream
         outputStream = mouseSocket.outputStream
@@ -109,6 +110,8 @@ class MouseServer(
     override fun onPostExecute(result: Int?) {
         super.onPostExecute(result)
         mouseSocket.close()
+        serverSocket.close()
+        keymapView.context.stopService(Intent(keymapView.context, MouseService::class.java))
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 

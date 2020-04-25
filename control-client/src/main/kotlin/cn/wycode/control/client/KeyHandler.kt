@@ -163,6 +163,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                                 connections.isDropsOpen -> {
                                     position = keymap.drops.buttons[index]
                                     connections.sendDropsOpen(false)
+                                    connections.weaponNumber = 4
                                 }
                                 connections.isDrugsOpen -> {
                                     position = keymap.drugs.buttons[index]
@@ -175,6 +176,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             position = when {
                                 connections.isDropsOpen -> {
                                     connections.sendDropsOpen(false)
+                                    connections.weaponNumber = 4
                                     keymap.drops.buttons[0]
                                 }
                                 connections.isDrugsOpen -> {

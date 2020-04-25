@@ -450,7 +450,7 @@ class Connections {
             controlOutputStream.write(repeatBuffer.array())
 
             repeatBuffer.put(0, HEAD_TOUCH_UP)
-            Thread.sleep(Random.nextInt(20, 30).toLong())
+            Thread.sleep(Random.nextLong(repeatDelay, repeatDelay + 10))
 
             controlOutputStream.write(repeatBuffer.array())
         }

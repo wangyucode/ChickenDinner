@@ -68,8 +68,8 @@ class Controller : Initializable {
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
             RATIO =
-                if (visualBounds.width / (visualBounds.height - 50) > SCREEN.x.toDouble() / SCREEN.y) {
-                    SCREEN.y / (visualBounds.height - 50)
+                if (visualBounds.width / (visualBounds.height) > SCREEN.x.toDouble() / SCREEN.y) {
+                    SCREEN.y / (visualBounds.height)
                 } else {
                     SCREEN.x / visualBounds.width
                 }

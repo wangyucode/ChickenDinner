@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.stage.Stage
+import javafx.stage.StageStyle
 import kotlin.system.exitProcess
 
 
@@ -19,6 +20,9 @@ class Launcher : Application() {
         primaryStage.title = "Android Controller"
         primaryStage.scene = Scene(root)
         primaryStage.isResizable = false
+        primaryStage.isAlwaysOnTop = true
+        primaryStage.initStyle(StageStyle.UNDECORATED)
+        primaryStage.isFullScreen = true
         primaryStage.show()
     }
 

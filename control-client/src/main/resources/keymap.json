@@ -1,7 +1,8 @@
 {
   "sensitivityX": 0.5,
   "sensitivityY": 0.5,
-  "repeatDelay": 12,
+  "repeatDelayMin": 11,
+  "repeatDelayMax": 22,
   "drops": {
     "open": {
       "x": 2001,
@@ -223,6 +224,13 @@
       "position": {
         "x": 2127,
         "y": 451
+      }
+    },
+    {
+      "key": "Alt",
+      "position": {
+        "x": 1584,
+        "y": 720
       }
     },
     {

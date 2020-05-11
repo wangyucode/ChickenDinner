@@ -59,7 +59,7 @@ class Controller : Initializable {
         connections.sendKeymap(initialTask.keymapString)
 
         val screen = Screen.getPrimary()
-        val visualBounds = screen.visualBounds
+        val screenBounds = screen.bounds
 
         val graphics = canvas.graphicsContext2D
         graphics.fill = Color.DARKOLIVEGREEN
@@ -68,10 +68,10 @@ class Controller : Initializable {
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
             RATIO =
-                if (visualBounds.width / (visualBounds.height) > SCREEN.x.toDouble() / SCREEN.y) {
-                    SCREEN.y / (visualBounds.height)
+                if (screenBounds.width / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
+                    SCREEN.y / screenBounds.height
                 } else {
-                    SCREEN.x / visualBounds.width
+                    SCREEN.x / screenBounds.width
                 }
             canvas.width = SCREEN.x / RATIO
             canvas.height = SCREEN.y / RATIO
@@ -79,13 +79,16 @@ class Controller : Initializable {
             CANVAS.x = canvas.width.toInt()
             CANVAS.y = canvas.height.toInt()
 
-            val window = canvas.scene.window
-            window.sizeToScene()
-            window.y = 0.0
-            window.x = visualBounds.width / 2 - window.width / 2
+            canvas.layoutX = screenBounds.width / 2 - canvas.width / 2
+            canvas.layoutY = 0.0
 
-            OFFSET.x = (window.x + canvas.scene.x).toInt()
-            OFFSET.y = (window.y + canvas.scene.y).toInt()
+            val window = canvas.scene.window
+            //window.sizeToScene()
+            window.y = 0.0
+            window.x = screenBounds.width / 2 - window.width / 2
+
+            OFFSET.x = (window.x + canvas.layoutX).toInt()
+            OFFSET.y = (window.y + canvas.layoutY).toInt()
 
             graphics.fillRect(0.0, 0.0, canvas.width, canvas.height)
         }

@@ -8,16 +8,19 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
-import kotlin.random.Random
 
 const val JOYSTICK_STEP = 50
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
 const val SCREEN_FOV_EDGE = 100
+const val REPEAT_INITIAL_DELAY = 100L
+const val RANDOM_POSITION_MIN = -15
+const val RANDOM_POSITION_MAX = 15
 
 class Connections {
 
@@ -103,14 +106,16 @@ class Connections {
     private lateinit var joystick: Joystick
     private var sensitivityX = 1.0
     private var sensitivityY = 1.0
-    private var repeatDelay = 10L
+    private var repeatDelayMin = 0L
+    private var repeatDelayMax = 0L
 
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
         resetPosition = keymap.buttons.find { it.name == KEY_NAME_SWITCH }!!.position
         sensitivityX = keymap.sensitivityX
         sensitivityY = keymap.sensitivityY
-        repeatDelay = keymap.repeatDelay
+        repeatDelayMin = keymap.repeatDelayMin
+        repeatDelayMax = keymap.repeatDelayMax
     }
 
     fun sendKey(key: Byte) {
@@ -129,8 +134,8 @@ class Connections {
     }
 
     fun sendTouch(head: Byte, id: Byte, x: Int, y: Int, shake: Boolean) {
-        val shakeX = if (shake) x + Random.nextInt(-5, 5) else x
-        val shakeY = if (shake) y + Random.nextInt(-5, 5) else y
+        val shakeX = if (shake) x + ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) else x
+        val shakeY = if (shake) y + ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) else y
         touchBuffer.clear()
         touchBuffer.put(head)
         touchBuffer.put(id)
@@ -336,7 +341,7 @@ class Connections {
         repeatFuture = repeatFireEventExecutor.scheduleAtFixedRate(
             WriteRepeatClickRunnable(left.x, left.y),
             0,
-            100,
+            REPEAT_INITIAL_DELAY,
             TimeUnit.MILLISECONDS
         )
     }
@@ -415,8 +420,8 @@ class Connections {
             lastJoystickX += dx
             lastJoystickY += dy
 
-            lastJoystickX += Random.nextInt(10)
-            lastJoystickY += Random.nextInt(10)
+            lastJoystickX += ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+            lastJoystickY += ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
 
             joystickBuffer.clear()
             joystickBuffer.put(HEAD_TOUCH_MOVE)
@@ -438,10 +443,12 @@ class Connections {
     inner class WriteRepeatClickRunnable(private val x: Int, private val y: Int) :
         Runnable {
 
+        private val random = ThreadLocalRandom.current()
+
         override fun run() {
-            Thread.sleep(Random.nextLong(repeatDelay, repeatDelay + 10))
-            val shakeX = x + Random.nextInt(-10, 10)
-            val shakeY = y + Random.nextInt(-10, 10)
+            Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
+            val shakeX = x + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+            val shakeY = y + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_DOWN)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
@@ -450,7 +457,7 @@ class Connections {
             controlOutputStream.write(repeatBuffer.array())
 
             repeatBuffer.put(0, HEAD_TOUCH_UP)
-            Thread.sleep(Random.nextLong(repeatDelay, repeatDelay + 10))
+            Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
 
             controlOutputStream.write(repeatBuffer.array())
         }

@@ -24,7 +24,8 @@ data class Keymap(
     val mouse: Mouse,
     val sensitivityX: Double,
     val sensitivityY: Double,
-    val repeatDelay: Long,
+    val repeatDelayMin: Long,
+    val repeatDelayMax: Long,
     val drops: Props,
     val drugs: Props
 )

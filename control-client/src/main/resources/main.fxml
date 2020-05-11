@@ -3,6 +3,6 @@
 <?import javafx.scene.canvas.*?>
 <?import javafx.scene.layout.*?>
 
-<Pane xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.wycode.control.client.Controller">
+<Pane style="-fx-background-color: #338833;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.wycode.control.client.Controller">
     <Canvas fx:id="canvas" height="200.0" width="200.0" />
 </Pane>

@@ -4,6 +4,8 @@ import javafx.application.Application
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlin.system.exitProcess
@@ -21,8 +23,9 @@ class Launcher : Application() {
         primaryStage.scene = Scene(root)
         primaryStage.isResizable = false
         primaryStage.isAlwaysOnTop = true
-        primaryStage.initStyle(StageStyle.UNDECORATED)
+        primaryStage.initStyle(StageStyle.TRANSPARENT)
         primaryStage.isFullScreen = true
+        primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F12) primaryStage.isFullScreen = true}
         primaryStage.show()
     }
 

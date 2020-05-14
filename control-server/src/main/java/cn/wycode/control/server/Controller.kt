@@ -40,7 +40,16 @@ class Controller(private val inputStream: InputStream) : Thread() {
     private fun injectEvent() {
         when (event.type) {
             HEAD_KEY -> injectKey()
-            HEAD_CLEAR_TOUCH -> touchConverter.localIdToEvent.clear()
+            HEAD_CLEAR_TOUCH -> {
+                while (touchConverter.localIdToEvent.size() > 0) {
+                    val event = touchConverter.localIdToEvent.valueAt(touchConverter.localIdToEvent.size() - 1)
+                    this.event.type = HEAD_TOUCH_UP
+                    this.event.id = event.id
+                    this.event.x = event.x
+                    this.event.y = event.y
+                    injectTouch()
+                }
+            }
             HEAD_SHUT_DOWN -> return
             else -> injectTouch()
         }
@@ -87,8 +96,11 @@ class Controller(private val inputStream: InputStream) : Thread() {
             HEAD_KEY -> {
                 event.key = inputStream.read().toByte()
             }
-            HEAD_SHUT_DOWN ->{
+            HEAD_SHUT_DOWN -> {
                 shutdown = true
+                return
+            }
+            HEAD_CLEAR_TOUCH -> {
                 return
             }
             else -> {

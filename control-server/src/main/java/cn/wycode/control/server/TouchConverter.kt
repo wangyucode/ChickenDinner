@@ -46,7 +46,7 @@ class TouchConverter {
                 } else {
                     localId = getLocalId(input)
                     if (localId != -1) {
-                        Ln.w("already down $input")
+                        Ln.w("already down $input, $localIdToEvent")
                     } else {
                         localId = getUnusedLocalId()
                         if (localId == -1) {
@@ -60,16 +60,14 @@ class TouchConverter {
                 }
             }
             HEAD_TOUCH_UP -> {
-                if (localIdToEvent.size() == 1) {
-                    action = MotionEvent.ACTION_UP
-                    localId = getLocalId(input)
+                localId = getLocalId(input)
+                action = if (localIdToEvent.size() == 1) {
+                    MotionEvent.ACTION_UP
                 } else {
-                    localId = getLocalId(input)
-                    action =
-                        MotionEvent.ACTION_POINTER_UP or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                    MotionEvent.ACTION_POINTER_UP or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                 }
                 if (localId == -1) {
-                    Ln.w("up id not found")
+                    Ln.w("up id not found $input, $localIdToEvent")
                     return null
                 } else {
                     localIdToEvent.put(localId, input.copy())
@@ -146,4 +144,5 @@ class TouchConverter {
         }
         return -1
     }
+
 }

@@ -1,8 +1,8 @@
 {
   "sensitivityX": 0.5,
   "sensitivityY": 0.5,
-  "repeatDelayMin": 11,
-  "repeatDelayMax": 22,
+  "repeatDelayMin": 2,
+  "repeatDelayMax": 52,
   "drops": {
     "open": {
       "x": 2001,
@@ -72,8 +72,8 @@
   },
   "mouse": {
     "left": {
-      "x": 659,
-      "y": 221
+      "x": 600,
+      "y": 300
     },
     "right": {
       "x": 2997,

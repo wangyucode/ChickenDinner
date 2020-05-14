@@ -18,7 +18,7 @@ const val JOYSTICK_STEP = 50
 const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
 const val SCREEN_FOV_EDGE = 100
-const val REPEAT_INITIAL_DELAY = 100L
+const val REPEAT_INITIAL_DELAY = 70L
 const val RANDOM_POSITION_MIN = -15
 const val RANDOM_POSITION_MAX = 15
 
@@ -298,7 +298,7 @@ class Connections {
         resetFuture?.cancel(false)
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
-            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+            sendClearTouch()
             sendMouseMove(resetPosition.x, resetPosition.y)
             scene.cursor = Cursor.DEFAULT
             HEAD_MOUSE_VISIBLE
@@ -444,11 +444,17 @@ class Connections {
         Runnable {
 
         private val random = ThreadLocalRandom.current()
+        private var lastRepeatTime: Long = 0
 
         override fun run() {
+            var now = System.currentTimeMillis()
+            println("repeat->${now - lastRepeatTime}")
+            lastRepeatTime = now
+
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
-            val shakeX = x + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
-            val shakeY = y + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+            val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 12
+            val shakeX = x - randomY / 6 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+            val shakeY = y + randomY
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_DOWN)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
@@ -456,10 +462,20 @@ class Connections {
             repeatBuffer.putInt(shakeY)
             controlOutputStream.write(repeatBuffer.array())
 
-            repeatBuffer.put(0, HEAD_TOUCH_UP)
+            now = System.currentTimeMillis()
+            println("down->${now - lastRepeatTime}")
+
+            repeatBuffer.clear()
+            repeatBuffer.put(HEAD_TOUCH_UP)
+            repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
+            repeatBuffer.putInt(shakeX + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
+            repeatBuffer.putInt(shakeY + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
 
             controlOutputStream.write(repeatBuffer.array())
+
+            now = System.currentTimeMillis()
+            println("up->${now - lastRepeatTime}")
         }
     }
 

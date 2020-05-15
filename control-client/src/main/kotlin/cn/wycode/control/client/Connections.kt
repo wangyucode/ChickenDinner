@@ -451,13 +451,8 @@ class Connections {
         Runnable {
 
         private val random = ThreadLocalRandom.current()
-        private var lastRepeatTime: Long = 0
 
         override fun run() {
-            var now = System.currentTimeMillis()
-            println("repeat->${now - lastRepeatTime}")
-            lastRepeatTime = now
-
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
             val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 12
             val shakeX = x - randomY / 6 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
@@ -469,9 +464,6 @@ class Connections {
             repeatBuffer.putInt(shakeY)
             controlOutputStream.write(repeatBuffer.array())
 
-            now = System.currentTimeMillis()
-            println("down->${now - lastRepeatTime}")
-
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_UP)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
@@ -480,9 +472,6 @@ class Connections {
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
 
             controlOutputStream.write(repeatBuffer.array())
-
-            now = System.currentTimeMillis()
-            println("up->${now - lastRepeatTime}")
         }
     }
 

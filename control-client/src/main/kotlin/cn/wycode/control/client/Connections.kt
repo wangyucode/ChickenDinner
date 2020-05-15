@@ -269,7 +269,7 @@ class Connections {
     }
 
     private fun checkFovEdge(position: Position){
-        if (abs(lastFovX - position.x) > position.x / 3 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
+        if (abs(lastFovX - position.x) > position.x / 2 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
             // up from current position
             sendTouch(
                 HEAD_TOUCH_UP,
@@ -314,7 +314,7 @@ class Connections {
             resetLastFov(resetPosition)
             HEAD_MOUSE_INVISIBLE
         }
-        //mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
+        mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
         robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
     }
 

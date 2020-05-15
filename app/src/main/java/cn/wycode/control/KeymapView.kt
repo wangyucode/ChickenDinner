@@ -58,9 +58,9 @@ class KeymapView : View {
         }
 
         val drugs = keymap!!.drugs
-        if(!drugsOpen){
+        if (!drugsOpen) {
             drawButton(canvas, Button("5", drugs.open))
-        }else{
+        } else {
             mPaint.color = 0x44ffff55
             drawButton(canvas, Button("5", drugs.buttons[0]))
             for (i in 1 until drugs.buttons.size) {
@@ -77,7 +77,8 @@ class KeymapView : View {
         }
         drawButton(canvas, Button("LM", mouse.left))
 
-
+        mPaint.color = 0x66dd0000
+        canvas.drawCircle(width / 2f, height / 2f, 3f, mPaint)
     }
 
     private fun drawButton(canvas: Canvas, button: Button) {

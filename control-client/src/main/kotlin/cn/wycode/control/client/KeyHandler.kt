@@ -100,6 +100,9 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                                 return
                             }
                         }
+                        KEY_NAME_Alt -> {
+                            if (!connections.mouseVisible) connections.resetMouse()
+                        }
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_DOWN,
@@ -144,7 +147,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                     var position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
-                            if(connections.mouseVisible) fovHandler.start() else fovHandler.stop()
+                            if (connections.mouseVisible) fovHandler.start() else fovHandler.stop()
                             connections.sendSwitchMouse()
                             return
                         }
@@ -153,7 +156,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             connections.sendEnableRepeat()
                             return
                         }
-                        KEY_NAME_BAG -> if (!connections.mouseVisible){
+                        KEY_NAME_BAG -> if (!connections.mouseVisible) {
                             fovHandler.stop()
                             connections.sendBagOpen(Position(2691, 267))
                         }
@@ -229,11 +232,11 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     }
 
     fun focusChange(focus: Boolean) {
-        if(!focus && !connections.mouseVisible){
+        if (!focus && !connections.mouseVisible) {
             fovHandler.stop()
             connections.sendJoystick(JoystickDirection.NONE.joystickByte)
             connections.sendClearTouch()
-            if(!connections.mouseVisible) connections.sendSwitchMouse()
+            if (!connections.mouseVisible) connections.sendSwitchMouse()
         }
     }
 }

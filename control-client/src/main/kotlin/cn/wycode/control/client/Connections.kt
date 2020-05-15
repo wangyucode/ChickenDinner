@@ -312,6 +312,13 @@ class Connections {
         robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
     }
 
+    fun resetMouse(){
+        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        resetLastFov()
+        robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+        sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
+    }
+
     fun sendBagOpen(mousePosition: Position) {
         resetFuture?.cancel(false)
         mouseVisible = true

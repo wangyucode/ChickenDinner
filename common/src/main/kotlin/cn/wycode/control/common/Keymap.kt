@@ -9,7 +9,7 @@ const val TOUCH_ID_PROPS: Byte = 5
 const val TOUCH_ID_BUTTON: Byte = 10
 
 const val KEY_NAME_SWITCH = "switch"
-const val KEY_NAME_Alt = "Alt"
+const val KEY_NAME_ALT = "Alt"
 const val KEY_NAME_BAG = "bag"
 const val KEY_NAME_ONE = "1"
 const val KEY_NAME_TWO = "2"

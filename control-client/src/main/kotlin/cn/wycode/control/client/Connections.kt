@@ -86,6 +86,7 @@ class Connections {
     lateinit var scene: Scene
 
     var mouseVisible = true
+    var altDown = false
 
     var lastFovX = 0.0
     var lastFovY = 0.0
@@ -102,7 +103,8 @@ class Connections {
 
     var weaponNumber = 1
 
-    private lateinit var resetPosition: Position
+    lateinit var resetPosition: Position
+    lateinit var altPosition: Position
     private lateinit var joystick: Joystick
     private var sensitivityX = 1.0
     private var sensitivityY = 1.0
@@ -111,7 +113,6 @@ class Connections {
 
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
-        resetPosition = keymap.buttons.find { it.name == KEY_NAME_SWITCH }!!.position
         sensitivityX = keymap.sensitivityX
         sensitivityY = keymap.sensitivityY
         repeatDelayMin = keymap.repeatDelayMin
@@ -224,7 +225,7 @@ class Connections {
 
     fun sendMoveFov(dx: Int, dy: Int) {
         resetFuture?.cancel(false)
-        if (isFovAutoUp) {
+        if (!altDown && isFovAutoUp) {
             sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
@@ -235,14 +236,14 @@ class Connections {
 
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             isFovAutoUp = false
-            resetLastFov()
+            resetLastFov(resetPosition)
             return
         }
 
         if (abs(dx) > 30 || abs(dy) > 30) return
 
         if (lastFovX == 0.0 || lastFovY == 0.0) {
-            resetLastFov()
+            resetLastFov(resetPosition)
             return
         }
 
@@ -250,32 +251,10 @@ class Connections {
         lastFovY += dy * sensitivityY
 
         //reach the device edge
-        if (abs(lastFovX - resetPosition.x) > resetPosition.x / 3 || abs(lastFovY - resetPosition.y) > resetPosition.y - SCREEN_FOV_EDGE) {
-            // up from current position
-            sendTouch(
-                HEAD_TOUCH_UP,
-                TOUCH_ID_MOUSE,
-                lastFovX.toInt(),
-                lastFovY.toInt(),
-                false
-            )
-            // reset mouse position
-            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-            // down from reset position
-            sendTouch(
-                HEAD_TOUCH_DOWN,
-                TOUCH_ID_MOUSE,
-                resetPosition.x,
-                resetPosition.y,
-                false
-            )
-            // reset last fov
-            resetLastFov()
-            // ignore this move
-            return
-        }
+        if (altDown) checkFovEdge(altPosition) else checkFovEdge(resetPosition)
 
         sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        if (altDown) return
 
         touchBuffer.clear()
         touchBuffer.put(HEAD_TOUCH_UP)
@@ -289,9 +268,36 @@ class Connections {
         )
     }
 
-    private fun resetLastFov() {
-        lastFovX = resetPosition.x.toDouble()
-        lastFovY = resetPosition.y.toDouble()
+    private fun checkFovEdge(position: Position){
+        if (abs(lastFovX - position.x) > position.x / 3 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
+            // up from current position
+            sendTouch(
+                HEAD_TOUCH_UP,
+                TOUCH_ID_MOUSE,
+                lastFovX.toInt(),
+                lastFovY.toInt(),
+                false
+            )
+            // reset mouse position
+            robot.mouseMove((OFFSET.x + position.x / RATIO).toInt(), (OFFSET.y + position.y / RATIO).toInt())
+            // down from reset position
+            sendTouch(
+                HEAD_TOUCH_DOWN,
+                TOUCH_ID_MOUSE,
+                position.x,
+                position.y,
+                false
+            )
+            // reset last fov
+            resetLastFov(position)
+            // ignore this move
+            return
+        }
+    }
+
+    private fun resetLastFov(position: Position) {
+        lastFovX = position.x.toDouble()
+        lastFovY = position.y.toDouble()
     }
 
     fun sendSwitchMouse() {
@@ -305,16 +311,23 @@ class Connections {
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
             scene.cursor = Cursor.NONE
-            resetLastFov()
+            resetLastFov(resetPosition)
             HEAD_MOUSE_INVISIBLE
         }
-        mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
+        //mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
         robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
     }
 
-    fun resetMouse(){
+    fun altMouseDown() {
         sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        resetLastFov()
+        resetLastFov(altPosition)
+        robot.mouseMove((OFFSET.x + altPosition.x / RATIO).toInt(), (OFFSET.y + altPosition.y / RATIO).toInt())
+        sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, altPosition.x, altPosition.y, false)
+    }
+
+    fun altMouseUp(){
+        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        resetLastFov(resetPosition)
         robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
         sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
     }

@@ -268,7 +268,7 @@ class Connections {
         )
     }
 
-    private fun checkFovEdge(position: Position){
+    private fun checkFovEdge(position: Position) {
         if (abs(lastFovX - position.x) > position.x / 2 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
             // up from current position
             sendTouch(
@@ -322,10 +322,14 @@ class Connections {
         sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
         resetLastFov(altPosition)
         robot.mouseMove((OFFSET.x + altPosition.x / RATIO).toInt(), (OFFSET.y + altPosition.y / RATIO).toInt())
-        sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, altPosition.x, altPosition.y, false)
+        resetEventExecutor.schedule(
+            { sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, altPosition.x, altPosition.y, false) },
+            20,
+            TimeUnit.MILLISECONDS
+        )
     }
 
-    fun altMouseUp(){
+    fun altMouseUp() {
         sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
         resetLastFov(resetPosition)
         robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())

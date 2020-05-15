@@ -104,7 +104,10 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                         }
                         KEY_NAME_ALT -> {
                             connections.altDown = true
-                            if (!connections.mouseVisible) connections.altMouseDown()
+                            if (!connections.mouseVisible) {
+                                connections.altMouseDown()
+                                return
+                            }
                         }
                     }
                     connections.sendTouch(
@@ -223,7 +226,10 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                         }
                         KEY_NAME_ALT -> {
                             connections.altDown = false
-                            if (!connections.mouseVisible) connections.altMouseUp()
+                            if (!connections.mouseVisible) {
+                                connections.altMouseUp()
+                                return
+                            }
                         }
                     }
                     connections.sendTouch(

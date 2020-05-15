@@ -76,9 +76,6 @@ class KeymapView : View {
             mPaint.color = 0x44ff5555
         }
         drawButton(canvas, Button("LM", mouse.left))
-
-        mPaint.color = 0x66dd0000
-        canvas.drawCircle(width / 2f, height / 2f, 3f, mPaint)
     }
 
     private fun drawButton(canvas: Canvas, button: Button) {

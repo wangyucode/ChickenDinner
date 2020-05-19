@@ -63,10 +63,10 @@ class Connections {
     private var lastJoystickByte: Byte = 0
 
     @Volatile
-    private var lastJoystickX = 0
+    private var lastJoystickX = -1
 
     @Volatile
-    private var lastJoystickY = 0
+    private var lastJoystickY = -1
 
     @Volatile
     private var destJoystickX = 0
@@ -147,16 +147,14 @@ class Connections {
 
     fun sendJoystick(joystickByte: Byte) {
 
-        if (lastJoystickX == 0) lastJoystickX = joystick.center.x
-        if (lastJoystickY == 0) lastJoystickY = joystick.center.y
+        if (lastJoystickX < 0 || lastJoystickY < 0) resetLastJoystick()
         // no changes
         if (lastJoystickByte == joystickByte) return
 
         // no touch
         if (joystickByte == ZERO_BYTE) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_JOYSTICK, joystick.center.x, joystick.center.y, false)
-            lastJoystickX = joystick.center.x
-            lastJoystickY = joystick.center.y
+            resetLastJoystick()
             lastJoystickByte = joystickByte
             // cancel move
             joystickFuture?.cancel(false)
@@ -198,8 +196,7 @@ class Connections {
                 joystick.center.y,
                 true
             )
-            lastJoystickX = joystick.center.x
-            lastJoystickY = joystick.center.y
+            resetLastJoystick()
             // start move
             joystickFuture = joystickEventExecutor.scheduleAtFixedRate(
                 JoystickWriteRunnable(),
@@ -210,6 +207,11 @@ class Connections {
         }
 
         lastJoystickByte = joystickByte
+    }
+
+    private fun resetLastJoystick() {
+        lastJoystickX = joystick.center.x
+        lastJoystickY = joystick.center.y
     }
 
     fun sendKeymap(keymapString: String) {
@@ -298,6 +300,23 @@ class Connections {
     private fun resetLastFov(position: Position) {
         lastFovX = position.x.toDouble()
         lastFovY = position.y.toDouble()
+    }
+
+    fun resetTouch() {
+        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        resetLastFov(resetPosition)
+        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_JOYSTICK, lastJoystickX, lastJoystickY, false)
+        resetLastJoystick()
+        resetEventExecutor.schedule({
+            if (!mouseVisible) sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+            if (lastJoystickByte != ZERO_BYTE) sendTouch(
+                HEAD_TOUCH_DOWN,
+                TOUCH_ID_JOYSTICK,
+                joystick.center.x,
+                joystick.center.y,
+                false
+            )
+        }, 120, TimeUnit.MILLISECONDS)
     }
 
     fun sendSwitchMouse() {

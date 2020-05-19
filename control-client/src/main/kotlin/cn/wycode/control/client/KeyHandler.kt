@@ -231,6 +231,9 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                                 return
                             }
                         }
+                        KEY_NAME_F -> {
+                            connections.resetTouch()
+                        }
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_UP,

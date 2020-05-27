@@ -86,7 +86,6 @@ class Connections {
     lateinit var scene: Scene
 
     var mouseVisible = true
-    var altDown = false
 
     var lastFovX = 0.0
     var lastFovY = 0.0
@@ -227,7 +226,8 @@ class Connections {
 
     fun sendMoveFov(dx: Int, dy: Int) {
         resetFuture?.cancel(false)
-        if (!altDown && isFovAutoUp) {
+        // auto up after some time
+        if (isFovAutoUp) {
             sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
@@ -253,11 +253,12 @@ class Connections {
         lastFovY += dy * sensitivityY
 
         //reach the device edge
-        if (altDown) checkFovEdge(altPosition) else checkFovEdge(resetPosition)
+        val reachEdge = checkFovEdge(resetPosition)
+        // ignore this move
+        if (reachEdge) return
 
         sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        if (altDown) return
-
+        // schedule auto up
         touchBuffer.clear()
         touchBuffer.put(HEAD_TOUCH_UP)
         touchBuffer.put(TOUCH_ID_MOUSE)
@@ -270,8 +271,8 @@ class Connections {
         )
     }
 
-    private fun checkFovEdge(position: Position) {
-        if (abs(lastFovX - position.x) > position.x / 2 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
+    private fun checkFovEdge(position: Position): Boolean {
+        return if (abs(lastFovX - position.x) > position.x / 2 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
             // up from current position
             sendTouch(
                 HEAD_TOUCH_UP,
@@ -292,8 +293,10 @@ class Connections {
             )
             // reset last fov
             resetLastFov(position)
-            // ignore this move
-            return
+
+            true
+        } else {
+            false
         }
     }
 
@@ -335,24 +338,6 @@ class Connections {
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
         robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-    }
-
-    fun altMouseDown() {
-        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        resetLastFov(altPosition)
-        robot.mouseMove((OFFSET.x + altPosition.x / RATIO).toInt(), (OFFSET.y + altPosition.y / RATIO).toInt())
-        resetEventExecutor.schedule(
-            { sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, altPosition.x, altPosition.y, false) },
-            20,
-            TimeUnit.MILLISECONDS
-        )
-    }
-
-    fun altMouseUp() {
-        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        resetLastFov(resetPosition)
-        robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-        sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
     }
 
     fun sendBagOpen(mousePosition: Position) {

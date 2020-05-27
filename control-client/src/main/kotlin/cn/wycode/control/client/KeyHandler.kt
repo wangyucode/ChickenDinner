@@ -27,7 +27,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         this.keymap = keymap
         for ((index, button) in keymap.buttons.withIndex()) {
             buttonMap[KeyCode.getKeyCode(button.key)] = ButtonWithId(index, button)
-            if (button.name == KEY_NAME_ALT) connections.altPosition = button.position
             if (button.name == KEY_NAME_SWITCH) connections.resetPosition = button.position
         }
         buttonMap[KeyCode.DIGIT4] = ButtonWithId(buttonMap.size, Button("4", keymap.drops.open, KEY_NAME_FOUR))
@@ -99,13 +98,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             if (connections.isDrugsOpen) {
                                 position = keymap.drugs.buttons[5]
                             } else {
-                                return
-                            }
-                        }
-                        KEY_NAME_ALT -> {
-                            connections.altDown = true
-                            if (!connections.mouseVisible) {
-                                connections.altMouseDown()
                                 return
                             }
                         }
@@ -221,13 +213,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                                 connections.sendDrugsOpen(false)
                                 position = keymap.drugs.buttons[5]
                             } else {
-                                return
-                            }
-                        }
-                        KEY_NAME_ALT -> {
-                            connections.altDown = false
-                            if (!connections.mouseVisible) {
-                                connections.altMouseUp()
                                 return
                             }
                         }

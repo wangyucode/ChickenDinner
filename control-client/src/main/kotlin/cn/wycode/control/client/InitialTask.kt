@@ -34,6 +34,7 @@ class InitialTask(val appendText: (text: String) -> Unit) : Task<Int>() {
         updateMessage("read keymap")
         keymapString = javaClass.classLoader.getResource("keymap.json")!!.readText()
         keymap = JSON.parseObject(keymapString, Keymap::class.java)
+        appendText("repeatMin=${REPEAT_INITIAL_DELAY + keymap.repeatDelayMin}, repeatMax=${REPEAT_INITIAL_DELAY + keymap.repeatDelayMax - 1}")
         updateValue(INIT_PROCESS_READ_KEYMAP)
 
         updateMessage("connect to mouse")

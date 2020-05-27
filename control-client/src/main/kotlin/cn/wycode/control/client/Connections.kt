@@ -107,6 +107,7 @@ class Connections {
 
     lateinit var resetPosition: Position
     private lateinit var joystick: Joystick
+    private lateinit var leftMousePosition: Position
     private var sensitivityX = 1.0
     private var sensitivityY = 1.0
     private var repeatDelayMin = 0L
@@ -118,6 +119,7 @@ class Connections {
         sensitivityY = keymap.sensitivityY
         repeatDelayMin = keymap.repeatDelayMin
         repeatDelayMax = keymap.repeatDelayMax
+        leftMousePosition = keymap.mouse.left
     }
 
     fun sendKey(key: Byte) {
@@ -136,14 +138,27 @@ class Connections {
     }
 
     fun sendTouch(head: Byte, id: Byte, x: Int, y: Int, shake: Boolean) {
-        val shakeX = if (shake) x + ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) else x
-        val shakeY = if (shake) y + ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) else y
+        var shakeX = x
+        var shakeY = y
+        if (shake) {
+            val random = ThreadLocalRandom.current()
+            shakeX = x + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+            shakeY = y + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+        }
+
         touchBuffer.clear()
         touchBuffer.put(head)
         touchBuffer.put(id)
         touchBuffer.putInt(shakeX)
         touchBuffer.putInt(shakeY)
         controlEventExecutor.execute(WriteRunnable(controlOutputStream, touchBuffer.array().copyOf()))
+    }
+
+    fun getRandomFirePosition(random: ThreadLocalRandom): Position {
+        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 12
+        val shakeX = leftMousePosition.x - randomY / 6 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+        val shakeY = leftMousePosition.y + randomY
+        return Position(shakeX, shakeY)
     }
 
     fun sendJoystick(joystickByte: Byte) {
@@ -367,10 +382,10 @@ class Connections {
         }
     }
 
-    fun startRepeatFire(left: Position) {
+    fun startRepeatFire() {
         isFireRepeating = true
         repeatFuture = repeatFireEventExecutor.scheduleAtFixedRate(
-            WriteRepeatClickRunnable(left.x, left.y),
+            WriteRepeatClickRunnable(),
             0,
             REPEAT_INITIAL_DELAY,
             TimeUnit.MILLISECONDS
@@ -473,28 +488,26 @@ class Connections {
         }
     }
 
-    inner class WriteRepeatClickRunnable(private val x: Int, private val y: Int) :
+    inner class WriteRepeatClickRunnable() :
         Runnable {
 
         private val random = ThreadLocalRandom.current()
 
         override fun run() {
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
-            val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 12
-            val shakeX = x - randomY / 6 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
-            val shakeY = y + randomY
+            val position = getRandomFirePosition(random)
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_DOWN)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
-            repeatBuffer.putInt(shakeX)
-            repeatBuffer.putInt(shakeY)
+            repeatBuffer.putInt(position.x)
+            repeatBuffer.putInt(position.y)
             controlOutputStream.write(repeatBuffer.array())
 
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_UP)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
-            repeatBuffer.putInt(shakeX + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
-            repeatBuffer.putInt(shakeY + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
+            repeatBuffer.putInt(position.x + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
+            repeatBuffer.putInt(position.y + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
 
             controlOutputStream.write(repeatBuffer.array())

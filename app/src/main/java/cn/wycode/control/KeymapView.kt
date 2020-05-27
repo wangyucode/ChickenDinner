@@ -23,7 +23,7 @@ class KeymapView : View {
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
 
-        mPaint.color = 0x44ffffff
+        mPaint.color = 0x33ffffff
         mPaint.strokeWidth = 1f
         mPaint.style = Paint.Style.STROKE
         mPaint.textSize = 30f
@@ -39,7 +39,7 @@ class KeymapView : View {
         )
 
         val buttons = keymap!!.buttons
-        mPaint.color = 0x4455ff55
+        mPaint.color = 0x3355ff55
         mPaint.style = Paint.Style.FILL_AND_STROKE
         for (button in buttons) {
             drawButton(canvas, button)
@@ -49,7 +49,7 @@ class KeymapView : View {
         if (!dropsOpen) {
             drawButton(canvas, Button("4", drops.open))
         } else {
-            mPaint.color = 0x44ffff55
+            mPaint.color = 0x33ffff55
             drawButton(canvas, Button("4", drops.buttons[0]))
             for (i in 1 until drops.buttons.size) {
                 val key = if (i < 4) i.toString() else (i + 1).toString()
@@ -61,7 +61,7 @@ class KeymapView : View {
         if (!drugsOpen) {
             drawButton(canvas, Button("5", drugs.open))
         } else {
-            mPaint.color = 0x44ffff55
+            mPaint.color = 0x33ffff55
             drawButton(canvas, Button("5", drugs.buttons[0]))
             for (i in 1 until drugs.buttons.size) {
                 val key = if (i < 5) i.toString() else (i + 1).toString()
@@ -69,11 +69,11 @@ class KeymapView : View {
             }
         }
 
-        mPaint.color = 0x445555ff
+        mPaint.color = 0x335555ff
         val mouse = keymap!!.mouse
         drawButton(canvas, Button("RM", mouse.right))
         if (repeat) {
-            mPaint.color = 0x44ff5555
+            mPaint.color = 0x33ff5555
         }
         drawButton(canvas, Button("LM", mouse.left))
 
@@ -85,7 +85,7 @@ class KeymapView : View {
         val x = button.position.x.toFloat()
         val y = button.position.y.toFloat()
         val text = if (button.name != null) button.name else button.key
-        canvas.drawCircle(x, y, 10f, mPaint)
+        canvas.drawCircle(x, y, 15f, mPaint)
         canvas.drawText(text!!, x, y, mPaint)
     }
 }

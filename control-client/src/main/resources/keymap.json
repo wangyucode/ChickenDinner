@@ -2,7 +2,7 @@
   "sensitivityX": 0.5,
   "sensitivityY": 0.5,
   "repeatDelayMin": 2,
-  "repeatDelayMax": 45,
+  "repeatDelayMax": 30,
   "drops": {
     "open": {
       "x": 2001,

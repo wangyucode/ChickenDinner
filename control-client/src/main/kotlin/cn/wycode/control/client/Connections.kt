@@ -22,7 +22,7 @@ const val REPEAT_INITIAL_DELAY = 67L
 const val RANDOM_POSITION_MIN = -15
 const val RANDOM_POSITION_MAX = 15
 
-class Connections {
+class Connections(val appendTextFun: (String) -> Unit) {
 
     /**
      * 1 byte head, 1 byte id, 4 byte x , 4 byte y
@@ -104,6 +104,10 @@ class Connections {
         private set
 
     var weaponNumber = 1
+        set(value) {
+            field = value
+            appendTextFun("switch weapon to $value")
+        }
 
     lateinit var resetPosition: Position
     private lateinit var joystick: Joystick

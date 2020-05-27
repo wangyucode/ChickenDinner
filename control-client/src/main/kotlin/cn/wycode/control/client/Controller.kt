@@ -32,9 +32,9 @@ class Controller : Initializable {
         }
     }
 
-    private val initialTask = InitialTask(this.appendTextFun)
+    private val initialTask = InitialTask(appendTextFun)
     private lateinit var readTask: ReadTask
-    private val connections = Connections()
+    private val connections = Connections(appendTextFun)
     private val mouseHandler = MouseHandler(connections)
     private val keyHandler = KeyHandler(connections)
 

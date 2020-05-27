@@ -99,11 +99,13 @@ class Connections {
     private var closeDrugFuture: ScheduledFuture<*>? = null
 
     var enableRepeatFire = false
+        private set
+    var isFireRepeating = false
+        private set
 
     var weaponNumber = 1
 
     lateinit var resetPosition: Position
-    lateinit var altPosition: Position
     private lateinit var joystick: Joystick
     private var sensitivityX = 1.0
     private var sensitivityY = 1.0
@@ -366,6 +368,7 @@ class Connections {
     }
 
     fun startRepeatFire(left: Position) {
+        isFireRepeating = true
         repeatFuture = repeatFireEventExecutor.scheduleAtFixedRate(
             WriteRepeatClickRunnable(left.x, left.y),
             0,
@@ -375,10 +378,12 @@ class Connections {
     }
 
     fun stopRepeatFire() {
+        isFireRepeating = false
         repeatFuture?.cancel(false)
     }
 
     fun sendEnableRepeat() {
+        enableRepeatFire = !enableRepeatFire
         val head = if (enableRepeatFire) HEAD_REPEAT_ENABLE else HEAD_REPEAT_DISABLE
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
     }

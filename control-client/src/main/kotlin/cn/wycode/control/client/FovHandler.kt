@@ -62,7 +62,10 @@ class FovHandler(private val connections: Connections) {
                     position = mouse.left
                     id = TOUCH_ID_MOUSE_LEFT
                     // repeat stop
-                    connections.stopRepeatFire()
+                    if (connections.isFireRepeating) {
+                        connections.stopRepeatFire()
+                        return
+                    }
                 }
                 GlobalMouseEvent.BUTTON_RIGHT -> {
                     position = mouse.right

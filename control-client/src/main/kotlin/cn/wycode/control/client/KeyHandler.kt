@@ -150,7 +150,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             return
                         }
                         KEY_NAME_REPEAT -> {
-                            connections.enableRepeatFire = !connections.enableRepeatFire
+                            connections.stopRepeatFire()
                             connections.sendEnableRepeat()
                             return
                         }

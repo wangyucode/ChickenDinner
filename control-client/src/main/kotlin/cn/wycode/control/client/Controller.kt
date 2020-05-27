@@ -1,12 +1,14 @@
 package cn.wycode.control.client
 
 import cn.wycode.control.common.Position
+import javafx.application.Platform
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.scene.canvas.Canvas
+import javafx.scene.Cursor
+import javafx.scene.control.TextArea
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
-import javafx.scene.paint.Color
+import javafx.scene.layout.Pane
 import javafx.stage.Screen
 import java.net.URL
 import java.util.*
@@ -19,9 +21,18 @@ var CANVAS = Position(0, 0)
 class Controller : Initializable {
 
     @FXML
-    lateinit var canvas: Canvas
+    lateinit var textArea: TextArea
 
-    private val initialTask = InitialTask()
+    @FXML
+    lateinit var controlPane: Pane
+
+    private val appendTextFun = fun(text: String) {
+        Platform.runLater {
+            textArea.appendText("\n" + text)
+        }
+    }
+
+    private val initialTask = InitialTask(this.appendTextFun)
     private lateinit var readTask: ReadTask
     private val connections = Connections()
     private val mouseHandler = MouseHandler(connections)
@@ -46,9 +57,9 @@ class Controller : Initializable {
         println("client::connected to control service!")
         mouseHandler.controlConnected = true
         connections.controlOutputStream = initialTask.controlSocket.getOutputStream()
-        canvas.scene.addEventHandler(KeyEvent.ANY, keyHandler)
-        connections.scene = canvas.scene
-        canvas.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
+        controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
+        connections.scene = controlPane.scene
+        controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
     }
 
     private fun onMouseServiceConnected() {
@@ -61,10 +72,7 @@ class Controller : Initializable {
         val screen = Screen.getPrimary()
         val screenBounds = screen.bounds
 
-        val graphics = canvas.graphicsContext2D
-        graphics.fill = Color.DARKOLIVEGREEN
-
-        readTask = ReadTask(initialTask.mouseSocket)
+        readTask = ReadTask(initialTask.mouseSocket, appendTextFun)
         readTask.valueProperty().addListener { _, _, _ ->
             // The client screen is wider than the server
             RATIO =
@@ -73,28 +81,33 @@ class Controller : Initializable {
                 } else {
                     SCREEN.x / screenBounds.width
                 }
-            canvas.width = SCREEN.x / RATIO
-            canvas.height = SCREEN.y / RATIO
+            textArea.prefWidth = SCREEN.x / RATIO
+            textArea.prefHeight = SCREEN.y / RATIO
 
-            CANVAS.x = canvas.width.toInt()
-            CANVAS.y = canvas.height.toInt()
+            controlPane.prefWidth = textArea.prefWidth
+            controlPane.prefHeight = textArea.prefHeight
 
-            canvas.layoutX = screenBounds.width / 2 - canvas.width / 2
-            canvas.layoutY = 0.0
+            CANVAS.x = textArea.prefWidth.toInt()
+            CANVAS.y = textArea.prefHeight.toInt()
 
-            val window = canvas.scene.window
+            textArea.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
+            textArea.layoutY = 0.0
+
+            controlPane.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
+            controlPane.layoutY = 0.0
+
+            val window = textArea.scene.window
             //window.sizeToScene()
             window.y = 0.0
             window.x = screenBounds.width / 2 - window.width / 2
 
-            OFFSET.x = (window.x + canvas.layoutX).toInt()
-            OFFSET.y = (window.y + canvas.layoutY).toInt()
+            OFFSET.x = (window.x + textArea.layoutX).toInt()
+            OFFSET.y = (window.y + textArea.layoutY).toInt()
 
-            graphics.fillRect(0.0, 0.0, canvas.width, canvas.height)
         }
         Thread(readTask).start()
-
-        canvas.addEventHandler(MouseEvent.ANY, mouseHandler)
+        controlPane.cursor = Cursor.CROSSHAIR
+        controlPane.addEventHandler(MouseEvent.ANY, mouseHandler)
     }
 
     fun stop() {

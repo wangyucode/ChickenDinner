@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
 <Pane style="-fx-background-color: #338833;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.wycode.control.client.Controller">
-    <Canvas fx:id="canvas" height="200.0" width="200.0" />
+   <children>
+      <TextArea fx:id="textArea" editable="false" focusTraversable="false" pickOnBounds="false" prefHeight="200.0" prefWidth="200.0" style="-fx-control-inner-background: #2b2b2b;" text="asdfasdfsf" wrapText="true" />
+      <Pane fx:id="controlPane" prefHeight="200.0" prefWidth="200.0" />
+   </children>
 </Pane>

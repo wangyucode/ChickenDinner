@@ -85,7 +85,7 @@ class KeymapView : View {
         val x = button.position.x.toFloat()
         val y = button.position.y.toFloat()
         val text = if (button.name != null) button.name else button.key
-        canvas.drawCircle(x, y, 15f, mPaint)
+        canvas.drawCircle(x, y, 10f, mPaint)
         canvas.drawText(text!!, x, y, mPaint)
     }
 }

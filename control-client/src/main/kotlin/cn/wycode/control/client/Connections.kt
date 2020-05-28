@@ -327,10 +327,22 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun resetTouch() {
-        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        resetLastFov(resetPosition)
-        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_JOYSTICK, lastJoystickX, lastJoystickY, false)
-        resetLastJoystick()
+        resetFuture?.cancel(false)
+        if (!mouseVisible) {
+            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+            resetLastFov(resetPosition)
+        }
+        if (lastJoystickByte != ZERO_BYTE) {
+            sendTouch(
+                HEAD_TOUCH_UP,
+                TOUCH_ID_JOYSTICK,
+                lastJoystickX,
+                lastJoystickY,
+                false
+            )
+            resetLastJoystick()
+        }
+
         resetEventExecutor.schedule({
             if (!mouseVisible) sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
             if (lastJoystickByte != ZERO_BYTE) sendTouch(

@@ -19,8 +19,8 @@ const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
 const val SCREEN_FOV_EDGE = 100
 const val REPEAT_INITIAL_DELAY = 67L
-const val RANDOM_POSITION_MIN = -15
-const val RANDOM_POSITION_MAX = 15
+const val RANDOM_POSITION_MIN = -20
+const val RANDOM_POSITION_MAX = 20
 
 class Connections(val appendTextFun: (String) -> Unit) {
 
@@ -87,8 +87,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
 
     var mouseVisible = true
 
-    var lastFovX = 0.0
-    var lastFovY = 0.0
+    private var lastFovX = 0.0
+    private var lastFovY = 0.0
 
     private val robot = Robot()
 
@@ -161,8 +161,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun getRandomFirePosition(random: ThreadLocalRandom): Position {
-        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 12
-        val shakeX = leftMousePosition.x - randomY / 6 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 11
+        val shakeX = leftMousePosition.x - randomY / 3 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
         val shakeY = leftMousePosition.y + randomY
         return Position(shakeX, shakeY)
     }
@@ -526,8 +526,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
             repeatBuffer.clear()
             repeatBuffer.put(HEAD_TOUCH_UP)
             repeatBuffer.put(TOUCH_ID_MOUSE_LEFT)
-            repeatBuffer.putInt(position.x + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
-            repeatBuffer.putInt(position.y + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX))
+            repeatBuffer.putInt(position.x + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 2)
+            repeatBuffer.putInt(position.y + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 2)
             Thread.sleep(random.nextLong(repeatDelayMin, repeatDelayMax))
 
             controlOutputStream.write(repeatBuffer.array())

@@ -117,6 +117,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
     private var repeatDelayMin = 0L
     private var repeatDelayMax = 0L
 
+    private var isResetting = false
+
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
         sensitivityX = keymap.sensitivityX
@@ -247,6 +249,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
 
     fun sendMoveFov(dx: Int, dy: Int) {
         resetFuture?.cancel(false)
+        if (isResetting) return
         // auto up after some time
         if (isFovAutoUp) {
             sendTouch(
@@ -328,9 +331,9 @@ class Connections(val appendTextFun: (String) -> Unit) {
 
     fun resetTouch() {
         resetFuture?.cancel(false)
-        if (!mouseVisible) {
+        if (!mouseVisible && !isFovAutoUp) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-            resetLastFov(resetPosition)
+            isFovAutoUp = true
         }
         if (lastJoystickByte != ZERO_BYTE) {
             sendTouch(
@@ -344,7 +347,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
         }
 
         resetEventExecutor.schedule({
-            if (!mouseVisible) sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+            isResetting = false
             if (lastJoystickByte != ZERO_BYTE) sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_JOYSTICK,
@@ -352,7 +355,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
                 joystick.center.y,
                 false
             )
-        }, 120, TimeUnit.MILLISECONDS)
+        }, 100, TimeUnit.MILLISECONDS)
+        isResetting = true
     }
 
     fun sendSwitchMouse() {
@@ -464,6 +468,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
     inner class JoystickWriteRunnable : Runnable {
 
         override fun run() {
+            if (isResetting) return
             var dx = destJoystickX - lastJoystickX
             var dy = destJoystickY - lastJoystickY
 
@@ -504,8 +509,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
         }
     }
 
-    inner class WriteRepeatClickRunnable() :
-        Runnable {
+    inner class WriteRepeatClickRunnable : Runnable {
 
         private val random = ThreadLocalRandom.current()
 

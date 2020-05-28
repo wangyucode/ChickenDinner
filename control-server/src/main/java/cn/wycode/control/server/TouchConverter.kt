@@ -77,7 +77,7 @@ class TouchConverter {
             HEAD_TOUCH_MOVE -> {
                 localId = getLocalId(input)
                 if (localId == -1) {
-                    Ln.w("move id not found")
+                    Ln.w("move id not found $input, $localIdToEvent")
                     return null
                 } else {
                     localIdToEvent.put(localId, input.copy())

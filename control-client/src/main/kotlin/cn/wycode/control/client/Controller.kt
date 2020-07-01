@@ -58,7 +58,6 @@ class Controller : Initializable {
         mouseHandler.controlConnected = true
         connections.controlOutputStream = initialTask.controlSocket.getOutputStream()
         controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
-        connections.scene = controlPane.scene
         controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
     }
 
@@ -97,7 +96,6 @@ class Controller : Initializable {
             controlPane.layoutY = 0.0
 
             val window = textArea.scene.window
-            //window.sizeToScene()
             window.y = 0.0
             window.x = screenBounds.width / 2 - window.width / 2
 

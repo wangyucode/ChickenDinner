@@ -21,8 +21,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
     private lateinit var keymap: Keymap
 
-    private val fovHandler = FovHandler(connections)
-
     fun initButtons(keymap: Keymap) {
         this.keymap = keymap
         for ((index, button) in keymap.buttons.withIndex()) {
@@ -32,8 +30,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         buttonMap[KeyCode.DIGIT4] = ButtonWithId(buttonMap.size, Button("4", keymap.drops.open, KEY_NAME_FOUR))
         buttonMap[KeyCode.DIGIT5] = ButtonWithId(buttonMap.size + 1, Button("5", keymap.drugs.open, KEY_NAME_FIVE))
         buttonMap[KeyCode.DIGIT6] = ButtonWithId(buttonMap.size + 2, Button("6", keymap.drugs.buttons[5], KEY_NAME_SIX))
-
-        fovHandler.mouse = keymap.mouse
     }
 
     override fun handle(event: KeyEvent) {
@@ -145,7 +141,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                     var position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
-                            if (connections.mouseVisible) fovHandler.start() else fovHandler.stop()
                             connections.sendSwitchMouse()
                             return
                         }
@@ -154,10 +149,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             connections.sendEnableRepeat()
                             return
                         }
-                        KEY_NAME_BAG -> if (!connections.mouseVisible) {
-                            fovHandler.stop()
-                            connections.sendBagOpen(Position(2691, 267))
-                        }
+                        KEY_NAME_BAG -> if (!connections.mouseVisible) connections.sendBagOpen(Position(2691, 267))
                         KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
                             val index = buttonWithId.button.name!!.toInt()
                             when {
@@ -234,7 +226,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
 
     fun focusChange(focus: Boolean) {
         if (!focus && !connections.mouseVisible) {
-            fovHandler.stop()
             connections.sendJoystick(JoystickDirection.NONE.joystickByte)
             connections.sendClearTouch()
             if (!connections.mouseVisible) connections.sendSwitchMouse()

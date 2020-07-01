@@ -1,8 +1,6 @@
 package cn.wycode.control.client
 
 import cn.wycode.control.common.*
-import javafx.scene.Cursor
-import javafx.scene.Scene
 import java.awt.Robot
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -83,14 +81,14 @@ class Connections(val appendTextFun: (String) -> Unit) {
     @Volatile
     var isDrugsOpen = false
 
-    lateinit var scene: Scene
-
     var mouseVisible = true
 
     private var lastFovX = 0.0
     private var lastFovY = 0.0
 
     private val robot = Robot()
+
+    private val fovHandler = FovHandler(this)
 
     private var resetFuture: ScheduledFuture<*>? = null
     private var repeatFuture: ScheduledFuture<*>? = null
@@ -104,10 +102,6 @@ class Connections(val appendTextFun: (String) -> Unit) {
         private set
 
     var weaponNumber = 1
-        set(value) {
-            field = value
-            appendTextFun("switch weapon to $value")
-        }
 
     lateinit var resetPosition: Position
     private lateinit var joystick: Joystick
@@ -126,6 +120,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
         repeatDelayMin = keymap.repeatDelayMin
         repeatDelayMax = keymap.repeatDelayMax
         leftMousePosition = keymap.mouse.left
+
+        fovHandler.mouse = keymap.mouse
     }
 
     fun sendKey(key: Byte) {
@@ -259,14 +255,13 @@ class Connections(val appendTextFun: (String) -> Unit) {
                 resetPosition.y,
                 false
             )
-
+            fovHandler.stop()
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+            fovHandler.start()
             isFovAutoUp = false
             resetLastFov(resetPosition)
             return
         }
-
-        if (abs(dx) > 30 || abs(dy) > 30) return
 
         if (lastFovX == 0.0 || lastFovY == 0.0) {
             resetLastFov(resetPosition)
@@ -306,7 +301,9 @@ class Connections(val appendTextFun: (String) -> Unit) {
                 false
             )
             // reset mouse position
+            fovHandler.stop()
             robot.mouseMove((OFFSET.x + position.x / RATIO).toInt(), (OFFSET.y + position.y / RATIO).toInt())
+            fovHandler.start()
             // down from reset position
             sendTouch(
                 HEAD_TOUCH_DOWN,
@@ -365,24 +362,25 @@ class Connections(val appendTextFun: (String) -> Unit) {
         val head = if (mouseVisible) {
             sendClearTouch()
             sendMouseMove(resetPosition.x, resetPosition.y)
-            scene.cursor = Cursor.DEFAULT
+            fovHandler.stop()
+            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
-            scene.cursor = Cursor.NONE
             resetLastFov(resetPosition)
+            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+            fovHandler.start()
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
-        robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
     }
 
     fun sendBagOpen(mousePosition: Position) {
+        fovHandler.stop()
         resetFuture?.cancel(false)
         mouseVisible = true
         sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
         sendMouseMove(mousePosition.x, mousePosition.y)
-        scene.cursor = Cursor.DEFAULT
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(HEAD_MOUSE_VISIBLE)))
         robot.mouseMove((OFFSET.x + mousePosition.x / RATIO).toInt(), (OFFSET.y + mousePosition.y / RATIO).toInt())
     }

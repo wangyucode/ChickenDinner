@@ -113,6 +113,9 @@ class Connections(val appendTextFun: (String) -> Unit) {
 
     private var isResetting = false
 
+    @Volatile
+    private var lastFovMoveTime = 0L
+
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
         sensitivityX = keymap.sensitivityX
@@ -244,10 +247,21 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun sendMoveFov(dx: Int, dy: Int) {
-        resetFuture?.cancel(false)
         if (isResetting) return
         // auto up after some time
         if (isFovAutoUp) {
+            sendTouch(
+                HEAD_TOUCH_UP,
+                TOUCH_ID_MOUSE,
+                lastFovX.toInt(),
+                lastFovY.toInt(),
+                false
+            )
+
+            fovHandler.stop()
+            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+            fovHandler.start()
+
             sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
@@ -255,9 +269,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
                 resetPosition.y,
                 false
             )
-            fovHandler.stop()
-            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-            fovHandler.start()
+
             isFovAutoUp = false
             resetLastFov(resetPosition)
             return
@@ -277,17 +289,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
         if (reachEdge) return
 
         sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        // schedule auto up
-        touchBuffer.clear()
-        touchBuffer.put(HEAD_TOUCH_UP)
-        touchBuffer.put(TOUCH_ID_MOUSE)
-        touchBuffer.putInt(lastFovX.toInt())
-        touchBuffer.putInt(lastFovY.toInt())
-        resetFuture = resetEventExecutor.schedule(
-            ResetMouseRunnable(touchBuffer.array().copyOf()),
-            1000L,
-            TimeUnit.MILLISECONDS
-        )
+        lastFovMoveTime = System.currentTimeMillis()
     }
 
     private fun checkFovEdge(position: Position): Boolean {
@@ -327,7 +329,6 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun resetTouch() {
-        resetFuture?.cancel(false)
         if (!mouseVisible && !isFovAutoUp) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
             isFovAutoUp = true
@@ -357,19 +358,21 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun sendSwitchMouse() {
-        resetFuture?.cancel(false)
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
             sendClearTouch()
             sendMouseMove(resetPosition.x, resetPosition.y)
             fovHandler.stop()
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+            resetFuture?.cancel(false)
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
             resetLastFov(resetPosition)
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             fovHandler.start()
+            resetFuture =
+                resetEventExecutor.scheduleAtFixedRate(ResetMouseRunnable(), 1000L, 1000L, TimeUnit.MILLISECONDS)
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))
@@ -500,10 +503,11 @@ class Connections(val appendTextFun: (String) -> Unit) {
         }
     }
 
-    inner class ResetMouseRunnable(private val data: ByteArray) : Runnable {
+    inner class ResetMouseRunnable : Runnable {
         override fun run() {
-            controlOutputStream.write(data)
-            isFovAutoUp = true
+            if (System.currentTimeMillis() - lastFovMoveTime > 1000L){
+                isFovAutoUp = true
+            }
         }
     }
 

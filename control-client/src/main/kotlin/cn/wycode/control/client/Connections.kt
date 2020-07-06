@@ -160,7 +160,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun getRandomFirePosition(random: ThreadLocalRandom): Position {
-        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 11
+        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 5
         val shakeX = leftMousePosition.x - randomY / 3 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
         val shakeY = leftMousePosition.y + randomY
         return Position(shakeX, shakeY)

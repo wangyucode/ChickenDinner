@@ -20,12 +20,14 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
     private var lastKeyDown = KeyCode.UNDEFINED
     private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
     private lateinit var keymap: Keymap
+    private lateinit var M_Position: Position
 
     fun initButtons(keymap: Keymap) {
         this.keymap = keymap
         for ((index, button) in keymap.buttons.withIndex()) {
             buttonMap[KeyCode.getKeyCode(button.key)] = ButtonWithId(index, button)
             if (button.name == KEY_NAME_SWITCH) connections.resetPosition = button.position
+            if (button.key == "M") M_Position = button.position
         }
         buttonMap[KeyCode.DIGIT4] = ButtonWithId(buttonMap.size, Button("4", keymap.drops.open, KEY_NAME_FOUR))
         buttonMap[KeyCode.DIGIT5] = ButtonWithId(buttonMap.size + 1, Button("5", keymap.drugs.open, KEY_NAME_FIVE))
@@ -149,7 +151,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             connections.sendEnableRepeat()
                             return
                         }
-                        KEY_NAME_BAG -> if (!connections.mouseVisible) connections.sendBagOpen(Position(2691, 267))
+                        KEY_NAME_BAG -> if (!connections.mouseVisible) connections.sendBagOpen(M_Position)
                         KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
                             val index = buttonWithId.button.name!!.toInt()
                             when {

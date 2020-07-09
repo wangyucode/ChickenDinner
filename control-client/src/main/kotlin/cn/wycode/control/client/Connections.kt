@@ -17,8 +17,8 @@ const val JOYSTICK_STEP_DELAY = 40L
 const val SCREEN_EDGE = 5
 const val SCREEN_FOV_EDGE = 100
 const val REPEAT_INITIAL_DELAY = 67L
-const val RANDOM_POSITION_MIN = -20
-const val RANDOM_POSITION_MAX = 20
+const val RANDOM_POSITION_MIN = -15
+const val RANDOM_POSITION_MAX = 15
 
 class Connections(val appendTextFun: (String) -> Unit) {
 

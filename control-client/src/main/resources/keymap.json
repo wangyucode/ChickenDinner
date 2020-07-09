@@ -1,6 +1,6 @@
 {
-  "sensitivityX": 0.5,
-  "sensitivityY": 0.5,
+  "sensitivityX": 0.4,
+  "sensitivityY": 0.4,
   "repeatDelayMin": 2,
   "repeatDelayMax": 30,
   "drops": {
@@ -98,7 +98,7 @@
     {
       "key": "T",
       "position": {
-        "x": 1755,
+        "x": 1752,
         "y": 163
       }
     },

@@ -209,7 +209,7 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                             }
                         }
                         KEY_NAME_F -> {
-                            connections.resetTouch()
+                            connections.resetTouchAfterGetInCar()
                         }
                     }
                     connections.sendTouch(

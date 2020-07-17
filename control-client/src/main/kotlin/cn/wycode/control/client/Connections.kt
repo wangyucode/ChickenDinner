@@ -250,14 +250,6 @@ class Connections(val appendTextFun: (String) -> Unit) {
         if (isResetting) return
         // auto up after some time
         if (isFovAutoUp) {
-            sendTouch(
-                HEAD_TOUCH_UP,
-                TOUCH_ID_MOUSE,
-                lastFovX.toInt(),
-                lastFovY.toInt(),
-                false
-            )
-
             fovHandler.stop()
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             fovHandler.start()
@@ -328,8 +320,9 @@ class Connections(val appendTextFun: (String) -> Unit) {
         lastFovY = position.y.toDouble()
     }
 
-    fun resetTouch() {
-        if (!mouseVisible && !isFovAutoUp) {
+    fun resetTouchAfterGetInCar() {
+        if (mouseVisible) return
+        if (!isFovAutoUp) {
             sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
             isFovAutoUp = true
         }
@@ -505,7 +498,14 @@ class Connections(val appendTextFun: (String) -> Unit) {
 
     inner class ResetMouseRunnable : Runnable {
         override fun run() {
-            if (System.currentTimeMillis() - lastFovMoveTime > 1000L){
+            if (System.currentTimeMillis() - lastFovMoveTime > 1000L && !isFovAutoUp) {
+                sendTouch(
+                    HEAD_TOUCH_UP,
+                    TOUCH_ID_MOUSE,
+                    lastFovX.toInt(),
+                    lastFovY.toInt(),
+                    false
+                )
                 isFovAutoUp = true
             }
         }

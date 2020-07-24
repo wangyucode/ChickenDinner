@@ -14,30 +14,42 @@ class ZhuGuang(controlSocket: Socket) {
     private val sender = Sender(controlSocket.getOutputStream())
 
     fun start() {
-        while (true) {
-            repeat(100) {
-                sender.tap(1, 720, 2950, 0)
-                sleep(70)
+        Thread {
+            while (true) nengLiang()
+        }.start()
+
+        Thread {
+            while (true) {
+                shengJi()
+                sleep(10000)
             }
-            repeat(2) {
-                sender.tap(1, 1240, 680, 0)
-                sleep(500)
-            }
-            repeat(2) {
-                sender.tap(1, 1240, 1070, 0)
-                sleep(500)
-            }
-            repeat(2) {
-                sender.tap(1, 1240, 1470, 0)
-                sleep(500)
-            }
-            repeat(2) {
-                sender.tap(1, 1240, 1870, 0)
-                sleep(500)
-            }
-        }
+        }.start()
 
     }
 
+
+    fun nengLiang(){
+        sender.tap(1, 720, 2950, 10)
+        sleep(60)
+    }
+
+    fun shengJi(){
+        repeat(2) {
+            sender.tap(1, 1240, 680, 0)
+            sleep(500)
+        }
+        repeat(2) {
+            sender.tap(1, 1240, 1070, 0)
+            sleep(500)
+        }
+        repeat(2) {
+            sender.tap(1, 1240, 1470, 0)
+            sleep(500)
+        }
+        repeat(2) {
+            sender.tap(1, 1240, 1870, 0)
+            sleep(500)
+        }
+    }
 
 }

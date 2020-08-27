@@ -26,6 +26,7 @@ class Launcher : Application() {
         primaryStage.initStyle(StageStyle.TRANSPARENT)
         primaryStage.isFullScreen = true
         primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F12) primaryStage.isFullScreen = true}
+        primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F11) controller.textArea.text = ""}
         primaryStage.show()
     }
 

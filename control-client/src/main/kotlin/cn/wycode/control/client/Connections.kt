@@ -86,6 +86,9 @@ class Connections(val appendTextFun: (String) -> Unit) {
     private var lastFovX = 0.0
     private var lastFovY = 0.0
 
+    private var lastSentFovX = 0
+    private var lastSentFovY = 0
+
     private val robot = Robot()
 
     private val fovHandler = FovHandler(this)
@@ -160,8 +163,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
     }
 
     fun getRandomFirePosition(random: ThreadLocalRandom): Position {
-        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 11
-        val shakeX = leftMousePosition.x - randomY / 3 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
+        val randomY = random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX) * 4
+        val shakeX = leftMousePosition.x - randomY / 2 + random.nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
         val shakeY = leftMousePosition.y + randomY
         return Position(shakeX, shakeY)
     }
@@ -275,13 +278,15 @@ class Connections(val appendTextFun: (String) -> Unit) {
         lastFovX += dx * sensitivityX
         lastFovY += dy * sensitivityY
 
-        //reach the device edge
-        val reachEdge = checkFovEdge(resetPosition)
-        // ignore this move
-        if (reachEdge) return
+        //reach the device edge, ignore this move
+        if (checkFovEdge(resetPosition)) return
 
-        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
-        lastFovMoveTime = System.currentTimeMillis()
+        if (lastSentFovX != lastFovX.toInt() && lastSentFovY != lastFovY.toInt()) {
+            lastSentFovX = lastFovX.toInt()
+            lastSentFovY = lastFovY.toInt()
+            sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastSentFovX, lastSentFovY, false)
+            lastFovMoveTime = System.currentTimeMillis()
+        }
     }
 
     private fun checkFovEdge(position: Position): Boolean {
@@ -294,21 +299,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
                 lastFovY.toInt(),
                 false
             )
-            // reset mouse position
-            fovHandler.stop()
-            robot.mouseMove((OFFSET.x + position.x / RATIO).toInt(), (OFFSET.y + position.y / RATIO).toInt())
-            fovHandler.start()
-            // down from reset position
-            sendTouch(
-                HEAD_TOUCH_DOWN,
-                TOUCH_ID_MOUSE,
-                position.x,
-                position.y,
-                false
-            )
-            // reset last fov
-            resetLastFov(position)
-
+            isFovAutoUp = true
             true
         } else {
             false

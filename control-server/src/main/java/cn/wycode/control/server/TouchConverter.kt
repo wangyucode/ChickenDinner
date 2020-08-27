@@ -1,7 +1,6 @@
 package cn.wycode.control.server
 
 import android.os.SystemClock
-import android.util.SparseArray
 import android.view.InputDevice
 import android.view.MotionEvent
 import cn.wycode.control.common.HEAD_TOUCH_DOWN
@@ -18,7 +17,7 @@ class TouchConverter {
     private val pointerProperties = arrayOfNulls<MotionEvent.PointerProperties>(MAX_POINTERS)
     private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
 
-    val localIdToEvent = SparseArray<Event>(10)
+    val events = ArrayList<Event>(10)
 
     init {
         for (i in 0 until MAX_POINTERS) {
@@ -35,18 +34,27 @@ class TouchConverter {
     fun convert(input: Event): MotionEvent? {
         val now = SystemClock.uptimeMillis()
         var localId = -1
+        var index = -1
         var action = MotionEvent.ACTION_MOVE
+        // find saved index and localId
+        for (i in 0 until events.size) {
+            if (events[i].id == input.id) {
+                localId = events[i].localId
+                index = i
+                break
+            }
+        }
+
         when (input.type) {
             HEAD_TOUCH_DOWN -> {
                 lastTouchDown = now
                 // first touch down
-                if (localIdToEvent.size() == 0) {
+                if (events.size == 0) {
                     action = MotionEvent.ACTION_DOWN
-                    localIdToEvent.put(0, input.copy())
+                    events.add(input.copy(localId = 0))
                 } else {
-                    localId = getLocalId(input)
-                    if (localId != -1) {
-                        Ln.w("already down $input, $localIdToEvent")
+                    if (index != -1) {
+                        Ln.w("already down $input, $events")
                     } else {
                         localId = getUnusedLocalId()
                         if (localId == -1) {
@@ -54,43 +62,44 @@ class TouchConverter {
                             return null
                         }
                     }
-                    localIdToEvent.put(localId, input.copy())
+                    events.add(input.copy(localId = localId))
                     action =
-                        MotionEvent.ACTION_POINTER_DOWN or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                        MotionEvent.ACTION_POINTER_DOWN or (events.size - 1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                 }
             }
             HEAD_TOUCH_UP -> {
-                localId = getLocalId(input)
-                action = if (localIdToEvent.size() == 1) {
-                    MotionEvent.ACTION_UP
-                } else {
-                    MotionEvent.ACTION_POINTER_UP or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
-                }
-                if (localId == -1) {
-                    Ln.w("up id not found $input, $localIdToEvent")
+                if (index == -1) {
+                    Ln.w("up id not found $input, $events")
                     return null
                 } else {
-                    localIdToEvent.put(localId, input.copy())
+                    action = if (events.size == 1) {
+                        MotionEvent.ACTION_UP
+                    } else {
+                        MotionEvent.ACTION_POINTER_UP or (index shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                    }
+                    events[index] = input.copy(localId = localId)
                 }
             }
 
             HEAD_TOUCH_MOVE -> {
-                localId = getLocalId(input)
-                if (localId == -1) {
-                    Ln.w("move id not found $input, $localIdToEvent")
+                if (index == -1) {
+                    Ln.w("move id not found $input, $events")
                     return null
                 } else {
-                    localIdToEvent.put(localId, input.copy())
+                    // not moved, ignore this event
+                    if (input.x == events[index].x && input.y == events[index].y) return null
+                    events.removeAt(index)
+                    events.add(input.copy(localId = localId))
                 }
             }
         }
 
-        val pointerCount = localIdToEvent.size()
+        val pointerCount = events.size
 
         updatePointerData()
 
         if (input.type == HEAD_TOUCH_UP) {
-            localIdToEvent.remove(localId)
+            events.removeAt(index)
         }
 
         val event = MotionEvent.obtain(
@@ -110,19 +119,17 @@ class TouchConverter {
             0
         )
 
-        if (ENABLE_LOG && event.action != MotionEvent.ACTION_MOVE) {
-            Ln.d("localIdToEvent->${localIdToEvent}")
+        if (shouldLogEvent) {
+            Ln.d("localIdToEvent->${events}")
             Ln.d("inject->${event}")
         }
         return event
     }
 
     private fun updatePointerData() {
-        for (i in 0 until localIdToEvent.size()) {
-            val localId = localIdToEvent.keyAt(i)
-            val input = localIdToEvent.valueAt(i)
-
-            pointerProperties[i]!!.id = localId
+        for (i in 0 until events.size) {
+            val input = events[i]
+            pointerProperties[i]!!.id = input.localId
             pointerCoords[i]!!.x = input.x.toFloat()
             pointerCoords[i]!!.y = input.y.toFloat()
         }
@@ -130,17 +137,14 @@ class TouchConverter {
 
     private fun getUnusedLocalId(): Int {
         for (i in 0 until 10) {
-            val index = localIdToEvent.indexOfKey(i)
-            if (index < 0) return i
-        }
-        return -1
-    }
-
-    private fun getLocalId(input: Event): Int {
-        for (i in 0 until localIdToEvent.size()) {
-            if (localIdToEvent.valueAt(i).id == input.id) {
-                return localIdToEvent.keyAt(i)
+            var used = false
+            for (j in 0 until events.size) {
+                if (events[j].localId == i) {
+                    used = true
+                    break
+                }
             }
+            if (!used) return i
         }
         return -1
     }

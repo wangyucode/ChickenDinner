@@ -43,7 +43,6 @@ fun main(args: Array<String>) {
 fun resolveArguments(args: Array<String>) {
     if (args.isEmpty()) return
     if (args[0] == "--debug") ENABLE_LOG = true
-
 }
 
 //        Log.d("wy---->", "start!"+ Arrays.toString(args));

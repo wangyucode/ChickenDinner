@@ -12,10 +12,12 @@ import cn.wycode.control.server.wrappers.ServiceManager
 import java.io.InputStream
 import java.nio.ByteBuffer
 
+var shouldLogEvent = ENABLE_LOG
 
 class Controller(private val inputStream: InputStream) : Thread() {
 
-    private val event: Event = Event(0, 0, 0, 0, 0)
+    private val event: Event = Event(0, 0, 0, 0, 0, 0)
+    private var lastEvent = event.copy()
 
     /**
      * 1 byte id, 4 byte x , 4 byte y
@@ -41,8 +43,8 @@ class Controller(private val inputStream: InputStream) : Thread() {
         when (event.type) {
             HEAD_KEY -> injectKey()
             HEAD_CLEAR_TOUCH -> {
-                for (i in touchConverter.localIdToEvent.size()-1 downTo 0) {
-                    val event = touchConverter.localIdToEvent.valueAt(i)
+                for (i in touchConverter.events.size - 1 downTo 0) {
+                    val event = touchConverter.events[i]
                     if (event.id == TOUCH_ID_JOYSTICK) continue
                     this.event.type = HEAD_TOUCH_UP
                     this.event.id = event.id
@@ -61,6 +63,8 @@ class Controller(private val inputStream: InputStream) : Thread() {
         if (motionEvent != null) {
             injectEvent(motionEvent)
             motionEvent.recycle()
+        } else {
+            lastEvent.id = 0
         }
     }
 
@@ -88,11 +92,12 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 
     private fun injectEvent(event: InputEvent): Boolean {
-        return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC);
+        return serviceManager.inputManager.injectInputEvent(event, INJECT_INPUT_EVENT_MODE_ASYNC)
     }
 
     private fun readEvent() {
         event.type = inputStream.read().toByte()
+        event.key = 0
         when (event.type) {
             HEAD_KEY -> {
                 event.key = inputStream.read().toByte()
@@ -112,8 +117,11 @@ class Controller(private val inputStream: InputStream) : Thread() {
                 event.y = touchBuffer.getInt(5)
             }
         }
-        if (ENABLE_LOG && event.type != HEAD_TOUCH_MOVE) Ln.d("revive->${event}")
+        shouldLogEvent =
+            ENABLE_LOG && (lastEvent.type != event.type || lastEvent.id != event.id || event.key != ZERO_BYTE)
+        lastEvent = event.copy()
+        if (shouldLogEvent) Ln.d("revive->${event}")
     }
 }
 
-data class Event(var type: Byte, var id: Byte, var x: Int, var y: Int, var key: Byte)
+data class Event(var type: Byte, var id: Byte, var x: Int, var y: Int, var key: Byte, var localId: Int)

@@ -103,6 +103,13 @@
       }
     },
     {
+      "key": "U",
+      "position": {
+        "x": 2591,
+        "y": 267
+      }
+    },
+    {
       "name": "repeat",
       "key": "F2",
       "position": {

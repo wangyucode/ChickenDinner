@@ -43,8 +43,9 @@ class Controller(private val inputStream: InputStream) : Thread() {
         when (event.type) {
             HEAD_KEY -> injectKey()
             HEAD_CLEAR_TOUCH -> {
-                while (touchConverter.localIdToEvent.size() > 0) {
-                    val event = touchConverter.localIdToEvent.valueAt(touchConverter.localIdToEvent.size() - 1)
+                for (i in touchConverter.localIdToEvent.size() - 1 downTo 0) {
+                    val event = touchConverter.localIdToEvent.valueAt(i)
+                    if (event.id == TOUCH_ID_JOYSTICK) continue
                     this.event.type = HEAD_TOUCH_UP
                     this.event.id = event.id
                     this.event.x = event.x
@@ -62,7 +63,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
         if (motionEvent != null) {
             injectEvent(motionEvent)
             motionEvent.recycle()
-        } else {
+        } else if (shouldLogEvent) {
             lastEvent.id = 0
         }
     }
@@ -118,7 +119,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
         }
         shouldLogEvent =
             ENABLE_LOG && (lastEvent.type != event.type || lastEvent.id != event.id || event.key != ZERO_BYTE)
-        lastEvent = event.copy()
+        if (shouldLogEvent) lastEvent = event.copy()
         if (shouldLogEvent) Ln.d("revive->${event}")
     }
 }

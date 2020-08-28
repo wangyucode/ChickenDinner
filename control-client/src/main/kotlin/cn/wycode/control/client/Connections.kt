@@ -116,6 +116,8 @@ class Connections(val appendTextFun: (String) -> Unit) {
     @Volatile
     private var lastFovMoveTime = 0L
 
+    private var movingFovId = TOUCH_ID_MOUSE
+
     fun initButtons(keymap: Keymap) {
         joystick = keymap.joystick
         sensitivityX = keymap.sensitivityX
@@ -250,9 +252,16 @@ class Connections(val appendTextFun: (String) -> Unit) {
         if (isResetting) return
         // auto up after some time
         if (isFovAutoUp) {
+
+            movingFovId = if (movingFovId == TOUCH_ID_MOUSE) {
+                TOUCH_ID_MOUSE_BACKUP
+            } else {
+                TOUCH_ID_MOUSE
+            }
+
             sendTouch(
                 HEAD_TOUCH_DOWN,
-                TOUCH_ID_MOUSE,
+                movingFovId,
                 resetPosition.x,
                 resetPosition.y,
                 false
@@ -274,19 +283,17 @@ class Connections(val appendTextFun: (String) -> Unit) {
         //reach the device edge, ignore this move
         if (checkFovEdge()) return
 
-        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        sendTouch(HEAD_TOUCH_MOVE, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
         lastFovMoveTime = System.currentTimeMillis()
     }
 
     private fun checkFovEdge(): Boolean {
         return if (abs(lastFovX - resetPosition.x) > resetPosition.x / 2 || abs(lastFovY - resetPosition.y) > resetPosition.y - SCREEN_FOV_EDGE) {
             // up from current position
-            sendTouch(
-                HEAD_TOUCH_UP,
-                TOUCH_ID_MOUSE,
-                lastFovX.toInt(),
-                lastFovY.toInt(),
-                false
+            resetEventExecutor.schedule(
+                FovResetRunnable(movingFovId, lastFovX.toInt(), lastFovY.toInt()),
+                100,
+                TimeUnit.MILLISECONDS
             )
             isFovAutoUp = true
             true
@@ -303,7 +310,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
     fun resetTouchAfterGetInCar() {
         if (mouseVisible) return
         if (!isFovAutoUp) {
-            sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+            sendTouch(HEAD_TOUCH_UP, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
             isFovAutoUp = true
         }
         if (lastJoystickByte != ZERO_BYTE) {
@@ -340,7 +347,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
             resetFuture?.cancel(false)
             HEAD_MOUSE_VISIBLE
         } else {
-            sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE, resetPosition.x, resetPosition.y, false)
+            sendTouch(HEAD_TOUCH_DOWN, movingFovId, resetPosition.x, resetPosition.y, false)
             resetLastFov(resetPosition)
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             fovHandler.start()
@@ -355,7 +362,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
         fovHandler.stop()
         resetFuture?.cancel(false)
         mouseVisible = true
-        sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        sendTouch(HEAD_TOUCH_UP, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
         sendMouseMove(mousePosition.x, mousePosition.y)
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(HEAD_MOUSE_VISIBLE)))
         robot.mouseMove((OFFSET.x + mousePosition.x / RATIO).toInt(), (OFFSET.y + mousePosition.y / RATIO).toInt())
@@ -481,7 +488,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
             if (System.currentTimeMillis() - lastFovMoveTime > 1000L && !isFovAutoUp) {
                 sendTouch(
                     HEAD_TOUCH_UP,
-                    TOUCH_ID_MOUSE,
+                    movingFovId,
                     lastFovX.toInt(),
                     lastFovY.toInt(),
                     false
@@ -519,6 +526,12 @@ class Connections(val appendTextFun: (String) -> Unit) {
     class WriteRunnable(private val outputStream: OutputStream, private val data: ByteArray) : Runnable {
         override fun run() {
             outputStream.write(data)
+        }
+    }
+
+    inner class FovResetRunnable(private val id: Byte, private val x: Int, private val y: Int) : Runnable {
+        override fun run() {
+            sendTouch(HEAD_TOUCH_UP, id, x, y, false)
         }
     }
 }

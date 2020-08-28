@@ -16,7 +16,7 @@ var shouldLogEvent = ENABLE_LOG
 
 class Controller(private val inputStream: InputStream) : Thread() {
 
-    private val event: Event = Event(0, 0, 0, 0, 0, 0)
+    private val event: Event = Event(0, 0, 0, 0, 0)
     private var lastEvent = event.copy()
 
     /**
@@ -43,9 +43,8 @@ class Controller(private val inputStream: InputStream) : Thread() {
         when (event.type) {
             HEAD_KEY -> injectKey()
             HEAD_CLEAR_TOUCH -> {
-                for (i in touchConverter.events.size - 1 downTo 0) {
-                    val event = touchConverter.events[i]
-                    if (event.id == TOUCH_ID_JOYSTICK) continue
+                while (touchConverter.localIdToEvent.size() > 0) {
+                    val event = touchConverter.localIdToEvent.valueAt(touchConverter.localIdToEvent.size() - 1)
                     this.event.type = HEAD_TOUCH_UP
                     this.event.id = event.id
                     this.event.x = event.x
@@ -124,4 +123,4 @@ class Controller(private val inputStream: InputStream) : Thread() {
     }
 }
 
-data class Event(var type: Byte, var id: Byte, var x: Int, var y: Int, var key: Byte, var localId: Int)
+data class Event(var type: Byte, var id: Byte, var x: Int, var y: Int, var key: Byte)

@@ -86,9 +86,6 @@ class Connections(val appendTextFun: (String) -> Unit) {
     private var lastFovX = 0.0
     private var lastFovY = 0.0
 
-    private var lastSentFovX = 0
-    private var lastSentFovY = 0
-
     private val robot = Robot()
 
     private val fovHandler = FovHandler(this)
@@ -253,10 +250,6 @@ class Connections(val appendTextFun: (String) -> Unit) {
         if (isResetting) return
         // auto up after some time
         if (isFovAutoUp) {
-            fovHandler.stop()
-            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-            fovHandler.start()
-
             sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
@@ -279,18 +272,14 @@ class Connections(val appendTextFun: (String) -> Unit) {
         lastFovY += dy * sensitivityY
 
         //reach the device edge, ignore this move
-        if (checkFovEdge(resetPosition)) return
+        if (checkFovEdge()) return
 
-        if (lastSentFovX != lastFovX.toInt() && lastSentFovY != lastFovY.toInt()) {
-            lastSentFovX = lastFovX.toInt()
-            lastSentFovY = lastFovY.toInt()
-            sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastSentFovX, lastSentFovY, false)
-            lastFovMoveTime = System.currentTimeMillis()
-        }
+        sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_MOUSE, lastFovX.toInt(), lastFovY.toInt(), false)
+        lastFovMoveTime = System.currentTimeMillis()
     }
 
-    private fun checkFovEdge(position: Position): Boolean {
-        return if (abs(lastFovX - position.x) > position.x / 2 || abs(lastFovY - position.y) > position.y - SCREEN_FOV_EDGE) {
+    private fun checkFovEdge(): Boolean {
+        return if (abs(lastFovX - resetPosition.x) > resetPosition.x / 2 || abs(lastFovY - resetPosition.y) > resetPosition.y - SCREEN_FOV_EDGE) {
             // up from current position
             sendTouch(
                 HEAD_TOUCH_UP,

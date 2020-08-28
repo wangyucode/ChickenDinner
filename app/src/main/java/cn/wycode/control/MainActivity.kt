@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
@@ -32,6 +33,11 @@ class MainActivity : Activity() {
             intent.data = Uri.parse("package:$packageName")
             startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
         }
+//        content.setOnTouchListener{
+//            _,event->
+//            Log.d("wycs1",event.toString())
+//            true
+//        }
     }
 
     override fun onStart() {

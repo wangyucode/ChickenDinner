@@ -1,6 +1,7 @@
 package cn.wycode.control.server
 
 import android.os.SystemClock
+import android.util.SparseArray
 import android.view.InputDevice
 import android.view.MotionEvent
 import cn.wycode.control.common.HEAD_TOUCH_DOWN
@@ -13,11 +14,11 @@ const val MAX_POINTERS = 10
 
 class TouchConverter {
 
-    private var lastTouchDown = 0L
+    private var downTime = 0L
     private val pointerProperties = arrayOfNulls<MotionEvent.PointerProperties>(MAX_POINTERS)
     private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
 
-    val events = ArrayList<Event>(10)
+    val localIdToEvent = SparseArray<Event>(10)
 
     init {
         for (i in 0 until MAX_POINTERS) {
@@ -34,27 +35,18 @@ class TouchConverter {
     fun convert(input: Event): MotionEvent? {
         val now = SystemClock.uptimeMillis()
         var localId = -1
-        var index = -1
         var action = MotionEvent.ACTION_MOVE
-        // find saved index and localId
-        for (i in 0 until events.size) {
-            if (events[i].id == input.id) {
-                localId = events[i].localId
-                index = i
-                break
-            }
-        }
-
         when (input.type) {
             HEAD_TOUCH_DOWN -> {
-                lastTouchDown = now
                 // first touch down
-                if (events.size == 0) {
+                if (localIdToEvent.size() == 0) {
+                    downTime = now
                     action = MotionEvent.ACTION_DOWN
-                    events.add(input.copy(localId = 0))
+                    localIdToEvent.put(0, input.copy())
                 } else {
-                    if (index != -1) {
-                        Ln.w("already down $input, $events")
+                    localId = getLocalId(input)
+                    if (localId != -1) {
+                        Ln.w("already down $input, $localIdToEvent")
                     } else {
                         localId = getUnusedLocalId()
                         if (localId == -1) {
@@ -62,48 +54,50 @@ class TouchConverter {
                             return null
                         }
                     }
-                    events.add(input.copy(localId = localId))
+                    localIdToEvent.put(localId, input.copy())
                     action =
-                        MotionEvent.ACTION_POINTER_DOWN or (events.size - 1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                        MotionEvent.ACTION_POINTER_DOWN or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
                 }
             }
             HEAD_TOUCH_UP -> {
-                if (index == -1) {
-                    Ln.w("up id not found $input, $events")
+                localId = getLocalId(input)
+                action = if (localIdToEvent.size() == 1) {
+                    MotionEvent.ACTION_UP
+                } else {
+                    MotionEvent.ACTION_POINTER_UP or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                }
+                if (localId == -1) {
+                    Ln.w("up id not found $input, $localIdToEvent")
                     return null
                 } else {
-                    action = if (events.size == 1) {
-                        MotionEvent.ACTION_UP
-                    } else {
-                        MotionEvent.ACTION_POINTER_UP or (index shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
-                    }
-                    events[index] = input.copy(localId = localId)
+                    localIdToEvent.put(localId, input.copy())
                 }
             }
 
             HEAD_TOUCH_MOVE -> {
-                if (index == -1) {
-                    Ln.w("move id not found $input, $events")
+                localId = getLocalId(input)
+                if (localId == -1) {
+                    Ln.w("move id not found")
                     return null
                 } else {
-                    // not moved, ignore this event
-                    if (input.x == events[index].x && input.y == events[index].y) return null
-                    events.removeAt(index)
-                    events.add(input.copy(localId = localId))
+                    val savedEvent = localIdToEvent.get(localId)
+                    // ignore event if not actually moved
+                    if (savedEvent.x == input.x && savedEvent.y == input.y) return null
+                    localIdToEvent.put(localId, input.copy())
                 }
             }
         }
 
-        val pointerCount = events.size
+        val pointerCount = localIdToEvent.size()
 
         updatePointerData()
 
         if (input.type == HEAD_TOUCH_UP) {
-            events.removeAt(index)
+            localIdToEvent.remove(localId)
         }
 
         val event = MotionEvent.obtain(
-            lastTouchDown,
+            downTime,
             now,
             action,
             pointerCount,
@@ -113,23 +107,25 @@ class TouchConverter {
             0,
             1f,
             1f,
-            -1,
+            8,
             0,
             InputDevice.SOURCE_TOUCHSCREEN,
             0
         )
 
         if (shouldLogEvent) {
-            Ln.d("localIdToEvent->${events}")
+            Ln.d("localIdToEvent->${localIdToEvent}")
             Ln.d("inject->${event}")
         }
         return event
     }
 
     private fun updatePointerData() {
-        for (i in 0 until events.size) {
-            val input = events[i]
-            pointerProperties[i]!!.id = input.localId
+        for (i in 0 until localIdToEvent.size()) {
+            val localId = localIdToEvent.keyAt(i)
+            val input = localIdToEvent.valueAt(i)
+
+            pointerProperties[i]!!.id = localId
             pointerCoords[i]!!.x = input.x.toFloat()
             pointerCoords[i]!!.y = input.y.toFloat()
         }
@@ -137,14 +133,17 @@ class TouchConverter {
 
     private fun getUnusedLocalId(): Int {
         for (i in 0 until 10) {
-            var used = false
-            for (j in 0 until events.size) {
-                if (events[j].localId == i) {
-                    used = true
-                    break
-                }
+            val index = localIdToEvent.indexOfKey(i)
+            if (index < 0) return i
+        }
+        return -1
+    }
+
+    private fun getLocalId(input: Event): Int {
+        for (i in 0 until localIdToEvent.size()) {
+            if (localIdToEvent.valueAt(i).id == input.id) {
+                return localIdToEvent.keyAt(i)
             }
-            if (!used) return i
         }
         return -1
     }

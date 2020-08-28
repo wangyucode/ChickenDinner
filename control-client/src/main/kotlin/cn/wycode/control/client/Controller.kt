@@ -32,9 +32,19 @@ class Controller : Initializable {
         }
     }
 
+    private val fovChangeFun = fun(visible: Boolean) {
+        Platform.runLater {
+            controlPane.cursor = if (visible) {
+                Cursor.DEFAULT
+            } else {
+                Cursor.NONE
+            }
+        }
+    }
+
     private val initialTask = InitialTask(appendTextFun)
     private lateinit var readTask: ReadTask
-    private val connections = Connections(appendTextFun)
+    private val connections = Connections(fovChangeFun)
     private val mouseHandler = MouseHandler(connections)
     private val keyHandler = KeyHandler(connections)
 
@@ -104,7 +114,7 @@ class Controller : Initializable {
 
         }
         Thread(readTask).start()
-        controlPane.cursor = Cursor.CROSSHAIR
+
         controlPane.addEventHandler(MouseEvent.ANY, mouseHandler)
     }
 

@@ -20,7 +20,7 @@ const val REPEAT_INITIAL_DELAY = 67L
 const val RANDOM_POSITION_MIN = -20
 const val RANDOM_POSITION_MAX = 20
 
-class Connections(val appendTextFun: (String) -> Unit) {
+class Connections(val fovChangeFun: (Boolean) -> Unit) {
 
     /**
      * 1 byte head, 1 byte id, 4 byte x , 4 byte y
@@ -345,6 +345,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
             fovHandler.stop()
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             resetFuture?.cancel(false)
+            fovChangeFun(true)
             HEAD_MOUSE_VISIBLE
         } else {
             sendTouch(HEAD_TOUCH_DOWN, movingFovId, resetPosition.x, resetPosition.y, false)
@@ -353,6 +354,7 @@ class Connections(val appendTextFun: (String) -> Unit) {
             fovHandler.start()
             resetFuture =
                 resetEventExecutor.scheduleAtFixedRate(ResetMouseRunnable(), 1000L, 1000L, TimeUnit.MILLISECONDS)
+            fovChangeFun(false)
             HEAD_MOUSE_INVISIBLE
         }
         mouseEventExecutor.execute(WriteRunnable(mouseOutputStream, byteArrayOf(head)))

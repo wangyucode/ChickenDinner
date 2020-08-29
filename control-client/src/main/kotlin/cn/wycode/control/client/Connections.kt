@@ -90,7 +90,6 @@ class Connections(val fovChangeFun: (Boolean) -> Unit) {
 
     private val fovHandler = FovHandler(this)
 
-    private var resetFuture: ScheduledFuture<*>? = null
     private var repeatFuture: ScheduledFuture<*>? = null
     private var joystickFuture: ScheduledFuture<*>? = null
     private var closeDropFuture: ScheduledFuture<*>? = null
@@ -344,7 +343,6 @@ class Connections(val fovChangeFun: (Boolean) -> Unit) {
             sendMouseMove(resetPosition.x, resetPosition.y)
             fovHandler.stop()
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
-            resetFuture?.cancel(false)
             fovChangeFun(true)
             HEAD_MOUSE_VISIBLE
         } else {
@@ -352,8 +350,6 @@ class Connections(val fovChangeFun: (Boolean) -> Unit) {
             resetLastFov(resetPosition)
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             fovHandler.start()
-            resetFuture =
-                resetEventExecutor.scheduleAtFixedRate(ResetMouseRunnable(), 1000L, 1000L, TimeUnit.MILLISECONDS)
             fovChangeFun(false)
             HEAD_MOUSE_INVISIBLE
         }
@@ -362,7 +358,6 @@ class Connections(val fovChangeFun: (Boolean) -> Unit) {
 
     fun sendBagOpen(mousePosition: Position) {
         fovHandler.stop()
-        resetFuture?.cancel(false)
         mouseVisible = true
         sendTouch(HEAD_TOUCH_UP, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
         sendMouseMove(mousePosition.x, mousePosition.y)
@@ -482,21 +477,6 @@ class Connections(val fovChangeFun: (Boolean) -> Unit) {
             joystickBuffer.putInt(lastJoystickY)
             controlOutputStream.write(joystickBuffer.array())
 
-        }
-    }
-
-    inner class ResetMouseRunnable : Runnable {
-        override fun run() {
-            if (System.currentTimeMillis() - lastFovMoveTime > 1000L && !isFovAutoUp) {
-                sendTouch(
-                    HEAD_TOUCH_UP,
-                    movingFovId,
-                    lastFovX.toInt(),
-                    lastFovY.toInt(),
-                    false
-                )
-                isFovAutoUp = true
-            }
         }
     }
 

@@ -15,8 +15,7 @@
         android:theme="@style/ActivityTheme" tools:ignore="GoogleAppIndexingWarning">
         <service
             android:name=".MouseService"
-            android:enabled="true"
-            android:exported="true"/>
+            android:enabled="true"/>
 
         <activity android:name=".MainActivity"
                   android:configChanges="orientation|screenLayout">

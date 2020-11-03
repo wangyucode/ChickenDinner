@@ -11,10 +11,15 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.*
+import cn.wycode.control.common.LOG_TAG
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 const val CHANNEL_ID = "cn.wycode.control_channel"
 
@@ -29,14 +34,16 @@ class MouseService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             "control channel",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_LOW
         )
 
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
 
         val notification: Notification = Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("Android Controller")
-            .setContentText("running").build()
+            .setContentText("running")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .build()
 
         startForeground(1, notification)
 
@@ -61,13 +68,21 @@ class MouseService : Service() {
         val pointer = overlay.getChildAt(1)
 
         val server = MouseServer(size, pointer, keymapView)
-        server.execute()
+
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            server.start()
+        }
 
         overlay.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             if (currentOrientation != resources.configuration.orientation) {
                 currentOrientation = resources.configuration.orientation
                 windowManager.defaultDisplay.getRealSize(size)
-                server.screenInfoExecutor.submit { server.sendScreenInfo() }
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    server.sendScreenInfo()
+                }
             }
         }
     }
@@ -76,4 +91,9 @@ class MouseService : Service() {
         return null
     }
 
+    override fun onDestroy() {
+        Log.d(LOG_TAG, "onDestroy");
+        stopForeground(true)
+        super.onDestroy()
+    }
 }

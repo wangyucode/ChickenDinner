@@ -4,22 +4,20 @@ import android.content.Intent
 import android.graphics.Point
 import android.net.LocalServerSocket
 import android.net.LocalSocket
-import android.os.AsyncTask
 import android.util.Log
 import android.view.View
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
+import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 class MouseServer(
     private val size: Point,
     private val pointerView: View,
     private val keymapView: KeymapView
-) : AsyncTask<Int, Byte, Int>() {
+) {
 
     private lateinit var mouseSocket: LocalSocket
     private lateinit var serverSocket: LocalServerSocket
@@ -28,48 +26,55 @@ class MouseServer(
     private val inputPointBuffer = ByteBuffer.allocate(8)
     private val outputPointBuffer = ByteBuffer.allocate(8)
 
-    val screenInfoExecutor: ExecutorService = Executors.newSingleThreadExecutor()
-
     private val point = Point()
 
     private lateinit var keymap: Keymap
     private var shutdown = false
 
-    override fun doInBackground(vararg params: Int?): Int {
+    fun start() {
         serverSocket = LocalServerSocket(MOUSE_SOCKET)
         mouseSocket = serverSocket.accept()
         val inputStream = mouseSocket.inputStream
         outputStream = mouseSocket.outputStream
         outputStream.write(1)
         Log.d(LOG_TAG, "Mouse client connected!")
+        this.sendScreenInfo()
 
-        screenInfoExecutor.submit { this.sendScreenInfo() }
         while (!shutdown) {
-            val head = inputStream.read().toByte()
-            when (head) {
-                HEAD_MOUSE_MOVE -> {
-                    inputStream.read(inputPointBuffer.array())
-                    point.x = inputPointBuffer.getInt(0)
-                    point.y = inputPointBuffer.getInt(4)
-                }
-                HEAD_SHUT_DOWN -> shutdown = true
-                HEAD_KEYMAP -> {
-                    val sizeBuffer = ByteBuffer.allocate(4)
-                    inputStream.read(sizeBuffer.array())
-                    val size = sizeBuffer.getInt(0)
-                    val dataArray = ByteArray(size)
-                    inputStream.read(dataArray)
-                    val keymapString = dataArray.toString(StandardCharsets.UTF_8)
-                    keymap = JSON.parseObject(keymapString, Keymap::class.java)
-                }
-            }
-            publishProgress(head)
+            val head = read(inputStream)
+            updateUi(head)
         }
-        return 0
+
+        mouseSocket.close()
+        serverSocket.close()
+        keymapView.context.stopService(Intent(keymapView.context, MouseService::class.java))
+        android.os.Process.killProcess(android.os.Process.myPid())
     }
 
-    override fun onProgressUpdate(vararg values: Byte?) {
-        when (values[0]) {
+    private fun read(inputStream: InputStream): Byte {
+        val head = inputStream.read().toByte()
+        when (head) {
+            HEAD_MOUSE_MOVE -> {
+                inputStream.read(inputPointBuffer.array())
+                point.x = inputPointBuffer.getInt(0)
+                point.y = inputPointBuffer.getInt(4)
+            }
+            HEAD_SHUT_DOWN -> shutdown = true
+            HEAD_KEYMAP -> {
+                val sizeBuffer = ByteBuffer.allocate(4)
+                inputStream.read(sizeBuffer.array())
+                val size = sizeBuffer.getInt(0)
+                val dataArray = ByteArray(size)
+                inputStream.read(dataArray)
+                val keymapString = dataArray.toString(StandardCharsets.UTF_8)
+                keymap = JSON.parseObject(keymapString, Keymap::class.java)
+            }
+        }
+        return head
+    }
+
+    private fun updateUi(head: Byte) {
+        when (head) {
             HEAD_MOUSE_MOVE -> {
                 pointerView.x = point.x.toFloat()
                 pointerView.y = point.y.toFloat()
@@ -105,14 +110,6 @@ class MouseServer(
                 keymapView.invalidate()
             }
         }
-    }
-
-    override fun onPostExecute(result: Int?) {
-        super.onPostExecute(result)
-        mouseSocket.close()
-        serverSocket.close()
-        keymapView.context.stopService(Intent(keymapView.context, MouseService::class.java))
-        android.os.Process.killProcess(android.os.Process.myPid())
     }
 
     fun sendScreenInfo() {

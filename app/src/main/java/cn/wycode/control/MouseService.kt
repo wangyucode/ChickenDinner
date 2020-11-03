@@ -69,9 +69,7 @@ class MouseService : Service() {
 
         val server = MouseServer(size, pointer, keymapView)
 
-
         CoroutineScope(Dispatchers.IO).launch {
-
             server.start()
         }
 

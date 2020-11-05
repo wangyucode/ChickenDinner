@@ -15,7 +15,10 @@ import android.view.WindowManager
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MouseServerWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {
 
@@ -40,7 +43,6 @@ class MouseServerWorker(context: Context, parameters: WorkerParameters) : Corout
         withContext(Dispatchers.Main) {
             addOverlay()
         }
-
         val server = MouseServer(size, pointer, keymapView)
 
         keymapView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->

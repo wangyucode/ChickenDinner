@@ -1,6 +1,5 @@
 package cn.wycode.control
 
-import android.content.Intent
 import android.graphics.Point
 import android.net.LocalServerSocket
 import android.net.LocalSocket
@@ -9,6 +8,8 @@ import android.view.View
 import androidx.work.WorkManager
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -23,6 +24,7 @@ class MouseServer(
     private lateinit var mouseSocket: LocalSocket
     private lateinit var serverSocket: LocalServerSocket
     private lateinit var outputStream: OutputStream
+    private lateinit var inputStream: InputStream
 
     private val inputPointBuffer = ByteBuffer.allocate(8)
     private val outputPointBuffer = ByteBuffer.allocate(8)
@@ -32,18 +34,21 @@ class MouseServer(
     private lateinit var keymap: Keymap
     private var shutdown = false
 
-    fun start() {
+    @Suppress("BlockingMethodInNonBlockingContext")
+    suspend fun start() {
         serverSocket = LocalServerSocket(MOUSE_SOCKET)
         mouseSocket = serverSocket.accept()
-        val inputStream = mouseSocket.inputStream
+        inputStream = mouseSocket.inputStream
         outputStream = mouseSocket.outputStream
         outputStream.write(1)
         Log.d(LOG_TAG, "Mouse client connected!")
-        this.sendScreenInfo()
+        sendScreenInfo()
 
         while (!shutdown) {
             val head = read(inputStream)
-            updateUi(head)
+            withContext(Dispatchers.Main){
+                updateUi(head)
+            }
         }
 
         mouseSocket.close()

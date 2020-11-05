@@ -43,6 +43,7 @@ class MouseServerWorker(context: Context, parameters: WorkerParameters) : Corout
         withContext(Dispatchers.Main) {
             addOverlay()
         }
+
         val server = MouseServer(size, pointer, keymapView)
 
         keymapView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->

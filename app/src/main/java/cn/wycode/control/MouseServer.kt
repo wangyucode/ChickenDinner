@@ -6,6 +6,7 @@ import android.net.LocalServerSocket
 import android.net.LocalSocket
 import android.util.Log
 import android.view.View
+import androidx.work.WorkManager
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
 import java.io.InputStream
@@ -47,7 +48,7 @@ class MouseServer(
 
         mouseSocket.close()
         serverSocket.close()
-        keymapView.context.stopService(Intent(keymapView.context, MouseService::class.java))
+        WorkManager.getInstance(keymapView.context).cancelAllWork()
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 

@@ -9,8 +9,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
-
-const val OVERLAY_PERMISSION_REQUEST_CODE = 300
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 class MainActivity : Activity() {
 
@@ -31,13 +33,8 @@ class MainActivity : Activity() {
             val intent = Intent()
             intent.action = Settings.ACTION_MANAGE_OVERLAY_PERMISSION
             intent.data = Uri.parse("package:$packageName")
-            startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
+            startActivityForResult(intent, 1)
         }
-//        content.setOnTouchListener{
-//            _,event->
-//            Log.d("wycs1",event.toString())
-//            true
-//        }
     }
 
     override fun onStart() {
@@ -45,7 +42,13 @@ class MainActivity : Activity() {
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "没有权限！", Toast.LENGTH_SHORT).show()
         } else {
-            startForegroundService(Intent(this, MouseService::class.java))
+            val workRequest: OneTimeWorkRequest =
+                OneTimeWorkRequestBuilder<MouseServerWorker>()
+                    .build()
+
+            WorkManager
+                .getInstance(this)
+                .enqueueUniqueWork("MouseServerWorker", ExistingWorkPolicy.REPLACE, workRequest)
         }
     }
 }

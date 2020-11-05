@@ -11,13 +11,13 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/client-ui" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/control-client" />
             <option value="$PROJECT_DIR$/control-server" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
-        <option name="useAutoImport" value="true" />
       </GradleProjectSettings>
     </option>
   </component>

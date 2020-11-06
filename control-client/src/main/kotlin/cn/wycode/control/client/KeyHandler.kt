@@ -29,7 +29,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
         }
         buttonMap[KeyCode.DIGIT4] = ButtonWithId(buttonMap.size, Button("4", keymap.drops.open, KEY_NAME_FOUR))
         buttonMap[KeyCode.DIGIT5] = ButtonWithId(buttonMap.size + 1, Button("5", keymap.drugs.open, KEY_NAME_FIVE))
-        buttonMap[KeyCode.DIGIT6] = ButtonWithId(buttonMap.size + 2, Button("6", keymap.drugs.buttons[5], KEY_NAME_SIX))
     }
 
     override fun handle(event: KeyEvent) {
@@ -88,13 +87,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                                 connections.isDropsOpen -> keymap.drops.buttons[4]
                                 connections.isDrugsOpen -> keymap.drugs.buttons[0]
                                 else -> keymap.drugs.open
-                            }
-                        }
-                        KEY_NAME_SIX -> {
-                            if (connections.isDrugsOpen) {
-                                position = keymap.drugs.buttons[5]
-                            } else {
-                                return
                             }
                         }
                     }
@@ -198,14 +190,6 @@ class KeyHandler(private val connections: Connections) : EventHandler<KeyEvent> 
                                     connections.sendDropsOpen(false)
                                     keymap.drugs.open
                                 }
-                            }
-                        }
-                        KEY_NAME_SIX -> {
-                            if (connections.isDrugsOpen) {
-                                connections.sendDrugsOpen(false)
-                                position = keymap.drugs.buttons[5]
-                            } else {
-                                return
                             }
                         }
                         KEY_NAME_F -> {

@@ -6,16 +6,19 @@ import cn.wycode.control.common.*
 import javafx.event.EventHandler
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
+import org.springframework.stereotype.Component
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
 
+@Component
 class KeyHandler(
     val joystickHelper: JoystickHelper,
     val switchMouseHelper: SwitchMouseHelper,
     val connections: Connections,
-    val weaponHelper: WeaponHelper,
     val bagHelper: BagHelper,
+    val fovHelper: FovHelper,
+    val propsHelper: PropsHelper,
     val repeatHelper: RepeatHelper
 ) : EventHandler<KeyEvent> {
 
@@ -30,8 +33,6 @@ class KeyHandler(
     private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
     private lateinit var keymap: Keymap
     private lateinit var resetPosition: Position
-    private var isDropsOpen = false
-    private var isDrugsOpen = false
 
     fun initButtons(keymap: Keymap) {
         this.keymap = keymap
@@ -43,9 +44,14 @@ class KeyHandler(
         }
         joystickHelper.joystick = keymap.joystick
         switchMouseHelper.resetPosition = resetPosition
+        fovHelper.resetPosition = resetPosition
+        fovHelper.sensitivityX = keymap.sensitivityX
+        fovHelper.sensitivityY = keymap.sensitivityY
         repeatHelper.repeatDelayMin = keymap.repeatDelayMin
         repeatHelper.repeatDelayMax = keymap.repeatDelayMax
         repeatHelper.leftMousePosition = keymap.mouse.left
+        propsHelper.drops = keymap.drops
+        propsHelper.drugs = keymap.drugs
 
         buttonMap[KeyCode.DIGIT4] = ButtonWithId(
             buttonMap.size,
@@ -54,10 +60,6 @@ class KeyHandler(
         buttonMap[KeyCode.DIGIT5] = ButtonWithId(
             buttonMap.size + 1,
             Button("5", keymap.drugs.open, KEY_NAME_FIVE)
-        )
-        buttonMap[KeyCode.DIGIT6] = ButtonWithId(
-            buttonMap.size + 2,
-            Button("6", keymap.drugs.buttons[5], KEY_NAME_SIX)
         )
     }
 
@@ -94,37 +96,11 @@ class KeyHandler(
                 // screen button
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
-                    var position = buttonWithId.button.position
+                    val position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return
-                        KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
-                            val index = buttonWithId.button.name!!.toInt()
-                            if (isDropsOpen) {
-                                position = keymap.drops.buttons[index]
-                            } else if (isDrugsOpen) {
-                                position = keymap.drugs.buttons[index]
-                            }
-                        }
-                        KEY_NAME_FOUR -> {
-                            position = when {
-                                isDropsOpen -> keymap.drops.buttons[0]
-                                isDrugsOpen -> keymap.drugs.buttons[4]
-                                else -> keymap.drops.open
-                            }
-                        }
-                        KEY_NAME_FIVE -> {
-                            position = when {
-                                isDropsOpen -> keymap.drops.buttons[4]
-                                isDrugsOpen -> keymap.drugs.buttons[0]
-                                else -> keymap.drugs.open
-                            }
-                        }
-                        KEY_NAME_SIX -> {
-                            if (isDrugsOpen) {
-                                position = keymap.drugs.buttons[5]
-                            } else {
-                                return
-                            }
+                        else -> {
+                            propsHelper.changeDownPosition(buttonWithId.button.name, position)
                         }
                     }
                     connections.sendTouch(
@@ -167,7 +143,7 @@ class KeyHandler(
             else -> {
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
-                    var position = buttonWithId.button.position
+                    val position = buttonWithId.button.position
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
                             switchMouseHelper.sendSwitchMouse()
@@ -179,68 +155,11 @@ class KeyHandler(
                             connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
                             return
                         }
-                        KEY_NAME_BAG -> if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen(Position(2691, 267))
-                        KEY_NAME_ONE, KEY_NAME_TWO, KEY_NAME_THREE -> {
-                            val index = buttonWithId.button.name!!.toInt()
-                            when {
-                                connections.isDropsOpen -> {
-                                    position = keymap.drops.buttons[index]
-                                    connections.sendDropsOpen(false)
-                                    weaponHelper.weaponNumber = 4
-                                }
-                                connections.isDrugsOpen -> {
-                                    position = keymap.drugs.buttons[index]
-                                    connections.sendDrugsOpen(false)
-                                }
-                                else -> connections.weaponNumber = index
-                            }
-                        }
-                        KEY_NAME_FOUR -> {
-                            position = when {
-                                connections.isDropsOpen -> {
-                                    connections.sendDropsOpen(false)
-                                    connections.weaponNumber = 4
-                                    keymap.drops.buttons[0]
-                                }
-                                connections.isDrugsOpen -> {
-                                    connections.sendDrugsOpen(false)
-                                    keymap.drugs.buttons[4]
-                                }
-                                else -> {
-                                    connections.sendDropsOpen(true)
-                                    connections.sendDrugsOpen(false)
-                                    keymap.drops.open
-                                }
-                            }
-                        }
-                        KEY_NAME_FIVE -> {
-                            position = when {
-                                connections.isDropsOpen -> {
-                                    connections.sendDropsOpen(false)
-                                    keymap.drops.buttons[4]
-                                }
-                                connections.isDrugsOpen -> {
-                                    connections.sendDrugsOpen(false)
-                                    keymap.drugs.buttons[0]
-                                }
-                                else -> {
-                                    connections.sendDrugsOpen(true)
-                                    connections.sendDropsOpen(false)
-                                    keymap.drugs.open
-                                }
-                            }
-                        }
-                        KEY_NAME_SIX -> {
-                            if (connections.isDrugsOpen) {
-                                connections.sendDrugsOpen(false)
-                                position = keymap.drugs.buttons[5]
-                            } else {
-                                return
-                            }
-                        }
-                        KEY_NAME_F -> {
-                            connections.resetTouchAfterGetInCar()
-                        }
+                        KEY_NAME_BAG -> if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
+                        //KEY_NAME_F -> connections.resetTouchAfterGetInCar()
+                        else -> propsHelper.changeUpPosition(buttonWithId.button.name, position)
+
+
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_UP,
@@ -255,10 +174,10 @@ class KeyHandler(
     }
 
     fun focusChange(focus: Boolean) {
-        if (!focus && !connections.mouseVisible) {
-            connections.sendJoystick(JoystickDirection.NONE.joystickByte)
+        if (!focus) {
+            joystickHelper.sendJoystick(JoystickDirection.NONE.joystickByte)
             connections.sendClearTouch()
-            if (!connections.mouseVisible) connections.sendSwitchMouse()
+            if (!switchMouseHelper.mouseVisible) switchMouseHelper.sendSwitchMouse()
         }
     }
 }

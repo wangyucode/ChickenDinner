@@ -16,7 +16,6 @@ const val KEY_NAME_TWO = "2"
 const val KEY_NAME_THREE = "3"
 const val KEY_NAME_FOUR = "4"
 const val KEY_NAME_FIVE = "5"
-const val KEY_NAME_SIX = "6"
 const val KEY_NAME_REPEAT = "repeat"
 
 data class Keymap(

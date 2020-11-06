@@ -1,11 +1,13 @@
 package cn.wycode.clientui.helper
 
 import cn.wycode.clientui.Connections
-import cn.wycode.control.common.HEAD_TOUCH_DOWN
-import cn.wycode.control.common.HEAD_TOUCH_MOVE
-import cn.wycode.control.common.TOUCH_ID_MOUSE
-import cn.wycode.control.common.TOUCH_ID_MOUSE_BACKUP
+import cn.wycode.control.common.*
+import kotlinx.coroutines.*
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
+
+const val SCREEN_FOV_EDGE = 100
 
 @Component
 class FovHelper(val connections: Connections) {
@@ -14,6 +16,13 @@ class FovHelper(val connections: Connections) {
     var isFovAutoUp = false
     var lastFovMoveTime = 0L
     var movingFovId = TOUCH_ID_MOUSE
+    lateinit var resetPosition: Position
+
+    var lastFovX = 0.0
+    var lastFovY = 0.0
+
+    var sensitivityX = 1.0
+    var sensitivityY = 1.0
 
     fun sendMoveFov(dx: Int, dy: Int) {
         if (isResetting) return
@@ -50,7 +59,29 @@ class FovHelper(val connections: Connections) {
         //reach the device edge, ignore this move
         if (checkFovEdge()) return
 
-        sendTouch(HEAD_TOUCH_MOVE, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
+        connections.sendTouch(HEAD_TOUCH_MOVE, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
         lastFovMoveTime = System.currentTimeMillis()
+    }
+
+    fun resetLastFov(position: Position) {
+        lastFovX = position.x.toDouble()
+        lastFovY = position.y.toDouble()
+    }
+
+    private fun checkFovEdge(): Boolean {
+        return if (abs(lastFovX - resetPosition.x) > resetPosition.x / 2 || abs(lastFovY - resetPosition.y) > resetPosition.y - SCREEN_FOV_EDGE) {
+            // up from current position
+            val x = lastFovX.toInt()
+            val y = lastFovY.toInt()
+            val id = movingFovId
+            CoroutineScope(Dispatchers.IO).launch {
+                delay(100)
+                connections.sendTouch(HEAD_TOUCH_UP, id, x, y, false)
+            }
+            isFovAutoUp = true
+            true
+        } else {
+            false
+        }
     }
 }

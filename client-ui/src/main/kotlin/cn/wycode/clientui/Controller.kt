@@ -35,15 +35,7 @@ class Controller(
     lateinit var controlPane: Pane
 
 
-    private val fovChangeFun = fun(visible: Boolean) {
-        Platform.runLater {
-            controlPane.cursor = if (visible) {
-                Cursor.DEFAULT
-            } else {
-                Cursor.NONE
-            }
-        }
-    }
+
 
 //    private val connections = Connections(fovChangeFun)
 //    private val mouseHandler = MouseHandler(connections)
@@ -67,15 +59,6 @@ class Controller(
 //
 //        Thread(initialTask).start()
     }
-
-
-//    private fun onControlServiceConnected() {
-//        println("client::connected to control service!")
-//        mouseHandler.controlConnected = true
-//        connections.controlOutputStream = initialTask.controlSocket.getOutputStream()
-//        controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
-//        controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
-//    }
 
 
     fun onScreenChange() {
@@ -113,12 +96,21 @@ class Controller(
         textArea.text = ""
     }
 
+    fun changeCursor(visible: Boolean) {
+        controlPane.cursor = if (visible) {
+            Cursor.DEFAULT
+        } else {
+            Cursor.NONE
+        }
+    }
+
     fun onOverlayConnected() {
         controlPane.addEventHandler(MouseEvent.ANY, mouseHandler)
     }
 
     fun onControlConnected() {
         controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
+        controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
     }
 
 }

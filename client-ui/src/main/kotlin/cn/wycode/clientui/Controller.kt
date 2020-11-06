@@ -1,5 +1,7 @@
 package cn.wycode.clientui
 
+import cn.wycode.clientui.handler.KeyHandler
+import cn.wycode.clientui.handler.MouseHandler
 import cn.wycode.control.common.Position
 import javafx.application.Platform
 import javafx.fxml.FXML
@@ -12,7 +14,6 @@ import javafx.stage.Screen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
 
 var RATIO = 3.0
@@ -21,7 +22,11 @@ var SCREEN = Position(0, 0)
 var CANVAS = Position(0, 0)
 
 @Component
-class Controller(val initializer: Initializer) {
+class Controller(
+    val initializer: Initializer,
+    val mouseHandler: MouseHandler,
+    val keyHandler: KeyHandler
+) {
 
     @FXML
     lateinit var textArea: TextArea
@@ -40,15 +45,14 @@ class Controller(val initializer: Initializer) {
         }
     }
 
-    private lateinit var readTask: ReadTask
-    private val connections = Connections(fovChangeFun)
-    private val mouseHandler = MouseHandler(connections)
-    private val keyHandler = KeyHandler(connections)
+//    private val connections = Connections(fovChangeFun)
+//    private val mouseHandler = MouseHandler(connections)
+//    private val keyHandler = KeyHandler(connections)
 
     @FXML
     fun initialize() {
         CoroutineScope(Dispatchers.Main).launch {
-            initializer.initialize(textArea, controlPane)
+            initializer.initialize(textArea)
         }
 //        initialTask.valueProperty().addListener { _, _, value ->
 //            when (value) {
@@ -64,71 +68,57 @@ class Controller(val initializer: Initializer) {
 //        Thread(initialTask).start()
     }
 
-    private suspend fun appendText(text: String) {
-        withContext(Dispatchers.Main) {
-            textArea.appendText("$text\n")
-        }
-    }
 
-    private fun onControlServiceConnected() {
-        println("client::connected to control service!")
-        mouseHandler.controlConnected = true
-        connections.controlOutputStream = initialTask.controlSocket.getOutputStream()
-        controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
-        controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
-    }
+//    private fun onControlServiceConnected() {
+//        println("client::connected to control service!")
+//        mouseHandler.controlConnected = true
+//        connections.controlOutputStream = initialTask.controlSocket.getOutputStream()
+//        controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
+//        controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
+//    }
 
-    private fun onMouseServiceConnected() {
-        println("client::connected to overlay service!")
-        mouseHandler.mouseConnected = true
-        connections.mouseOutputStream = initialTask.mouseSocket.getOutputStream()
 
-        connections.sendKeymap(initialTask.keymapString)
-
+    fun onScreenChange() {
         val screen = Screen.getPrimary()
         val screenBounds = screen.bounds
-
-        readTask = ReadTask(initialTask.mouseSocket, appendTextFun)
-        readTask.valueProperty().addListener { _, _, _ ->
-            // The client screen is wider than the server
-            RATIO =
-                if (screenBounds.width / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
-                    SCREEN.y / screenBounds.height
-                } else {
-                    SCREEN.x / screenBounds.width
-                }
-            textArea.prefWidth = SCREEN.x / RATIO
-            textArea.prefHeight = SCREEN.y / RATIO
-
-            controlPane.prefWidth = textArea.prefWidth
-            controlPane.prefHeight = textArea.prefHeight
-
-            CANVAS.x = textArea.prefWidth.toInt()
-            CANVAS.y = textArea.prefHeight.toInt()
-
-            textArea.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
-            textArea.layoutY = 0.0
-
-            controlPane.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
-            controlPane.layoutY = 0.0
-
-            val window = textArea.scene.window
-            window.y = 0.0
-            window.x = screenBounds.width / 2 - window.width / 2
-
-            OFFSET.x = (window.x + textArea.layoutX).toInt()
-            OFFSET.y = (window.y + textArea.layoutY).toInt()
-
+        RATIO = if (screenBounds.width / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
+            SCREEN.y / screenBounds.height
+        } else {
+            SCREEN.x / screenBounds.width
         }
-        Thread(readTask).start()
+        textArea.prefWidth = SCREEN.x / RATIO
+        textArea.prefHeight = SCREEN.y / RATIO
 
+        controlPane.prefWidth = textArea.prefWidth
+        controlPane.prefHeight = textArea.prefHeight
+
+        CANVAS.x = textArea.prefWidth.toInt()
+        CANVAS.y = textArea.prefHeight.toInt()
+
+        textArea.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
+        textArea.layoutY = 0.0
+
+        controlPane.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
+        controlPane.layoutY = 0.0
+
+        val window = textArea.scene.window
+        window.y = 0.0
+        window.x = screenBounds.width / 2 - window.width / 2
+
+        OFFSET.x = (window.x + textArea.layoutX).toInt()
+        OFFSET.y = (window.y + textArea.layoutY).toInt()
+    }
+
+    fun clearTextArea() {
+        textArea.text = ""
+    }
+
+    fun onOverlayConnected() {
         controlPane.addEventHandler(MouseEvent.ANY, mouseHandler)
     }
 
-    fun stop() {
-        readTask.cancel()
-        connections.close()
-        initialTask.cancel()
+    fun onControlConnected() {
+        controlPane.scene.addEventHandler(KeyEvent.ANY, keyHandler)
     }
 
 }

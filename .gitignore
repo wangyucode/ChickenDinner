@@ -14,4 +14,4 @@
 .cxx
 
 # Project exclude paths
-/control-client/build/
+**/build/

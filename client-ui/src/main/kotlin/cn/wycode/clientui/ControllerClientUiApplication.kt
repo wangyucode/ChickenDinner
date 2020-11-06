@@ -2,7 +2,6 @@ package cn.wycode.clientui
 
 import javafx.application.Application
 import javafx.application.Platform
-import javafx.event.Event
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
@@ -15,41 +14,50 @@ import org.springframework.boot.runApplication
 import org.springframework.context.ApplicationEvent
 import org.springframework.context.ConfigurableApplicationContext
 
+const val EVENT_STOP = "EVENT_STOP"
 
 @SpringBootApplication
-class ControllerClientUiApplication: Application() {
+class ControllerClientUiApplication : Application() {
 
-	lateinit var springContext: ConfigurableApplicationContext
+    lateinit var springContext: ConfigurableApplicationContext
 
-	override fun init() {
-		super.init()
-		springContext = runApplication<ControllerClientUiApplication>(*parameters.raw.toTypedArray())
-	}
+    override fun init() {
+        super.init()
+        springContext = runApplication<ControllerClientUiApplication>(*parameters.raw.toTypedArray())
+    }
 
-	override fun start(primaryStage: Stage) {
-		val loader = FXMLLoader(javaClass.classLoader.getResource("main.fxml"))
-		loader.setControllerFactory { aClass -> springContext.getBean(aClass) }
-		val root = loader.load<Parent>()
-		primaryStage.title = "Android Controller"
-		primaryStage.scene = Scene(root)
-		primaryStage.isResizable = false
-		primaryStage.isAlwaysOnTop = true
-		primaryStage.initStyle(StageStyle.TRANSPARENT)
-		primaryStage.isFullScreen = true
+    override fun start(primaryStage: Stage) {
+        val loader = FXMLLoader(javaClass.classLoader.getResource("main.fxml"))
+        loader.setControllerFactory { aClass -> springContext.getBean(aClass) }
+        val root = loader.load<Parent>()
+        val controller = loader.getController<Controller>()
+        primaryStage.title = "Android Controller"
+        primaryStage.scene = Scene(root)
+        primaryStage.isResizable = false
+        primaryStage.isAlwaysOnTop = true
+        primaryStage.initStyle(StageStyle.TRANSPARENT)
+        primaryStage.isFullScreen = true
 
-		primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F12) primaryStage.isFullScreen = true}
-		primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F11) springContext.publishEvent(SpringKeyEvent(event))}
-		primaryStage.show()
-	}
+        primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event ->
+            if (event.code == KeyCode.F12) primaryStage.isFullScreen = true
+        }
+        primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F11) controller.clearTextArea() }
+        primaryStage.show()
+    }
 
-	override fun stop() {
-		springContext.close();
-		Platform.exit();
-	}
+    override fun stop() {
+        springContext.publishEvent(SpringEvent(EVENT_STOP))
+        springContext.close()
+        Platform.exit();
+    }
 }
 
-class SpringKeyEvent(source: Event): ApplicationEvent(source)
+class SpringEvent(source: String) : ApplicationEvent(source)
+
+var ENABLE_LOG = false
 
 fun main(args: Array<String>) {
-	Application.launch(ControllerClientUiApplication::class.java, *args)
+    println(args.contentToString())
+    ENABLE_LOG = args.isNotEmpty() && args[0] == "dev"
+    Application.launch(ControllerClientUiApplication::class.java, *args)
 }

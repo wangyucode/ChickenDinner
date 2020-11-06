@@ -1,25 +1,21 @@
 package cn.wycode.clientui
 
+import cn.wycode.clientui.handler.KeyHandler
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
 import javafx.scene.control.TextArea
-import javafx.scene.layout.Pane
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
-import java.lang.Runnable
-import java.net.Socket
 
-const val INIT_PROCESS_START_MOUSE_SERVICE = 1
-const val INIT_PROCESS_ENABLE_MOUSE_TUNNEL = 2
-const val INIT_PROCESS_READ_KEYMAP = 3
-const val INIT_PROCESS_CONNECT_MOUSE_SERVICE = 4
-const val INIT_PROCESS_ENABLE_CONTROL_TUNNEL = 5
-const val INIT_PROCESS_CONNECT_CONTROL_SERVICE = 6
-
-var ENABLE_LOG = false
 
 @Component
-class Initializer(val connections: Connections) {
+class Initializer(
+    val connections: Connections,
+    val keyHandler: KeyHandler
+) {
 
     private val runtime = Runtime.getRuntime()
 
@@ -27,52 +23,45 @@ class Initializer(val connections: Connections) {
     lateinit var keymapString: String
     lateinit var textArea: TextArea
 
-    suspend fun initialize(textArea: TextArea, pane: Pane) {
+    suspend fun initialize(textArea: TextArea) {
         this.textArea = textArea
+        textArea.appendText("\nstart control service")
         startMouseService()
 
-        textArea.appendText("enable overlay tunnel\n")
+        textArea.appendText("\nenable overlay tunnel")
         enableTunnel(MOUSE_PORT, MOUSE_SOCKET)
 
-        textArea.appendText("read keymap\n")
+        textArea.appendText("\nread keymap")
         keymapString = javaClass.classLoader.getResource("keymap.json")!!.readText()
         keymap = JSON.parseObject(keymapString, Keymap::class.java)
+        connections.keymapString = keymapString
+        keyHandler.initButtons(keymap)
+
 //        textArea.appendText("repeatMin=${REPEAT_INITIAL_DELAY + keymap.repeatDelayMin}, repeatMax=${REPEAT_INITIAL_DELAY + keymap.repeatDelayMax - 1}")
 
-        textArea.appendText("connect to mouse\n")
+        textArea.appendText("\nconnecting to mouse")
         connections.connectToOverlayServer()
 
-        textArea.appendText("enable control tunnel")
+        textArea.appendText("\nenable control tunnel")
         enableTunnel(CONTROL_PORT, CONTROL_SOCKET)
 
-        textArea.appendText("start control service\n")
-//        Thread(Runnable {
-//            startController()
-//        }).start()
-//
-//        updateMessage("connecting to control")
-//        while (true) {
-//            controlSocket = Socket("localhost", CONTROL_PORT)
-//            val signal = controlSocket.getInputStream().read()
-//            appendText("control signal->$signal")
-//            if (signal == 1) break
-//            Thread.sleep(200)
-//        }
-//        updateValue(INIT_PROCESS_CONNECT_CONTROL_SERVICE)
-//
-//
-//        return get()
+        textArea.appendText("\nstart control service")
+        startController()
+
+        textArea.appendText("\nconnecting to control")
+        connections.connectToControlServer()
+        textArea.appendText("\ninitialized!")
     }
 
     suspend fun startMouseService() {
         try {
             var command = "adb shell am force-stop cn.wycode.control"
-            textArea.appendText("$command\n")
-            textArea.appendText("${executeCommand(command)}\n")
+            textArea.appendText("\n$command")
+            textArea.appendText("\n${executeCommand(command)}")
 
             command = "adb shell am start-activity cn.wycode.control/.MainActivity"
-            textArea.appendText("$command\n")
-            textArea.appendText("${executeCommand(command)}\n")
+            textArea.appendText("\n$command")
+            textArea.appendText("\n${executeCommand(command)}")
         } catch (e: Exception) {
             textArea.appendText(e.message)
         }
@@ -87,14 +76,11 @@ class Initializer(val connections: Connections) {
 
     }
 
-    private fun startController(): Boolean {
+    private suspend fun startController(): Boolean {
         try {
             var command = "adb shell killall $CONTROL_SERVER"
-            appendText(command)
-            var process = runtime.exec(command)
-            process.waitFor()
-            val result = process.inputStream.bufferedReader().readText()
-            appendText(result)
+            textArea.appendText("$command\n")
+            textArea.appendText("${executeCommand(command)}\n")
 
             //vm-options – VM 选项
             //cmd-dir –父目录 (/system/bin)
@@ -108,24 +94,33 @@ class Initializer(val connections: Connections) {
             val args = if (ENABLE_LOG) "--debug" else ""
             command =
                 "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER $args"
-            appendText(command)
-            process = runtime.exec(command)
-            while (process.isAlive && !isCancelled) {
-                appendText(process.inputStream.bufferedReader().readLine())
+            textArea.appendText("$command\n")
+            CoroutineScope(Dispatchers.IO).launch {
+                val process = runtime.exec(command)
+                while (process.isAlive) {
+                    val input = process.inputStream.bufferedReader().readLine()
+                    withContext(Dispatchers.Main) {
+                        textArea.appendText(input)
+                    }
+                }
+                val input = process.inputStream.bufferedReader().readLine()
+                val error = process.errorStream.bufferedReader().readLine()
+                withContext(Dispatchers.Main) {
+                    textArea.appendText(input)
+                    textArea.appendText(error)
+                }
+                connections.closeAll()
+                withContext(Dispatchers.Main) {
+                    textArea.appendText("all closed!")
+                }
             }
-            appendText(process.inputStream.bufferedReader().readText())
-            appendText(process.errorStream.bufferedReader().readText())
-
-            mouseSocket.close()
-            controlSocket.close()
-            appendText("all closed!")
         } catch (e: Exception) {
             e.printStackTrace()
         }
         return false
     }
 
-    private suspend fun enableTunnel(port: Int, socketName: String): Boolean {
+    private suspend fun enableTunnel(port: Int, socketName: String) {
         try {
             val command = "adb forward tcp:$port localabstract:$socketName"
             textArea.appendText("$command\n")

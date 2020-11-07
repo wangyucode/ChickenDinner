@@ -130,7 +130,7 @@ class Connections(val springContext: ApplicationContext) {
 
     fun sendControlData(data: ByteArray) {
         CoroutineScope(Dispatchers.IO).launch {
-            controlSocket.outputStream.write(data)
+            if (!controlSocket.isClosed) controlSocket.outputStream.write(data)
         }
     }
 

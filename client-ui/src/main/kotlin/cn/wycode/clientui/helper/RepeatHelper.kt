@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import org.springframework.stereotype.Component
 import java.util.concurrent.ThreadLocalRandom
 
-const val REPEAT_INITIAL_DELAY = 67L
+const val REPEAT_INITIAL_DELAY = 47L
 
 @Component
 class RepeatHelper(val connections: Connections) {
@@ -27,8 +27,8 @@ class RepeatHelper(val connections: Connections) {
     fun startRepeatFire() {
         isFireRepeating = true
         CoroutineScope(Dispatchers.IO).launch {
+            val random = ThreadLocalRandom.current()
             while (isFireRepeating) {
-                val random = ThreadLocalRandom.current()
                 val position = getRandomFirePosition(random)
                 connections.sendTouch(HEAD_TOUCH_DOWN, TOUCH_ID_MOUSE_LEFT, position.x, position.y, false)
 
@@ -37,7 +37,7 @@ class RepeatHelper(val connections: Connections) {
                 delay(random.nextLong(repeatDelayMin, repeatDelayMax))
                 connections.sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE_LEFT, upX, upY, false)
 
-                delay(REPEAT_INITIAL_DELAY)
+                delay(REPEAT_INITIAL_DELAY + random.nextLong(repeatDelayMin, repeatDelayMax))
             }
         }
     }

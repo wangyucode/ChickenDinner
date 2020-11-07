@@ -3,7 +3,6 @@ package cn.wycode.clientui
 import cn.wycode.clientui.handler.KeyHandler
 import cn.wycode.clientui.handler.MouseHandler
 import cn.wycode.control.common.Position
-import javafx.application.Platform
 import javafx.fxml.FXML
 import javafx.scene.Cursor
 import javafx.scene.control.TextArea
@@ -35,29 +34,11 @@ class Controller(
     lateinit var controlPane: Pane
 
 
-
-
-//    private val connections = Connections(fovChangeFun)
-//    private val mouseHandler = MouseHandler(connections)
-//    private val keyHandler = KeyHandler(connections)
-
     @FXML
     fun initialize() {
         CoroutineScope(Dispatchers.Main).launch {
             initializer.initialize(textArea)
         }
-//        initialTask.valueProperty().addListener { _, _, value ->
-//            when (value) {
-//                INIT_PROCESS_READ_KEYMAP -> {
-//                    keyHandler.initButtons(initialTask.keymap)
-//                    connections.initButtons(initialTask.keymap)
-//                }
-//                INIT_PROCESS_CONNECT_MOUSE_SERVICE -> onMouseServiceConnected()
-//                INIT_PROCESS_CONNECT_CONTROL_SERVICE -> onControlServiceConnected()
-//            }
-//        }
-//
-//        Thread(initialTask).start()
     }
 
 

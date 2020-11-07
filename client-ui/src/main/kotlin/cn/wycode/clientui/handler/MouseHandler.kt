@@ -2,6 +2,7 @@ package cn.wycode.clientui.handler
 
 import cn.wycode.clientui.CANVAS
 import cn.wycode.clientui.Connections
+import cn.wycode.clientui.Controller.Companion.robot
 import cn.wycode.clientui.OFFSET
 import cn.wycode.clientui.RATIO
 import cn.wycode.clientui.helper.SwitchMouseHelper
@@ -11,8 +12,6 @@ import cn.wycode.control.common.HEAD_TOUCH_UP
 import cn.wycode.control.common.TOUCH_ID_MOUSE
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
-import javafx.scene.robot.Robot
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 
 const val SCREEN_EDGE = 5.0
@@ -20,16 +19,10 @@ const val SCREEN_EDGE = 5.0
 @Component
 class MouseHandler(
     val connections: Connections,
-    val mouseHelper: SwitchMouseHelper,
-    val robot: Robot
+    val mouseHelper: SwitchMouseHelper
 ) : EventHandler<MouseEvent> {
 
     var mouseVisibility = true
-
-    @Bean
-    fun robot(): Robot {
-        return Robot()
-    }
 
     override fun handle(event: MouseEvent) {
         when (event.eventType) {
@@ -60,16 +53,16 @@ class MouseHandler(
 
     fun checkReachEdge(x: Double, y: Double) {
         if (x < SCREEN_EDGE) {
-            robot.mouseMove(OFFSET.x + SCREEN_EDGE, OFFSET.y + y)
+            robot.mouseMove((OFFSET.x + SCREEN_EDGE).toInt(), (OFFSET.y + y).toInt())
         }
         if (x > CANVAS.x - SCREEN_EDGE) {
-            robot.mouseMove(OFFSET.x + CANVAS.x - SCREEN_EDGE, OFFSET.y + y)
+            robot.mouseMove((OFFSET.x + CANVAS.x - SCREEN_EDGE).toInt(), (OFFSET.y + y).toInt())
         }
         if (y < SCREEN_EDGE) {
-            robot.mouseMove(OFFSET.x + x, OFFSET.y + SCREEN_EDGE)
+            robot.mouseMove((OFFSET.x + x).toInt(), (OFFSET.y + SCREEN_EDGE).toInt())
         }
         if (y > CANVAS.y - SCREEN_EDGE) {
-            robot.mouseMove(OFFSET.x + x, OFFSET.y + CANVAS.y - SCREEN_EDGE)
+            robot.mouseMove((OFFSET.x + x).toInt(), (OFFSET.y + CANVAS.y - SCREEN_EDGE).toInt())
         }
     }
 

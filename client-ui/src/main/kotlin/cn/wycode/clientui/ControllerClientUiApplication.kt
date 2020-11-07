@@ -15,6 +15,11 @@ import org.springframework.context.ApplicationEvent
 import org.springframework.context.ConfigurableApplicationContext
 
 const val EVENT_STOP = "EVENT_STOP"
+const val EVENT_CURSOR_VISIBLE = "EVENT_CURSOR_VISIBLE"
+const val EVENT_CURSOR_INVISIBLE = "EVENT_CURSOR_INVISIBLE"
+const val EVENT_OVERLAY_CONNECTED = "EVENT_OVERLAY_CONNECTED"
+const val EVENT_CONTROL_CONNECTED = "EVENT_CONTROL_CONNECTED"
+const val EVENT_SCREEN_CHANGE = "EVENT_SCREEN_CHANGE"
 
 @SpringBootApplication
 class ControllerClientUiApplication : Application() {
@@ -59,5 +64,6 @@ var ENABLE_LOG = false
 fun main(args: Array<String>) {
     println(args.contentToString())
     ENABLE_LOG = args.isNotEmpty() && args[0] == "dev"
+    System.setProperty("java.awt.headless", "false")
     Application.launch(ControllerClientUiApplication::class.java, *args)
 }

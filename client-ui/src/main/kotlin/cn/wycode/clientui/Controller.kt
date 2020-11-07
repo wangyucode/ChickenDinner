@@ -13,7 +13,9 @@ import javafx.stage.Screen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
+import java.awt.Robot
 
 var RATIO = 3.0
 var OFFSET = Position(0, 0)
@@ -24,8 +26,9 @@ var CANVAS = Position(0, 0)
 class Controller(
     val initializer: Initializer,
     val mouseHandler: MouseHandler,
-    val keyHandler: KeyHandler
-) {
+    val keyHandler: KeyHandler,
+    val connections: Connections
+) : ApplicationListener<SpringEvent> {
 
     @FXML
     lateinit var textArea: TextArea
@@ -39,10 +42,12 @@ class Controller(
         CoroutineScope(Dispatchers.Main).launch {
             initializer.initialize(textArea)
         }
+        robot = Robot()
     }
 
 
     fun onScreenChange() {
+        textArea.appendText("\nScreenChange::$SCREEN")
         val screen = Screen.getPrimary()
         val screenBounds = screen.bounds
         RATIO = if (screenBounds.width / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
@@ -87,6 +92,7 @@ class Controller(
 
     fun onOverlayConnected() {
         controlPane.addEventHandler(MouseEvent.ANY, mouseHandler)
+
     }
 
     fun onControlConnected() {
@@ -94,4 +100,18 @@ class Controller(
         controlPane.scene.window.focusedProperty().addListener { _, _, newValue -> keyHandler.focusChange(newValue) }
     }
 
+    override fun onApplicationEvent(event: SpringEvent) {
+        when (event.source as String) {
+            EVENT_STOP -> connections.closeAll()
+            EVENT_SCREEN_CHANGE -> onScreenChange()
+            EVENT_OVERLAY_CONNECTED -> onOverlayConnected()
+            EVENT_CONTROL_CONNECTED -> onControlConnected()
+            EVENT_CURSOR_VISIBLE -> changeCursor(true)
+            EVENT_CURSOR_INVISIBLE -> changeCursor(false)
+        }
+    }
+
+    companion object {
+        lateinit var robot: Robot
+    }
 }

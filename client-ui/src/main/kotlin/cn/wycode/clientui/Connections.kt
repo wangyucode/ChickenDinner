@@ -3,8 +3,7 @@ package cn.wycode.clientui
 import cn.wycode.control.common.*
 import javafx.application.Platform
 import kotlinx.coroutines.*
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationListener
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -14,7 +13,7 @@ const val RANDOM_POSITION_MIN = -20
 const val RANDOM_POSITION_MAX = 20
 
 @Component
-class Connections : ApplicationListener<SpringEvent> {
+class Connections(val springContext: ApplicationContext) {
 
     lateinit var keymapString: String
     lateinit var overlaySocket: Socket
@@ -44,8 +43,6 @@ class Connections : ApplicationListener<SpringEvent> {
      */
     private val keyBuffer = ByteBuffer.allocate(2)
 
-    @Autowired
-    lateinit var controller: Controller
 
     var isOverlayClosed = false
     var isControlClosed = false
@@ -65,9 +62,7 @@ class Connections : ApplicationListener<SpringEvent> {
             }
 
             if (signal == 1) {
-                withContext(Dispatchers.Main) {
-                    controller.onOverlayConnected()
-                }
+                springContext.publishEvent(SpringEvent(EVENT_OVERLAY_CONNECTED))
 
                 sendKeymap()
 
@@ -77,10 +72,7 @@ class Connections : ApplicationListener<SpringEvent> {
                     if (overlaySocket.inputStream.read(buffer) > 0) {
                         SCREEN.x = ByteBuffer.wrap(buffer).getInt(0)
                         SCREEN.y = ByteBuffer.wrap(buffer).getInt(4)
-                        withContext(Dispatchers.Main) {
-                            controller.onScreenChange()
-                            controller.textArea.appendText("\nReadTask::$SCREEN")
-                        }
+                        springContext.publishEvent(SpringEvent(EVENT_SCREEN_CHANGE))
                     } else {
                         isOverlayClosed = true
                         Platform.exit()
@@ -111,9 +103,7 @@ class Connections : ApplicationListener<SpringEvent> {
             }
 
             if (signal == 1) {
-                withContext(Dispatchers.Main) {
-                    controller.onControlConnected()
-                }
+                springContext.publishEvent(SpringEvent(EVENT_CONTROL_CONNECTED))
             }
         }
     }
@@ -122,12 +112,6 @@ class Connections : ApplicationListener<SpringEvent> {
         isOverlayClosed = true
         overlaySocket.close()
         controlSocket.close()
-    }
-
-    override fun onApplicationEvent(event: SpringEvent) {
-        when (event.source as String) {
-            EVENT_STOP -> closeAll()
-        }
     }
 
     fun sendMouseMove(x: Int, y: Int) {

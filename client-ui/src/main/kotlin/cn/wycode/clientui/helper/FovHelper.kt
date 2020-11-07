@@ -2,15 +2,20 @@ package cn.wycode.clientui.helper
 
 import cn.wycode.clientui.Connections
 import cn.wycode.control.common.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.springframework.stereotype.Component
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 const val SCREEN_FOV_EDGE = 100
 
 @Component
-class FovHelper(val connections: Connections) {
+class FovHelper(
+    val connections: Connections,
+    val joystickHelper: JoystickHelper
+) {
 
     var isResetting = false
     var isFovAutoUp = false
@@ -61,6 +66,23 @@ class FovHelper(val connections: Connections) {
 
         connections.sendTouch(HEAD_TOUCH_MOVE, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
         lastFovMoveTime = System.currentTimeMillis()
+    }
+
+    fun resetTouchAfterGetInCar() {
+        if (!isFovAutoUp) {
+            connections.sendTouch(HEAD_TOUCH_UP, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
+            isFovAutoUp = true
+        }
+
+        val lastJoystickByte = joystickHelper.lastJoystickByte
+        joystickHelper.sendJoystick(ZERO_BYTE)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            delay(100)
+            isResetting = false
+            joystickHelper.sendJoystick(lastJoystickByte)
+        }
+        isResetting = true
     }
 
     fun resetLastFov(position: Position) {

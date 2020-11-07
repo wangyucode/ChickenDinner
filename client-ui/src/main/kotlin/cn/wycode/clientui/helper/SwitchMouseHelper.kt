@@ -18,7 +18,7 @@ class SwitchMouseHelper(
     val springContext: ApplicationContext
 ) {
 
-    var mouseVisible = false
+    var mouseVisible = true
 
     lateinit var resetPosition: Position
 

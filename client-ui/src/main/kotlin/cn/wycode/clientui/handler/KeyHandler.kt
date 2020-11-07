@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
+import kotlin.math.PI
+import kotlin.math.sin
 
 @Component
 class KeyHandler(
@@ -17,6 +19,7 @@ class KeyHandler(
     val switchMouseHelper: SwitchMouseHelper,
     val connections: Connections,
     val bagHelper: BagHelper,
+    val fovHandler: FovHandler,
     val fovHelper: FovHelper,
     val propsHelper: PropsHelper,
     val repeatHelper: RepeatHelper
@@ -43,10 +46,12 @@ class KeyHandler(
             if (button.name == KEY_NAME_SWITCH) resetPosition = button.position
         }
         joystickHelper.joystick = keymap.joystick
+        joystickHelper.sin45 = (keymap.joystick.radius * sin(PI / 4)).toInt()
         switchMouseHelper.resetPosition = resetPosition
         fovHelper.resetPosition = resetPosition
         fovHelper.sensitivityX = keymap.sensitivityX
         fovHelper.sensitivityY = keymap.sensitivityY
+        fovHandler.mouse = keymap.mouse
         repeatHelper.repeatDelayMin = keymap.repeatDelayMin
         repeatHelper.repeatDelayMax = keymap.repeatDelayMax
         repeatHelper.leftMousePosition = keymap.mouse.left
@@ -156,7 +161,7 @@ class KeyHandler(
                             return
                         }
                         KEY_NAME_BAG -> if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
-                        //KEY_NAME_F -> connections.resetTouchAfterGetInCar()
+                        KEY_NAME_F -> if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
                         else -> propsHelper.changeUpPosition(buttonWithId.button.name, position)
 
 

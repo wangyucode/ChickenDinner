@@ -47,8 +47,8 @@ class Connections(val springContext: ApplicationContext) {
     var isOverlayClosed = false
     var isControlClosed = false
 
-    suspend fun connectToOverlayServer() {
-        withContext(Dispatchers.IO) {
+    fun connectToOverlayServer() {
+        CoroutineScope(Dispatchers.IO).launch {
             var signal = 0
             while (!isOverlayClosed && signal != 1) {
                 try {

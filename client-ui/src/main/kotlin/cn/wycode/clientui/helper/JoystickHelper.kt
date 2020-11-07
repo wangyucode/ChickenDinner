@@ -5,11 +5,10 @@ import cn.wycode.clientui.RANDOM_POSITION_MAX
 import cn.wycode.clientui.RANDOM_POSITION_MIN
 import cn.wycode.control.common.*
 import kotlinx.coroutines.*
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.concurrent.ThreadLocalRandom
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.sin
 
 
 const val JOYSTICK_STEP_DELAY = 40L
@@ -35,17 +34,19 @@ enum class JoystickDirection(val joystickByte: Byte) {
 @Component
 class JoystickHelper(val connections: Connections) {
 
-    private var lastJoystickX = -1
-    private var lastJoystickY = -1
+    var lastJoystickX = -1
+    var lastJoystickY = -1
     private var destJoystickX = 0
     private var destJoystickY = 0
 
-    private var isResetting = false
-
-    private var lastJoystickByte: Byte = 0
+    var lastJoystickByte: Byte = 0
     lateinit var joystick: Joystick
+    var sin45: Int = 0
 
     private var stepJob: Job? = null
+
+    @Autowired
+    lateinit var fovHelper: FovHelper
 
     fun sendJoystick(joystickByte: Byte) {
         if (lastJoystickX < 0 || lastJoystickY < 0) resetLastJoystick()
@@ -54,9 +55,9 @@ class JoystickHelper(val connections: Connections) {
 
         // no touch
         if (joystickByte == ZERO_BYTE) {
-            connections.sendTouch(HEAD_TOUCH_UP, TOUCH_ID_JOYSTICK, joystick.center.x, joystick.center.y, false)
+            connections.sendTouch(HEAD_TOUCH_UP, TOUCH_ID_JOYSTICK, lastJoystickX, lastJoystickY, false)
             resetLastJoystick()
-            lastJoystickByte = joystickByte
+            lastJoystickByte = ZERO_BYTE
             // cancel move
             stepJob?.cancel()
             return
@@ -65,7 +66,6 @@ class JoystickHelper(val connections: Connections) {
         destJoystickX = joystick.center.x
         destJoystickY = joystick.center.y
 
-        val sin45 = (joystick.radius * sin(PI / 4)).toInt()
         when (joystickByte) {
             JoystickDirection.TOP.joystickByte -> destJoystickY -= joystick.radius
             JoystickDirection.TOP_RIGHT.joystickByte -> {
@@ -98,23 +98,24 @@ class JoystickHelper(val connections: Connections) {
                 true
             )
             resetLastJoystick()
-
-            stepJob = CoroutineScope(Dispatchers.IO).launch {
-                val dx = destJoystickX - lastJoystickX
-                val dy = destJoystickY - lastJoystickY
-                while (abs(dx) > JOYSTICK_STEP || abs(dy) > JOYSTICK_STEP) {
-                    delay(JOYSTICK_STEP_DELAY)
-                    sendStep(dx.coerceIn(-JOYSTICK_STEP, JOYSTICK_STEP), dy.coerceIn(-JOYSTICK_STEP, JOYSTICK_STEP))
-                    delay(JOYSTICK_STEP_DELAY)
-                }
-            }
+        }
+        stepJob?.cancel()
+        stepJob = CoroutineScope(Dispatchers.IO).launch {
+            var dx: Int
+            var dy: Int
+            do {
+                dx = destJoystickX - lastJoystickX
+                dy = destJoystickY - lastJoystickY
+                sendStep(dx.coerceIn(-JOYSTICK_STEP, JOYSTICK_STEP), dy.coerceIn(-JOYSTICK_STEP, JOYSTICK_STEP))
+                delay(JOYSTICK_STEP_DELAY)
+            } while (abs(dx) > JOYSTICK_STEP || abs(dy) > JOYSTICK_STEP)
         }
 
         lastJoystickByte = joystickByte
     }
 
     private fun sendStep(dx: Int, dy: Int) {
-        if (isResetting) return
+        if (fovHelper.isResetting) return
 
         lastJoystickX += dx
         lastJoystickY += dy
@@ -125,7 +126,7 @@ class JoystickHelper(val connections: Connections) {
         connections.sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_JOYSTICK, lastJoystickX, lastJoystickY, false)
     }
 
-    private fun resetLastJoystick() {
+    fun resetLastJoystick() {
         lastJoystickX = joystick.center.x
         lastJoystickY = joystick.center.y
     }

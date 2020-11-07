@@ -79,8 +79,8 @@ class Initializer(
     private suspend fun startController(): Boolean {
         try {
             var command = "adb shell killall $CONTROL_SERVER"
-            textArea.appendText("$command\n")
-            textArea.appendText("${executeCommand(command)}\n")
+            textArea.appendText("\n$command")
+            textArea.appendText("\n${executeCommand(command)}")
 
             //vm-options – VM 选项
             //cmd-dir –父目录 (/system/bin)
@@ -94,24 +94,24 @@ class Initializer(
             val args = if (ENABLE_LOG) "--debug" else ""
             command =
                 "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER $args"
-            textArea.appendText("$command\n")
+            textArea.appendText("\n$command")
             CoroutineScope(Dispatchers.IO).launch {
                 val process = runtime.exec(command)
                 while (process.isAlive) {
                     val input = process.inputStream.bufferedReader().readLine()
                     withContext(Dispatchers.Main) {
-                        textArea.appendText(input)
+                        textArea.appendText("\n$input")
                     }
                 }
                 val input = process.inputStream.bufferedReader().readLine()
                 val error = process.errorStream.bufferedReader().readLine()
                 withContext(Dispatchers.Main) {
-                    textArea.appendText(input)
-                    textArea.appendText(error)
+                    textArea.appendText("\n$input")
+                    textArea.appendText("\n$error")
                 }
                 connections.closeAll()
                 withContext(Dispatchers.Main) {
-                    textArea.appendText("all closed!")
+                    textArea.appendText("\nall closed!")
                 }
             }
         } catch (e: Exception) {
@@ -123,8 +123,8 @@ class Initializer(
     private suspend fun enableTunnel(port: Int, socketName: String) {
         try {
             val command = "adb forward tcp:$port localabstract:$socketName"
-            textArea.appendText("$command\n")
-            textArea.appendText("${executeCommand(command)}\n")
+            textArea.appendText("\n$command")
+            textArea.appendText("\n${executeCommand(command)}")
         } catch (e: Exception) {
             textArea.appendText(e.message)
         }

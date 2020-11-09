@@ -124,7 +124,7 @@ class Connections(val springContext: ApplicationContext) {
 
     fun sendOverlayData(data: ByteArray) {
         CoroutineScope(Dispatchers.IO).launch {
-            overlaySocket.outputStream.write(data)
+            if (!controlSocket.isClosed) overlaySocket.outputStream.write(data)
         }
     }
 

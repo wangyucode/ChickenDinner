@@ -157,6 +157,14 @@ class KeyHandler(
                         KEY_NAME_REPEAT -> {
                             repeatHelper.stopRepeatFire()
                             repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
+                            repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY
+                            connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
+                            return
+                        }
+                        KEY_NAME_REPEAT_1 -> {
+                            repeatHelper.stopRepeatFire()
+                            repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
+                            repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY_1
                             connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
                             return
                         }

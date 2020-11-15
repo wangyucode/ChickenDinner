@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component
 import java.util.concurrent.ThreadLocalRandom
 
 const val REPEAT_INITIAL_DELAY = 47L
+const val REPEAT_INITIAL_DELAY_1 = 39L
 
 @Component
 class RepeatHelper(val connections: Connections) {
@@ -22,6 +23,7 @@ class RepeatHelper(val connections: Connections) {
     var isFireRepeating = false
     var repeatDelayMin = 0L
     var repeatDelayMax = 0L
+    var repeatInitialDelay = REPEAT_INITIAL_DELAY
     lateinit var leftMousePosition: Position
 
     fun startRepeatFire() {
@@ -37,7 +39,7 @@ class RepeatHelper(val connections: Connections) {
                 delay(random.nextLong(repeatDelayMin, repeatDelayMax))
                 connections.sendTouch(HEAD_TOUCH_UP, TOUCH_ID_MOUSE_LEFT, upX, upY, false)
 
-                delay(REPEAT_INITIAL_DELAY + random.nextLong(repeatDelayMin, repeatDelayMax))
+                delay(repeatInitialDelay + random.nextLong(repeatDelayMin, repeatDelayMax))
             }
         }
     }

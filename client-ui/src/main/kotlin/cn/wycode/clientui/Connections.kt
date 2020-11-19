@@ -44,7 +44,10 @@ class Connections(val springContext: ApplicationContext) {
     private val keyBuffer = ByteBuffer.allocate(2)
 
 
+    @Volatile
     var isOverlayClosed = false
+
+    @Volatile
     var isControlClosed = false
 
     fun connectToOverlayServer() {
@@ -110,6 +113,9 @@ class Connections(val springContext: ApplicationContext) {
 
     fun closeAll() {
         isOverlayClosed = true
+        isControlClosed = true
+        overlaySocket.outputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
+        controlSocket.outputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
         overlaySocket.close()
         controlSocket.close()
     }
@@ -124,13 +130,13 @@ class Connections(val springContext: ApplicationContext) {
 
     fun sendOverlayData(data: ByteArray) {
         CoroutineScope(Dispatchers.IO).launch {
-            if (!controlSocket.isClosed) overlaySocket.outputStream.write(data)
+            overlaySocket.outputStream.write(data)
         }
     }
 
     fun sendControlData(data: ByteArray) {
         CoroutineScope(Dispatchers.IO).launch {
-            if (!controlSocket.isClosed) controlSocket.outputStream.write(data)
+            controlSocket.outputStream.write(data)
         }
     }
 

@@ -101,7 +101,7 @@ class KeyHandler(
                 // screen button
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
-                    val position = buttonWithId.button.position
+                    val position = buttonWithId.button.position.copy()
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return
                         else -> {
@@ -148,7 +148,7 @@ class KeyHandler(
             else -> {
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
-                    val position = buttonWithId.button.position
+                    val position = buttonWithId.button.position.copy()
                     when (buttonWithId.button.name) {
                         KEY_NAME_SWITCH -> {
                             switchMouseHelper.sendSwitchMouse()

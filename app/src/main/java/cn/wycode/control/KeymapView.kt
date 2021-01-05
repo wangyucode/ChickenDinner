@@ -36,11 +36,11 @@ class KeymapView : View {
             mPaint
         )
 
+        mPaint.style = Paint.Style.FILL_AND_STROKE
         drawProps(canvas)
 
         val buttons = keymap!!.buttons
         mPaint.color = 0x3355ff55
-        mPaint.style = Paint.Style.FILL_AND_STROKE
         for (button in buttons) {
             drawButton(canvas, button)
         }

@@ -46,9 +46,9 @@ class KeyHandler(
         repeatHelper.repeatDelayMin = keymap.repeatDelayMin
         repeatHelper.repeatDelayMax = keymap.repeatDelayMax
         repeatHelper.leftMousePosition = keymap.mouse.left
-//        propsHelper.drops = keymap.drops
-//        propsHelper.drugs = keymap.drugs
-//        propsHelper.size = buttonMap.size
+        propsHelper.drops = keymap.drops
+        propsHelper.drugs = keymap.drugs
+        propsHelper.id = buttonMap.size + 1
     }
 
     override fun handle(event: KeyEvent) {
@@ -95,6 +95,7 @@ class KeyHandler(
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
             KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.released(event.code)
+            KeyCode.DIGIT6, KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9 -> propsHelper.change(event.code)
             else -> {
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {

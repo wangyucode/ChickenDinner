@@ -51,4 +51,10 @@ class MainActivity : Activity() {
                 .enqueueUniqueWork("MouseServerWorker", ExistingWorkPolicy.REPLACE, workRequest)
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        WorkManager.getInstance(this).cancelAllWork()
+        android.os.Process.killProcess(android.os.Process.myPid())
+    }
 }

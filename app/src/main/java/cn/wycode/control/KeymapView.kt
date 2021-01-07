@@ -11,8 +11,6 @@ import cn.wycode.control.common.Keymap
 class KeymapView : View {
 
     var repeat: Boolean = false
-    var dropsOpen: Boolean = false
-    var drugsOpen: Boolean = false
     var keymap: Keymap? = null
 
     private val mPaint = Paint()
@@ -38,35 +36,13 @@ class KeymapView : View {
             mPaint
         )
 
+        mPaint.style = Paint.Style.FILL_AND_STROKE
+        drawProps(canvas)
+
         val buttons = keymap!!.buttons
         mPaint.color = 0x3355ff55
-        mPaint.style = Paint.Style.FILL_AND_STROKE
         for (button in buttons) {
             drawButton(canvas, button)
-        }
-
-        val drops = keymap!!.drops
-        if (!dropsOpen) {
-            drawButton(canvas, Button("4", drops.open))
-        } else {
-            mPaint.color = 0x33ffff55
-            drawButton(canvas, Button("4", drops.buttons[0]))
-            for (i in 1 until drops.buttons.size) {
-                val key = if (i < 4) i.toString() else (i + 1).toString()
-                drawButton(canvas, Button(key, drops.buttons[i]))
-            }
-        }
-
-        val drugs = keymap!!.drugs
-        if (!drugsOpen) {
-            drawButton(canvas, Button("5", drugs.open))
-        } else {
-            mPaint.color = 0x33ffff55
-            drawButton(canvas, Button("5", drugs.buttons[0]))
-            for (i in 1 until drugs.buttons.size) {
-                val key = if (i < 5) i.toString() else (i + 1).toString()
-                drawButton(canvas, Button(key, drugs.buttons[i]))
-            }
         }
 
         mPaint.color = 0x335555ff
@@ -79,6 +55,22 @@ class KeymapView : View {
 
         mPaint.color = 0x66dd0000
         canvas.drawCircle(width / 2f, height / 2f, 2f, mPaint)
+    }
+
+    private fun drawProps(canvas: Canvas){
+        canvas.drawCircle(
+            keymap!!.drops.open.x.toFloat(),
+            keymap!!.drops.open.y.toFloat(),
+            10f,
+            mPaint
+        )
+
+        canvas.drawCircle(
+            keymap!!.drugs.open.x.toFloat(),
+            keymap!!.drugs.open.y.toFloat(),
+            10f,
+            mPaint
+        )
     }
 
     private fun drawButton(canvas: Canvas, button: Button) {

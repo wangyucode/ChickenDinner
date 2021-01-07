@@ -7,9 +7,6 @@ import javafx.event.EventHandler
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import org.springframework.stereotype.Component
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -22,15 +19,9 @@ class KeyHandler(
     val fovHandler: FovHandler,
     val fovHelper: FovHelper,
     val propsHelper: PropsHelper,
-    val repeatHelper: RepeatHelper
+    val repeatHelper: RepeatHelper,
+    val weaponHelper: WeaponHelper
 ) : EventHandler<KeyEvent> {
-
-    /**
-     * 4 bit -> 4 direction
-     * | . . . . | top | right | bottom | left |
-     * | . . . . |  .  |   .   |    .   |  .   |
-     */
-    private var joystickByte: Byte = 0
 
     private var lastKeyDown = KeyCode.UNDEFINED
     private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
@@ -57,15 +48,7 @@ class KeyHandler(
         repeatHelper.leftMousePosition = keymap.mouse.left
         propsHelper.drops = keymap.drops
         propsHelper.drugs = keymap.drugs
-
-        buttonMap[KeyCode.DIGIT4] = ButtonWithId(
-            buttonMap.size,
-            Button("4", keymap.drops.open, KEY_NAME_FOUR)
-        )
-        buttonMap[KeyCode.DIGIT5] = ButtonWithId(
-            buttonMap.size + 1,
-            Button("5", keymap.drugs.open, KEY_NAME_FIVE)
-        )
+        propsHelper.id = buttonMap.size + 1
     }
 
     override fun handle(event: KeyEvent) {
@@ -81,32 +64,14 @@ class KeyHandler(
         lastKeyDown = event.code
 
         when (event.code) {
-            KeyCode.W -> {
-                joystickByte = joystickByte.or(JoystickDirection.TOP.joystickByte)
-                joystickHelper.sendJoystick(joystickByte)
-            }
-            KeyCode.S -> {
-                joystickByte = joystickByte.or(JoystickDirection.BOTTOM.joystickByte)
-                joystickHelper.sendJoystick(joystickByte)
-            }
-            KeyCode.A -> {
-                joystickByte = joystickByte.or(JoystickDirection.LEFT.joystickByte)
-                joystickHelper.sendJoystick(joystickByte)
-            }
-            KeyCode.D -> {
-                joystickByte = joystickByte.or(JoystickDirection.RIGHT.joystickByte)
-                joystickHelper.sendJoystick(joystickByte)
-            }
+            KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.pressed(event.code)
             else -> {
                 // screen button
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
                     val position = buttonWithId.button.position.copy()
                     when (buttonWithId.button.name) {
-                        KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return
-                        else -> {
-                            propsHelper.changeDownPosition(buttonWithId.button.name, position)
-                        }
+                        KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return // no need to touch
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_DOWN,
@@ -129,22 +94,8 @@ class KeyHandler(
             KeyCode.END -> connections.sendKey(KEY_HOME)
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
-            KeyCode.W -> {
-                joystickByte = joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
-                joystickHelper.sendJoystick(joystickByte)
-            }
-            KeyCode.S -> {
-                joystickByte = joystickByte.and(JoystickDirection.BOTTOM.joystickByte.inv())
-                joystickHelper.sendJoystick(joystickByte)
-            }
-            KeyCode.A -> {
-                joystickByte = joystickByte.and(JoystickDirection.LEFT.joystickByte.inv())
-                joystickHelper.sendJoystick(joystickByte)
-            }
-            KeyCode.D -> {
-                joystickByte = joystickByte.and(JoystickDirection.RIGHT.joystickByte.inv())
-                joystickHelper.sendJoystick(joystickByte)
-            }
+            KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.released(event.code)
+            KeyCode.DIGIT6, KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9 -> propsHelper.change(event.code)
             else -> {
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
@@ -170,9 +121,7 @@ class KeyHandler(
                         }
                         KEY_NAME_BAG -> if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
                         KEY_NAME_F -> if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
-                        else -> propsHelper.changeUpPosition(buttonWithId.button.name, position)
-
-
+                        KEY_NAME_1, KEY_NAME_2, KEY_NAME_3, KEY_NAME_4 -> weaponHelper.changeWeapon(buttonWithId.button.name!!)
                     }
                     connections.sendTouch(
                         HEAD_TOUCH_UP,

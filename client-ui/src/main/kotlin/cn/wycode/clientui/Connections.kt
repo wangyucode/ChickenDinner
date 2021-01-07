@@ -5,6 +5,7 @@ import javafx.application.Platform
 import kotlinx.coroutines.*
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+import java.io.IOException
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.ThreadLocalRandom
@@ -72,14 +73,16 @@ class Connections(val springContext: ApplicationContext) {
                 // read screen change
                 val buffer = ByteArray(8)
                 while (!isOverlayClosed) {
-                    if (overlaySocket.inputStream.read(buffer) > 0) {
-                        SCREEN.x = ByteBuffer.wrap(buffer).getInt(0)
-                        SCREEN.y = ByteBuffer.wrap(buffer).getInt(4)
-                        springContext.publishEvent(SpringEvent(EVENT_SCREEN_CHANGE))
-                    } else {
+                    try {
+                        overlaySocket.inputStream.read(buffer)
+                    } catch (e: IOException) {
                         isOverlayClosed = true
                         Platform.exit()
+                        break
                     }
+                    SCREEN.x = ByteBuffer.wrap(buffer).getInt(0)
+                    SCREEN.y = ByteBuffer.wrap(buffer).getInt(4)
+                    springContext.publishEvent(SpringEvent(EVENT_SCREEN_CHANGE))
                 }
             }
         }

@@ -10,6 +10,7 @@ import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -46,7 +47,7 @@ class MouseServer(
 
         while (!shutdown) {
             val head = read(inputStream)
-            withContext(Dispatchers.Main){
+            withContext(Dispatchers.Main) {
                 updateUi(head)
             }
         }
@@ -99,22 +100,6 @@ class MouseServer(
                 keymapView.repeat = false
                 keymapView.invalidate()
             }
-            HEAD_DROPS_OPEN -> {
-                keymapView.dropsOpen = true
-                keymapView.invalidate()
-            }
-            HEAD_DROPS_CLOSE -> {
-                keymapView.dropsOpen = false
-                keymapView.invalidate()
-            }
-            HEAD_DRUGS_OPEN -> {
-                keymapView.drugsOpen = true
-                keymapView.invalidate()
-            }
-            HEAD_DRUGS_CLOSE -> {
-                keymapView.drugsOpen = false
-                keymapView.invalidate()
-            }
         }
     }
 
@@ -122,7 +107,12 @@ class MouseServer(
         outputPointBuffer.clear()
         outputPointBuffer.putInt(size.x)
         outputPointBuffer.putInt(size.y)
-        outputStream.write(outputPointBuffer.array())
+        try {
+            outputStream.write(outputPointBuffer.array())
+        } catch (e: IOException) {
+            Log.e(LOG_TAG, "sendScreenInfo", e)
+            shutdown = true
+        }
         Log.d(LOG_TAG, "sendScreenInfo::$size")
     }
 }

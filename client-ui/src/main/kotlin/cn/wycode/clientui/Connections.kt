@@ -1,11 +1,9 @@
 package cn.wycode.clientui
 
 import cn.wycode.control.common.*
-import javafx.application.Platform
 import kotlinx.coroutines.*
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
-import java.io.IOException
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.ThreadLocalRandom
@@ -54,14 +52,9 @@ class Connections(val springContext: ApplicationContext) {
     fun connectToOverlayServer() {
         CoroutineScope(Dispatchers.IO).launch {
             var signal = 0
-            while (!isOverlayClosed && signal != 1) {
-                try {
-                    overlaySocket = Socket("localhost", MOUSE_PORT)
-                    signal = overlaySocket.inputStream.read()
-                } catch (e: Exception) {
-                    isOverlayClosed = true
-                    break
-                }
+            while (!isControlClosed && signal != 1) {
+                overlaySocket = Socket("localhost", MOUSE_PORT)
+                signal = overlaySocket.inputStream.read()
                 delay(200)
             }
 
@@ -73,13 +66,7 @@ class Connections(val springContext: ApplicationContext) {
                 // read screen change
                 val buffer = ByteArray(8)
                 while (!isOverlayClosed) {
-                    try {
-                        overlaySocket.inputStream.read(buffer)
-                    } catch (e: IOException) {
-                        isOverlayClosed = true
-                        Platform.exit()
-                        break
-                    }
+                    overlaySocket.inputStream.read(buffer)
                     SCREEN.x = ByteBuffer.wrap(buffer).getInt(0)
                     SCREEN.y = ByteBuffer.wrap(buffer).getInt(4)
                     springContext.publishEvent(SpringEvent(EVENT_SCREEN_CHANGE))

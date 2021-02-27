@@ -5,14 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 
 class MainActivity : Activity() {
 
@@ -42,19 +37,13 @@ class MainActivity : Activity() {
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "没有权限！", Toast.LENGTH_SHORT).show()
         } else {
-            val workRequest: OneTimeWorkRequest =
-                OneTimeWorkRequestBuilder<MouseServerWorker>()
-                    .build()
-
-            WorkManager
-                .getInstance(this)
-                .enqueueUniqueWork("MouseServerWorker", ExistingWorkPolicy.REPLACE, workRequest)
+            startForegroundService(Intent(this, MouseService::class.java))
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        WorkManager.getInstance(this).cancelAllWork()
+        stopService(Intent(this, MouseService::class.java))
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 }

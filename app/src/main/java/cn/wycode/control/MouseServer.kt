@@ -1,14 +1,22 @@
 package cn.wycode.control
 
+import android.content.Context
+import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.PixelFormat
 import android.graphics.Point
 import android.net.LocalServerSocket
 import android.net.LocalSocket
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import androidx.work.WorkManager
+import android.view.ViewGroup
+import android.view.WindowManager
 import cn.wycode.control.common.*
 import com.alibaba.fastjson.JSON
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
@@ -17,10 +25,17 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
 class MouseServer(
-    private val size: Point,
-    private val pointerView: View,
-    private val keymapView: KeymapView
+    private val context: Context
 ) {
+
+    private val windowManager =
+        context.getSystemService(Context.WINDOW_SERVICE) as
+                WindowManager
+
+    private val size = Point()
+    private lateinit var overlay: ViewGroup
+    private lateinit var keymapView: KeymapView
+    private lateinit var pointer: View
 
     private lateinit var mouseSocket: LocalSocket
     private lateinit var serverSocket: LocalServerSocket
@@ -35,6 +50,8 @@ class MouseServer(
     private lateinit var keymap: Keymap
     private var shutdown = false
 
+    private var currentOrientation = Configuration.ORIENTATION_PORTRAIT
+
     @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun start() {
         serverSocket = LocalServerSocket(MOUSE_SOCKET)
@@ -43,7 +60,13 @@ class MouseServer(
         outputStream = mouseSocket.outputStream
         outputStream.write(1)
         Log.d(LOG_TAG, "Mouse client connected!")
-        sendScreenInfo()
+
+        withContext(Dispatchers.Main) {
+            addOverlay()
+            withContext(Dispatchers.IO) {
+                sendScreenInfo()
+            }
+        }
 
         while (!shutdown) {
             val head = read(inputStream)
@@ -54,7 +77,10 @@ class MouseServer(
 
         mouseSocket.close()
         serverSocket.close()
-        WorkManager.getInstance(keymapView.context).cancelAllWork()
+        withContext(Dispatchers.Main) {
+            removeOverlay()
+        }
+        context.stopService(Intent(context, MouseService::class.java))
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 
@@ -83,15 +109,15 @@ class MouseServer(
     private fun updateUi(head: Byte) {
         when (head) {
             HEAD_MOUSE_MOVE -> {
-                pointerView.x = point.x.toFloat()
-                pointerView.y = point.y.toFloat()
+                pointer.x = point.x.toFloat()
+                pointer.y = point.y.toFloat()
             }
             HEAD_KEYMAP -> {
                 keymapView.keymap = keymap
                 keymapView.invalidate()
             }
-            HEAD_MOUSE_VISIBLE -> pointerView.visibility = View.VISIBLE
-            HEAD_MOUSE_INVISIBLE -> pointerView.visibility = View.INVISIBLE
+            HEAD_MOUSE_VISIBLE -> pointer.visibility = View.VISIBLE
+            HEAD_MOUSE_INVISIBLE -> pointer.visibility = View.INVISIBLE
             HEAD_REPEAT_ENABLE -> {
                 keymapView.repeat = true
                 keymapView.invalidate()
@@ -103,7 +129,7 @@ class MouseServer(
         }
     }
 
-    fun sendScreenInfo() {
+    private fun sendScreenInfo() {
         outputPointBuffer.clear()
         outputPointBuffer.putInt(size.x)
         outputPointBuffer.putInt(size.y)
@@ -114,5 +140,46 @@ class MouseServer(
             shutdown = true
         }
         Log.d(LOG_TAG, "sendScreenInfo::$size")
+    }
+
+
+    private fun addOverlay() {
+        windowManager.defaultDisplay.getRealSize(size)
+        val layoutParams = WindowManager.LayoutParams()
+        layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        layoutParams.format = PixelFormat.RGBA_8888
+        layoutParams.layoutInDisplayCutoutMode =
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        layoutParams.flags =
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                .or(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                .or(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+                .or(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+        layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT
+        layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT
+
+        overlay = LayoutInflater.from(context.applicationContext).inflate(R.layout.overlay, null) as ViewGroup
+        windowManager.addView(overlay, layoutParams)
+
+        keymapView = overlay.getChildAt(0) as KeymapView
+        pointer = overlay.getChildAt(1)
+
+        currentOrientation = context.resources.configuration.orientation
+
+        overlay.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val orientation = context.resources.configuration.orientation
+            if (currentOrientation != orientation) {
+                currentOrientation = orientation
+                windowManager.defaultDisplay.getRealSize(size)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    sendScreenInfo()
+                }
+            }
+        }
+    }
+
+    private fun removeOverlay() {
+        windowManager.removeView(overlay)
     }
 }

@@ -48,6 +48,8 @@ class ControllerClientUiApplication : Application() {
         }
         primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F11) controller.clearTextArea() }
         primaryStage.show()
+
+        Thread.setDefaultUncaughtExceptionHandler { _: Thread, _: Throwable -> Platform.exit() }
     }
 
     override fun stop() {

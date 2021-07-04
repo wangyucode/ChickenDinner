@@ -92,7 +92,6 @@ class Controller(
 
     fun onOverlayConnected() {
         controlPane.addEventHandler(MouseEvent.ANY, mouseHandler)
-
     }
 
     fun onControlConnected() {
@@ -109,6 +108,14 @@ class Controller(
             EVENT_CURSOR_VISIBLE -> changeCursor(true)
             EVENT_CURSOR_INVISIBLE -> changeCursor(false)
         }
+    }
+
+    fun showKeymap() {
+        connections.sendKeymapVisible(true)
+    }
+
+    fun hideKeymap() {
+        connections.sendKeymapVisible(false)
     }
 
     companion object {

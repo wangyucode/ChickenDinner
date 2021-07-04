@@ -126,6 +126,14 @@ class MouseServer(
                 keymapView.repeat = false
                 keymapView.invalidate()
             }
+            HEAD_KEYMAP_VISIBLE -> {
+                keymapView.keymapVisible = true
+                keymapView.invalidate()
+            }
+            HEAD_KEYMAP_INVISIBLE -> {
+                keymapView.keymapVisible = false
+                keymapView.invalidate()
+            }
         }
     }
 

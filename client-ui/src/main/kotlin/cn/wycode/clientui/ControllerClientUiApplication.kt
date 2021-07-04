@@ -44,9 +44,14 @@ class ControllerClientUiApplication : Application() {
         primaryStage.isFullScreen = true
 
         primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event ->
-            if (event.code == KeyCode.F12) primaryStage.isFullScreen = true
+            when (event.code) {
+                KeyCode.F11 -> controller.clearTextArea()
+                KeyCode.F12 -> primaryStage.isFullScreen = true
+                KeyCode.F10 -> controller.hideKeymap()
+                KeyCode.F9 -> controller.showKeymap()
+                else -> {}
+            }
         }
-        primaryStage.addEventHandler(KeyEvent.KEY_RELEASED) { event -> if (event.code == KeyCode.F11) controller.clearTextArea() }
         primaryStage.show()
 
         Thread.setDefaultUncaughtExceptionHandler { _: Thread, _: Throwable -> Platform.exit() }
@@ -55,7 +60,7 @@ class ControllerClientUiApplication : Application() {
     override fun stop() {
         springContext.publishEvent(SpringEvent(EVENT_STOP))
         springContext.close()
-        Platform.exit();
+        Platform.exit()
     }
 }
 

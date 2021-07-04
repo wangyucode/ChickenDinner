@@ -164,4 +164,10 @@ class Connections(val springContext: ApplicationContext) {
         sendOverlayData(byteArrayOf(head))
     }
 
+    fun sendKeymapVisible(visible: Boolean) {
+        val head = if (visible) HEAD_KEYMAP_VISIBLE else HEAD_KEYMAP_INVISIBLE
+        sendOverlayData(byteArrayOf(head))
+    }
+
+
 }

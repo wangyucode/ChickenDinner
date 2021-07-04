@@ -32,7 +32,7 @@ class SwitchMouseHelper(
             springContext.publishEvent(SpringEvent(EVENT_CURSOR_VISIBLE))
             HEAD_MOUSE_VISIBLE
         } else {
-            connections.sendTouch(HEAD_TOUCH_DOWN, fovHelper.movingFovId, resetPosition.x, resetPosition.y, false)
+            connections.sendTouch(HEAD_TOUCH_DOWN, fovHelper.movingFovId, resetPosition.x, resetPosition.y, true)
             fovHelper.resetLastFov(resetPosition)
             robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
             fovHandler.start()

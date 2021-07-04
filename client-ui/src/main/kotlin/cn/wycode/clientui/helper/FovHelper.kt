@@ -45,7 +45,7 @@ class FovHelper(
                 movingFovId,
                 resetPosition.x,
                 resetPosition.y,
-                false
+                true
             )
 
             isFovAutoUp = false

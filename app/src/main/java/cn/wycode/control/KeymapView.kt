@@ -10,6 +10,7 @@ import cn.wycode.control.common.Keymap
 
 class KeymapView : View {
 
+    var keymapVisible: Boolean = false
     var repeat: Boolean = false
     var keymap: Keymap? = null
 
@@ -21,12 +22,12 @@ class KeymapView : View {
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
 
+        if (keymap == null || !keymapVisible) return
+
         mPaint.color = 0x33ffffff
         mPaint.strokeWidth = 1f
         mPaint.style = Paint.Style.STROKE
         mPaint.textSize = 30f
-
-        if (keymap == null) return
 
         val joystick = keymap!!.joystick
         canvas.drawCircle(

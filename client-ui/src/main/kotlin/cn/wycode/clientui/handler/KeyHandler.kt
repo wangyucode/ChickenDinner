@@ -35,6 +35,7 @@ class KeyHandler(
             buttonMap[KeyCode.getKeyCode(button.key)] =
                 ButtonWithId(index, button)
             if (button.name == KEY_NAME_SWITCH) resetPosition = button.position
+            if (button.name == KEY_NAME_F1) bagHelper.openPosition = button.position
         }
         joystickHelper.joystick = keymap.joystick
         joystickHelper.sin45 = (keymap.joystick.radius * sin(PI / 4)).toInt()
@@ -49,6 +50,7 @@ class KeyHandler(
         propsHelper.drops = keymap.drops
         propsHelper.drugs = keymap.drugs
         propsHelper.id = buttonMap.size + 1
+
     }
 
     override fun handle(event: KeyEvent) {

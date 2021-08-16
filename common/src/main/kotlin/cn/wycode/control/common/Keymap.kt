@@ -9,6 +9,7 @@ const val TOUCH_ID_MOUSE_BACKUP: Byte = 5
 const val TOUCH_ID_BUTTON: Byte = 10
 
 const val KEY_NAME_SWITCH = "switch"
+const val KEY_NAME_F1 = "F1"
 const val KEY_NAME_F = "F"
 const val KEY_NAME_BAG = "bag"
 const val KEY_NAME_1 = "1"

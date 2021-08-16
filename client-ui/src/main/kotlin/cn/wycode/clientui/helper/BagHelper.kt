@@ -17,7 +17,7 @@ class BagHelper(
     val fovHelper: FovHelper,
     val connections: Connections
 ) {
-    private val openPosition = Position(2691, 267)
+    lateinit var openPosition: Position
 
     fun sendBagOpen() {
         fovHandler.stop()

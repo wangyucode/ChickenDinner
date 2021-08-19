@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
+import java.util.*
 
 
 @Component
@@ -25,19 +26,23 @@ class Initializer(
 
     suspend fun initialize(textArea: TextArea) {
         this.textArea = textArea
+        textArea.appendText("\nget device name")
+        val deviceName = getDeviceName()
+        textArea.appendText("\ndevice name: $deviceName")
+
         textArea.appendText("\nstart control service")
         startMouseService()
 
         textArea.appendText("\nenable overlay tunnel")
         enableTunnel(MOUSE_PORT, MOUSE_SOCKET)
 
-        textArea.appendText("\nread keymap")
-        keymapString = javaClass.classLoader.getResource("keymap.json")!!.readText()
+        val keymapFileName = deviceName.trim() + ".json"
+
+        textArea.appendText("\nread keymap: $keymapFileName")
+        keymapString = javaClass.classLoader.getResource(keymapFileName)!!.readText()
         keymap = JSON.parseObject(keymapString, Keymap::class.java)
         connections.keymapString = keymapString
         keyHandler.initButtons(keymap)
-
-//        textArea.appendText("repeatMin=${REPEAT_INITIAL_DELAY + keymap.repeatDelayMin}, repeatMax=${REPEAT_INITIAL_DELAY + keymap.repeatDelayMax - 1}")
 
         textArea.appendText("\nconnecting to mouse")
         connections.connectToOverlayServer()
@@ -51,6 +56,12 @@ class Initializer(
         textArea.appendText("\nconnecting to control")
         connections.connectToControlServer()
         textArea.appendText("\ninitialized!")
+    }
+
+    suspend fun getDeviceName(): String {
+        val command = "adb shell getprop ro.product.model"
+        textArea.appendText("\n$command")
+        return executeCommand(command)
     }
 
     suspend fun startMouseService() {

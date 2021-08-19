@@ -36,11 +36,18 @@ class Connections(val springContext: ApplicationContext) {
     private val touchBuffer = ByteBuffer.allocate(10)
 
     /**
-     * 1 byte head , 1 byte key
+     * 1 byte head, 1 byte key
      * | head | key |
      * |  .   |  .  |
      */
     private val keyBuffer = ByteBuffer.allocate(2)
+
+    /**
+     * 1 byte head, 1 byte type(4=drops, 5=drugs), 1 byte index
+     * | head | type | index |
+     * |  .   |  .   |   .   |
+     */
+    private val selectedPropBuffer = ByteBuffer.allocate(3)
 
 
     @Volatile
@@ -167,6 +174,14 @@ class Connections(val springContext: ApplicationContext) {
     fun sendKeymapVisible(visible: Boolean) {
         val head = if (visible) HEAD_KEYMAP_VISIBLE else HEAD_KEYMAP_INVISIBLE
         sendOverlayData(byteArrayOf(head))
+    }
+
+    fun sendSelectedProp(type: Byte, index: Byte) {
+        selectedPropBuffer.clear()
+        selectedPropBuffer.put(HEAD_SELECTED_PROP)
+        selectedPropBuffer.put(type)
+        selectedPropBuffer.put(index)
+        sendOverlayData(selectedPropBuffer.array().copyOf())
     }
 
 

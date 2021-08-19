@@ -23,8 +23,15 @@ const val HEAD_REPEAT_ENABLE: Byte = 9
 const val HEAD_REPEAT_DISABLE: Byte = 10
 const val HEAD_KEYMAP_VISIBLE: Byte = 11
 const val HEAD_KEYMAP_INVISIBLE: Byte = 12
+const val HEAD_SELECTED_PROP: Byte = 13
 const val HEAD_CLEAR_TOUCH: Byte = 15
 const val HEAD_SHUT_DOWN: Byte = 16
+
+const val PROP_TYPE_DROPS: Byte = 4
+const val PROP_TYPE_DROPS_END: Byte = 14
+const val PROP_TYPE_DRUGS: Byte = 5
+const val PROP_TYPE_DRUGS_END: Byte = 15
+
 
 const val KEY_HOME: Byte = 1
 const val KEY_BACK: Byte = 2

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 class WeaponHelper {
     var weaponNumber = 1
 
-    fun changeWeapon(name: String) {
-        weaponNumber = name.toInt()
+    fun changeWeapon(number: Int) {
+        weaponNumber = number
     }
 }

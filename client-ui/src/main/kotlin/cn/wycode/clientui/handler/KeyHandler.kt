@@ -32,10 +32,11 @@ class KeyHandler(
         this.keymap = keymap
 
         for ((index, button) in keymap.buttons.withIndex()) {
-            buttonMap[KeyCode.getKeyCode(button.key)] =
-                ButtonWithId(index, button)
-            if (button.name == KEY_NAME_SWITCH) resetPosition = button.position
-            if (button.name == KEY_NAME_F1) bagHelper.openPosition = button.position
+            val keycode = KeyCode.getKeyCode(button.key)
+            buttonMap[keycode] = ButtonWithId(index, button)
+            if (keycode == KeyCode.CONTROL) resetPosition = button.position
+            // move mouse to mark button position
+            if (keycode == KeyCode.F1) bagHelper.openPosition = button.position
         }
         joystickHelper.joystick = keymap.joystick
         joystickHelper.sin45 = (keymap.joystick.radius * sin(PI / 4)).toInt()
@@ -67,14 +68,12 @@ class KeyHandler(
 
         when (event.code) {
             KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.pressed(event.code)
+            KeyCode.CONTROL, KeyCode.F2, KeyCode.F3 -> return // no need to touch
             else -> {
                 // screen button
                 val buttonWithId = buttonMap[event.code]
                 if (buttonWithId != null) {
-                    val position = buttonWithId.button.position.copy()
-                    when (buttonWithId.button.name) {
-                        KEY_NAME_SWITCH, KEY_NAME_REPEAT -> return // no need to touch
-                    }
+                    val position = buttonWithId.button.position
                     connections.sendTouch(
                         HEAD_TOUCH_DOWN,
                         (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
@@ -97,43 +96,64 @@ class KeyHandler(
             KeyCode.DELETE -> connections.sendKey(KEY_BACK)
             KeyCode.HOME -> connections.sendKey(KEY_HOME)
             KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.released(event.code)
-            KeyCode.DIGIT6, KeyCode.DIGIT7, KeyCode.DIGIT8, KeyCode.DIGIT9 -> propsHelper.change(event.code)
-            else -> {
-                val buttonWithId = buttonMap[event.code]
-                if (buttonWithId != null) {
-                    val position = buttonWithId.button.position.copy()
-                    when (buttonWithId.button.name) {
-                        KEY_NAME_SWITCH -> {
-                            switchMouseHelper.sendSwitchMouse()
-                            return
-                        }
-                        KEY_NAME_REPEAT -> {
-                            repeatHelper.stopRepeatFire()
-                            repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
-                            repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY
-                            connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
-                            return
-                        }
-                        KEY_NAME_REPEAT_1 -> {
-                            repeatHelper.stopRepeatFire()
-                            repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
-                            repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY_1
-                            connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
-                            return
-                        }
-                        KEY_NAME_BAG -> if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
-                        KEY_NAME_F -> if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
-                        KEY_NAME_1, KEY_NAME_2, KEY_NAME_3, KEY_NAME_4 -> weaponHelper.changeWeapon(buttonWithId.button.name!!)
-                    }
-                    connections.sendTouch(
-                        HEAD_TOUCH_UP,
-                        (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
-                        position.x,
-                        position.y,
-                        true
-                    )
-                }
+            KeyCode.CONTROL -> switchMouseHelper.sendSwitchMouse()
+            KeyCode.F2 -> {
+                repeatHelper.stopRepeatFire()
+                repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
+                repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY
+                connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
             }
+            KeyCode.F3 -> {
+                repeatHelper.stopRepeatFire()
+                repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
+                repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY_1
+                connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
+            }
+            KeyCode.TAB -> {
+                if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
+                sendTouchUp(event.code)
+            }
+            KeyCode.F -> {
+                if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
+                sendTouchUp(event.code)
+            }
+            KeyCode.DIGIT1 -> {
+                weaponHelper.changeWeapon(1)
+                sendTouchUp(event.code)
+            }
+            KeyCode.DIGIT2 -> {
+                weaponHelper.changeWeapon(2)
+                sendTouchUp(event.code)
+            }
+            KeyCode.DIGIT3 ->  {
+                weaponHelper.changeWeapon(3)
+                sendTouchUp(event.code)
+            }
+            KeyCode.DIGIT4 ->{
+                if(!propsHelper.isDropOpen) propsHelper.openDrops()
+                sendTouchUp(event.code)
+            }
+            KeyCode.DIGIT5 ->{
+                if(!propsHelper.isDrugOpen) propsHelper.openDrugs()
+                sendTouchUp(event.code)
+            }
+            else -> {
+                sendTouchUp(event.code)
+            }
+        }
+    }
+
+    fun sendTouchUp(keyCode: KeyCode) {
+        val buttonWithId = buttonMap[keyCode]
+        if (buttonWithId != null) {
+            val position = buttonWithId.button.position
+            connections.sendTouch(
+                HEAD_TOUCH_UP,
+                (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
+                position.x,
+                position.y,
+                true
+            )
         }
     }
 

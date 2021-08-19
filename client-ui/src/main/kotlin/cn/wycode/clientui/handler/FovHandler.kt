@@ -2,9 +2,11 @@ package cn.wycode.clientui.handler
 
 import cn.wycode.clientui.Connections
 import cn.wycode.clientui.helper.FovHelper
+import cn.wycode.clientui.helper.PropsHelper
 import cn.wycode.clientui.helper.RepeatHelper
 import cn.wycode.clientui.helper.WeaponHelper
 import cn.wycode.control.common.*
+import kotlinx.coroutines.Job
 import lc.kra.system.mouse.GlobalMouseHook
 import lc.kra.system.mouse.event.GlobalMouseAdapter
 import lc.kra.system.mouse.event.GlobalMouseEvent
@@ -16,9 +18,9 @@ class FovHandler(
     val connections: Connections,
     val fovHelper: FovHelper,
     val weaponHelper: WeaponHelper,
-    val repeatHelper: RepeatHelper
+    val repeatHelper: RepeatHelper,
+    val propsHelper: PropsHelper
 ) {
-
     private lateinit var mouseHook: GlobalMouseHook
 
     lateinit var mouse: Mouse
@@ -97,6 +99,11 @@ class FovHandler(
                 position.y,
                 true
             )
+        }
+
+        override fun mouseWheel(event: GlobalMouseEvent) {
+            val scroll = if (event.delta > 0) 1 else -1
+            propsHelper.change(scroll)
         }
     }
 }

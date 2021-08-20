@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 const val PROPS_UP_DOWN_DELAY = 7L
 
 const val PROPS_SELECT_DELAY = 500L
-const val PROPS_CLOSE_DELAY = 10000L
+const val PROPS_CLOSE_DELAY = 2500L
 
 @Component
 class PropsHelper(

@@ -1,6 +1,6 @@
 {
-  "sensitivityX": 0.5,
-  "sensitivityY": 0.5,
+  "sensitivityX": 0.3,
+  "sensitivityY": 0.3,
   "repeatDelayMin": 2,
   "repeatDelayMax": 20,
   "drops": {
@@ -64,8 +64,8 @@
   },
   "mouse": {
     "left": {
-      "x": 615,
-      "y": 317
+      "x": 200,
+      "y": 617
     },
     "right": {
       "x": 2459,
@@ -97,7 +97,7 @@
     {
       "key": "Ctrl",
       "position": {
-        "x": 1321,
+        "x": 1221,
         "y": 341
       }
     },

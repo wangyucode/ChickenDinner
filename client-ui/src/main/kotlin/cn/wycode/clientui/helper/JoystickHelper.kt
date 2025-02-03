@@ -36,7 +36,8 @@ enum class JoystickDirection(val joystickByte: Byte) {
 }
 
 @Component
-class JoystickHelper(val connections: Connections) {
+class JoystickHelper(val connections: Connections,
+                     val fovHelper: FovHelper) {
 
     /**
      * 4 bit -> 4 direction
@@ -55,9 +56,6 @@ class JoystickHelper(val connections: Connections) {
     var sin45: Int = 0
 
     private var stepJob: Job? = null
-
-    @Autowired
-    lateinit var fovHelper: FovHelper
 
     fun pressed(keyCode: KeyCode) {
         joystickByte = when (keyCode) {

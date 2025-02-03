@@ -28,7 +28,8 @@ class ControllerClientUiApplication : Application() {
 
     override fun init() {
         super.init()
-        springContext = runApplication<ControllerClientUiApplication>(*parameters.raw.toTypedArray())
+        springContext =
+            runApplication<ControllerClientUiApplication>(*parameters.raw.toTypedArray())
     }
 
     override fun start(primaryStage: Stage) {
@@ -54,7 +55,10 @@ class ControllerClientUiApplication : Application() {
         }
         primaryStage.show()
 
-        Thread.setDefaultUncaughtExceptionHandler { _: Thread, _: Throwable -> Platform.exit() }
+        Thread.setDefaultUncaughtExceptionHandler { _: Thread, ex: Throwable ->
+            ex.printStackTrace()
+            stop()
+        }
     }
 
     override fun stop() {

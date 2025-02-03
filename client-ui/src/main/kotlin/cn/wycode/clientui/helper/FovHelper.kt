@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import kotlin.math.abs
 
@@ -14,7 +15,7 @@ const val SCREEN_FOV_EDGE = 100
 @Component
 class FovHelper(
     val connections: Connections,
-    val joystickHelper: JoystickHelper
+    @Lazy val joystickHelper: JoystickHelper
 ) {
 
     var isResetting = false

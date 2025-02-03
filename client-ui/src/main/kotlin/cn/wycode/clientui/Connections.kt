@@ -163,7 +163,9 @@ class Connections(val springContext: ApplicationContext) {
     }
 
     fun sendClearTouch() {
-        sendControlData(byteArrayOf(HEAD_CLEAR_TOUCH))
+        if(!isControlClosed){
+            sendControlData(byteArrayOf(HEAD_CLEAR_TOUCH))
+        }
     }
 
     fun sendEnableRepeat(enableRepeatFire: Boolean) {

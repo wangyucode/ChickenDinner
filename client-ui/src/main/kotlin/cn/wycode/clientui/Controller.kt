@@ -36,7 +36,6 @@ class Controller(
     @FXML
     lateinit var controlPane: Pane
 
-
     @FXML
     fun initialize() {
         CoroutineScope(Dispatchers.Main).launch {

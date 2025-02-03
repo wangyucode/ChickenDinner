@@ -1,6 +1,0 @@
-rootProject.name = 'Control'
-include ':app'
-include ':control-server'
-include ':common'
-include ':client-ui'
-

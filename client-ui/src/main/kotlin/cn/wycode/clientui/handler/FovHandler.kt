@@ -6,7 +6,6 @@ import cn.wycode.clientui.helper.PropsHelper
 import cn.wycode.clientui.helper.RepeatHelper
 import cn.wycode.clientui.helper.WeaponHelper
 import cn.wycode.control.common.*
-import kotlinx.coroutines.Job
 import lc.kra.system.mouse.GlobalMouseHook
 import lc.kra.system.mouse.event.GlobalMouseAdapter
 import lc.kra.system.mouse.event.GlobalMouseEvent

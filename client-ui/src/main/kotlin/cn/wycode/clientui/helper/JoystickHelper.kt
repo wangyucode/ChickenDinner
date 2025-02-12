@@ -4,10 +4,9 @@ import cn.wycode.clientui.Connections
 import cn.wycode.clientui.RANDOM_POSITION_MAX
 import cn.wycode.clientui.RANDOM_POSITION_MIN
 import cn.wycode.control.common.*
-import javafx.scene.input.KeyCode
 import kotlinx.coroutines.*
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.awt.event.KeyEvent
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.experimental.and
 import kotlin.experimental.inv
@@ -57,23 +56,23 @@ class JoystickHelper(val connections: Connections,
 
     private var stepJob: Job? = null
 
-    fun pressed(keyCode: KeyCode) {
+    fun pressed(keyCode: Int) {
         joystickByte = when (keyCode) {
-            KeyCode.W -> joystickByte.or(JoystickDirection.TOP.joystickByte)
-            KeyCode.S -> joystickByte.or(JoystickDirection.BOTTOM.joystickByte)
-            KeyCode.A -> joystickByte.or(JoystickDirection.LEFT.joystickByte)
-            KeyCode.D -> joystickByte.or(JoystickDirection.RIGHT.joystickByte)
+            KeyEvent.VK_W -> joystickByte.or(JoystickDirection.TOP.joystickByte)
+            KeyEvent.VK_S -> joystickByte.or(JoystickDirection.BOTTOM.joystickByte)
+            KeyEvent.VK_A -> joystickByte.or(JoystickDirection.LEFT.joystickByte)
+            KeyEvent.VK_D -> joystickByte.or(JoystickDirection.RIGHT.joystickByte)
             else -> return
         }
         sendJoystick(joystickByte)
     }
 
-    fun released(keyCode: KeyCode) {
+    fun released(keyCode: Int) {
         joystickByte = when (keyCode) {
-            KeyCode.W -> joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
-            KeyCode.S -> joystickByte.and(JoystickDirection.BOTTOM.joystickByte.inv())
-            KeyCode.A -> joystickByte.and(JoystickDirection.LEFT.joystickByte.inv())
-            KeyCode.D -> joystickByte.and(JoystickDirection.RIGHT.joystickByte.inv())
+            KeyEvent.VK_W -> joystickByte.and(JoystickDirection.TOP.joystickByte.inv())
+            KeyEvent.VK_S -> joystickByte.and(JoystickDirection.BOTTOM.joystickByte.inv())
+            KeyEvent.VK_A -> joystickByte.and(JoystickDirection.LEFT.joystickByte.inv())
+            KeyEvent.VK_D -> joystickByte.and(JoystickDirection.RIGHT.joystickByte.inv())
             else -> return
         }
         sendJoystick(joystickByte)

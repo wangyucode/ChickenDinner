@@ -3,12 +3,12 @@ package cn.wycode.clientui
 import cn.wycode.clientui.handler.KeyHandler
 import cn.wycode.control.common.*
 import com.alibaba.fastjson2.JSON
-import javafx.scene.control.TextArea
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
+import java.awt.TextArea
 
 
 @Component
@@ -25,55 +25,55 @@ class Initializer(
 
     suspend fun initialize(textArea: TextArea) {
         this.textArea = textArea
-        textArea.appendText("\nget device name")
+        textArea.append("\nget device name")
         val deviceName = getDeviceName()
-        textArea.appendText("\ndevice name: $deviceName")
+        textArea.append("\ndevice name: $deviceName")
 
-        textArea.appendText("\nstart control service")
+        textArea.append("\nstart control service")
         startMouseService()
 
-        textArea.appendText("\nenable overlay tunnel")
+        textArea.append("\nenable overlay tunnel")
         enableTunnel(MOUSE_PORT, MOUSE_SOCKET)
 
         val keymapFileName = deviceName.trim() + ".json"
 
-        textArea.appendText("\nread keymap: $keymapFileName")
+        textArea.append("\nread keymap: $keymapFileName")
         keymapString = javaClass.classLoader.getResource(keymapFileName)!!.readText()
         keymap = JSON.parseObject(keymapString, Keymap::class.java)
         connections.keymapString = keymapString
         keyHandler.initButtons(keymap)
 
-        textArea.appendText("\nconnecting to mouse")
+        textArea.append("\nconnecting to mouse")
         connections.connectToOverlayServer()
 
-        textArea.appendText("\nenable control tunnel")
+        textArea.append("\nenable control tunnel")
         enableTunnel(CONTROL_PORT, CONTROL_SOCKET)
 
-        textArea.appendText("\nstart control service")
+        textArea.append("\nstart control service")
         startController()
 
-        textArea.appendText("\nconnecting to control")
+        textArea.append("\nconnecting to control")
         connections.connectToControlServer()
-        textArea.appendText("\ninitialized!")
+        textArea.append("\ninitialized!")
     }
 
     suspend fun getDeviceName(): String {
         val command = "adb shell getprop ro.product.model"
-        textArea.appendText("\n$command")
+        textArea.append("\n$command")
         return executeCommand(command)
     }
 
     suspend fun startMouseService() {
         try {
             var command = "adb shell am force-stop cn.wycode.control"
-            textArea.appendText("\n$command")
-            textArea.appendText("\n${executeCommand(command)}")
+            textArea.append("\n$command")
+            textArea.append("\n${executeCommand(command)}")
 
             command = "adb shell am start-activity cn.wycode.control/.MainActivity"
-            textArea.appendText("\n$command")
-            textArea.appendText("\n${executeCommand(command)}")
+            textArea.append("\n$command")
+            textArea.append("\n${executeCommand(command)}")
         } catch (e: Exception) {
-            textArea.appendText(e.message)
+            textArea.append(e.message)
         }
     }
 
@@ -89,8 +89,8 @@ class Initializer(
     private suspend fun startController(): Boolean {
         try {
             var command = "adb shell killall $CONTROL_SERVER"
-            textArea.appendText("\n$command")
-            textArea.appendText("\n${executeCommand(command)}")
+            textArea.append("\n$command")
+            textArea.append("\n${executeCommand(command)}")
 
             //vm-options – VM 选项
             //cmd-dir –父目录 (/system/bin)
@@ -104,24 +104,24 @@ class Initializer(
             val args = if (ENABLE_LOG) "--debug" else ""
             command =
                 "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER $args"
-            textArea.appendText("\n$command")
+            textArea.append("\n$command")
             CoroutineScope(Dispatchers.IO).launch {
                 val process = runtime.exec(command)
                 while (process.isAlive) {
                     val input = process.inputStream.bufferedReader().readLine()
-                    withContext(Dispatchers.Main) {
-                        textArea.appendText("\n$input")
+                    withContext(Dispatchers.Unconfined) {
+                        textArea.append("\n$input")
                     }
                 }
                 val input = process.inputStream.bufferedReader().readLine()
                 val error = process.errorStream.bufferedReader().readLine()
                 withContext(Dispatchers.Main) {
-                    textArea.appendText("\n$input")
-                    textArea.appendText("\n$error")
+                    textArea.append("\n$input")
+                    textArea.append("\n$error")
                 }
                 connections.closeAll()
                 withContext(Dispatchers.Main) {
-                    textArea.appendText("\nall closed!")
+                    textArea.append("\nall closed!")
                 }
             }
         } catch (e: Exception) {
@@ -133,10 +133,10 @@ class Initializer(
     private suspend fun enableTunnel(port: Int, socketName: String) {
         try {
             val command = "adb forward tcp:$port localabstract:$socketName"
-            textArea.appendText("\n$command")
-            textArea.appendText("\n${executeCommand(command)}")
+            textArea.append("\n$command")
+            textArea.append("\n${executeCommand(command)}")
         } catch (e: Exception) {
-            textArea.appendText(e.message)
+            textArea.append(e.message)
         }
     }
 }

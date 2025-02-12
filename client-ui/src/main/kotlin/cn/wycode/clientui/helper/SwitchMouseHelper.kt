@@ -1,7 +1,8 @@
 package cn.wycode.clientui.helper
 
 import cn.wycode.clientui.*
-import cn.wycode.clientui.Controller.Companion.robot
+import cn.wycode.clientui.AwtUi.Companion.robot
+//import cn.wycode.clientui.Controller.Companion.robot
 import cn.wycode.clientui.handler.FovHandler
 import cn.wycode.control.common.HEAD_MOUSE_INVISIBLE
 import cn.wycode.control.common.HEAD_MOUSE_VISIBLE
@@ -28,13 +29,13 @@ class SwitchMouseHelper(
             connections.sendClearTouch()
             connections.sendMouseMove(resetPosition.x, resetPosition.y)
             fovHandler.stop()
-            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+            robot.mouseMove((TEXTAREA_BOUNDS.x + resetPosition.x / RATIO).toInt(), (TEXTAREA_BOUNDS.y + resetPosition.y / RATIO).toInt())
             springContext.publishEvent(SpringEvent(EVENT_CURSOR_VISIBLE))
             HEAD_MOUSE_VISIBLE
         } else {
             connections.sendTouch(HEAD_TOUCH_DOWN, fovHelper.movingFovId, resetPosition.x, resetPosition.y, true)
             fovHelper.resetLastFov(resetPosition)
-            robot.mouseMove((OFFSET.x + resetPosition.x / RATIO).toInt(), (OFFSET.y + resetPosition.y / RATIO).toInt())
+            robot.mouseMove((TEXTAREA_BOUNDS.x + resetPosition.x / RATIO).toInt(), (TEXTAREA_BOUNDS.y + resetPosition.y / RATIO).toInt())
             fovHandler.start()
             springContext.publishEvent(SpringEvent(EVENT_CURSOR_INVISIBLE))
             HEAD_MOUSE_INVISIBLE

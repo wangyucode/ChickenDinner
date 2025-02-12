@@ -1,7 +1,7 @@
 // filepath: /C:/Users/www_w/code/AndroidWorkspace/Control/control-server/build.gradle.kts
 plugins {
-    id("com.android.application")
-    id("kotlin-android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {

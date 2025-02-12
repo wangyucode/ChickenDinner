@@ -1,14 +1,27 @@
 package cn.wycode.clientui.handler
 
 import cn.wycode.clientui.Connections
+import cn.wycode.clientui.EVENT_CLEAR_TEXT_AREA
+import cn.wycode.clientui.SpringEvent
 import cn.wycode.clientui.helper.*
 import cn.wycode.control.common.*
-import javafx.event.EventHandler
-import javafx.scene.input.KeyCode
-import javafx.scene.input.KeyEvent
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import kotlin.math.PI
 import kotlin.math.sin
+
+val SPECIAL_KEY_MAP = HashMap<String, Int>().apply {
+    put("Shift", KeyEvent.VK_SHIFT)
+    put("Ctrl", KeyEvent.VK_CONTROL)
+    put("Tab", KeyEvent.VK_TAB)
+    put("Space", KeyEvent.VK_SPACE)
+    put("F1", KeyEvent.VK_F1)
+    put("Back Quote", KeyEvent.VK_BACK_QUOTE)
+}
 
 @Component
 class KeyHandler(
@@ -20,11 +33,11 @@ class KeyHandler(
     val fovHelper: FovHelper,
     val propsHelper: PropsHelper,
     val repeatHelper: RepeatHelper,
-    val weaponHelper: WeaponHelper
-) : EventHandler<KeyEvent> {
-
-    private var lastKeyDown = KeyCode.UNDEFINED
-    private val buttonMap = LinkedHashMap<KeyCode, ButtonWithId>()
+    val weaponHelper: WeaponHelper,
+    val springContext: ApplicationContext
+) : KeyListener, FocusListener {
+    private var lastKeyDown = KeyEvent.VK_UNDEFINED
+    private val buttonMap = LinkedHashMap<Int, ButtonWithId>()
     private lateinit var keymap: Keymap
     private lateinit var resetPosition: Position
 
@@ -32,11 +45,11 @@ class KeyHandler(
         this.keymap = keymap
 
         for ((index, button) in keymap.buttons.withIndex()) {
-            val keycode = KeyCode.getKeyCode(button.key)
+            val keycode = keyNameToKeyCode(button.key)
             buttonMap[keycode] = ButtonWithId(index, button)
-            if (keycode == KeyCode.CONTROL) resetPosition = button.position
+            if (keycode == KeyEvent.VK_CONTROL) resetPosition = button.position
             // move mouse to mark button position
-            if (keycode == KeyCode.F1) bagHelper.openPosition = button.position
+            if (keycode == KeyEvent.VK_F1) bagHelper.openPosition = button.position
         }
         joystickHelper.joystick = keymap.joystick
         joystickHelper.sin45 = (keymap.joystick.radius * sin(PI / 4)).toInt()
@@ -51,27 +64,35 @@ class KeyHandler(
         propsHelper.drops = keymap.drops
         propsHelper.drugs = keymap.drugs
         propsHelper.id = buttonMap.size + 1
-
     }
 
-    override fun handle(event: KeyEvent) {
-        when (event.eventType) {
-            KeyEvent.KEY_PRESSED -> keyPressed(event)
-            KeyEvent.KEY_RELEASED -> keyReleased(event)
+    fun keyNameToKeyCode(keyName: String): Int {
+        if (SPECIAL_KEY_MAP.containsKey(keyName)) {
+            return SPECIAL_KEY_MAP[keyName]!!
         }
+
+        // 如果是单个字符，尝试转换
+        if (keyName.length == 1) {
+            val c: Char = keyName[0]
+            return KeyEvent.getExtendedKeyCodeForChar(c.code)
+        }
+        throw IllegalArgumentException("Unknown key name: $keyName")
     }
 
-    private fun keyPressed(event: KeyEvent) {
-        // fix long press
-        if (event.code == lastKeyDown) return
-        lastKeyDown = event.code
+    override fun keyTyped(e: KeyEvent) {
+    }
 
-        when (event.code) {
-            KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.pressed(event.code)
-            KeyCode.CONTROL, KeyCode.F2, KeyCode.F3 -> return // no need to touch
+    override fun keyPressed(event: KeyEvent) {
+        // fix long press
+        if (event.keyCode == lastKeyDown) return
+        lastKeyDown = event.keyCode
+
+        when (event.keyCode) {
+            KeyEvent.VK_W, KeyEvent.VK_S, KeyEvent.VK_A, KeyEvent.VK_D -> joystickHelper.pressed(event.keyCode)
+            KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3 -> return // no need to touch
             else -> {
                 // screen button
-                val buttonWithId = buttonMap[event.code]
+                val buttonWithId = buttonMap[event.keyCode]
                 if (buttonWithId != null) {
                     val position = buttonWithId.button.position
                     connections.sendTouch(
@@ -86,64 +107,73 @@ class KeyHandler(
         }
     }
 
-    private fun keyReleased(event: KeyEvent) {
+    override fun keyReleased(event: KeyEvent) {
         // fix long press
-        if (event.code == lastKeyDown) lastKeyDown = KeyCode.UNDEFINED
-        when (event.code) {
-            KeyCode.PAGE_UP -> connections.sendKey(KEY_VOLUME_UP)
-            KeyCode.PAGE_DOWN -> connections.sendKey(KEY_VOLUME_DOWN)
-            KeyCode.END -> connections.sendKey(KEY_HOME)
-            KeyCode.DELETE -> connections.sendKey(KEY_BACK)
-            KeyCode.HOME -> connections.sendKey(KEY_HOME)
-            KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D -> joystickHelper.released(event.code)
-            KeyCode.CONTROL -> switchMouseHelper.sendSwitchMouse()
-            KeyCode.F2 -> {
+        if (event.keyCode == lastKeyDown) lastKeyDown = KeyEvent.VK_UNDEFINED
+        when (event.keyCode) {
+            KeyEvent.VK_PAGE_UP -> connections.sendKey(KEY_VOLUME_UP)
+            KeyEvent.VK_PAGE_DOWN -> connections.sendKey(KEY_VOLUME_DOWN)
+            KeyEvent.VK_END -> connections.sendKey(KEY_HOME)
+            KeyEvent.VK_DELETE -> connections.sendKey(KEY_BACK)
+            KeyEvent.VK_HOME -> connections.sendKey(KEY_HOME)
+            KeyEvent.VK_W, KeyEvent.VK_S, KeyEvent.VK_A, KeyEvent.VK_D -> joystickHelper.released(event.keyCode)
+            KeyEvent.VK_CONTROL -> switchMouseHelper.sendSwitchMouse()
+            KeyEvent.VK_F2 -> {
                 repeatHelper.stopRepeatFire()
                 repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
                 repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY
                 connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
             }
-            KeyCode.F3 -> {
+            KeyEvent.VK_F3 -> {
                 repeatHelper.stopRepeatFire()
                 repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
                 repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY_1
                 connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
             }
-            KeyCode.TAB -> {
+            KeyEvent.VK_TAB -> {
                 if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
-            KeyCode.F -> {
+            KeyEvent.VK_F -> {
                 if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
-            KeyCode.DIGIT1 -> {
+            KeyEvent.VK_1 -> {
                 weaponHelper.changeWeapon(1)
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
-            KeyCode.DIGIT2 -> {
+            KeyEvent.VK_2 -> {
                 weaponHelper.changeWeapon(2)
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
-            KeyCode.DIGIT3 ->  {
+            KeyEvent.VK_3 ->  {
                 weaponHelper.changeWeapon(3)
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
-            KeyCode.DIGIT4 ->{
+            KeyEvent.VK_4 ->{
                 if(!propsHelper.isDropOpen) propsHelper.openDrops()
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
-            KeyCode.DIGIT5 ->{
+            KeyEvent.VK_5 ->{
                 if(!propsHelper.isDrugOpen) propsHelper.openDrugs()
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
+            }
+            KeyEvent.VK_F9 -> {
+                connections.sendKeymapVisible(true)
+            }
+            KeyEvent.VK_F10 -> {
+                connections.sendKeymapVisible(false)
+            }
+            KeyEvent.VK_F11 -> {
+                springContext.publishEvent(SpringEvent(EVENT_CLEAR_TEXT_AREA))
             }
             else -> {
-                sendTouchUp(event.code)
+                sendTouchUp(event.keyCode)
             }
         }
     }
 
-    fun sendTouchUp(keyCode: KeyCode) {
+    fun sendTouchUp(keyCode: Int) {
         val buttonWithId = buttonMap[keyCode]
         if (buttonWithId != null) {
             val position = buttonWithId.button.position
@@ -157,12 +187,12 @@ class KeyHandler(
         }
     }
 
-    fun focusChange(focus: Boolean) {
-        if (!focus) {
-            joystickHelper.sendJoystick(JoystickDirection.NONE.joystickByte)
-            connections.sendClearTouch()
-            if (!switchMouseHelper.mouseVisible) switchMouseHelper.sendSwitchMouse()
-        }
+    override fun focusGained(e: FocusEvent) {}
+
+    override fun focusLost(e: FocusEvent) {
+        joystickHelper.sendJoystick(JoystickDirection.NONE.joystickByte)
+        connections.sendClearTouch()
+        if (!switchMouseHelper.mouseVisible) switchMouseHelper.sendSwitchMouse()
     }
 }
 

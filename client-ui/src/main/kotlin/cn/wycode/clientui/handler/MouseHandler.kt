@@ -1,102 +1,100 @@
 package cn.wycode.clientui.handler
 
-import cn.wycode.clientui.CANVAS
 import cn.wycode.clientui.Connections
-import cn.wycode.clientui.Controller.Companion.robot
-import cn.wycode.clientui.OFFSET
 import cn.wycode.clientui.RATIO
+import cn.wycode.clientui.TEXTAREA_BOUNDS
 import cn.wycode.clientui.helper.SwitchMouseHelper
 import cn.wycode.control.common.HEAD_TOUCH_DOWN
 import cn.wycode.control.common.HEAD_TOUCH_MOVE
 import cn.wycode.control.common.HEAD_TOUCH_UP
+import cn.wycode.control.common.Position
 import cn.wycode.control.common.TOUCH_ID_MOUSE
-import javafx.event.EventHandler
-import javafx.scene.input.MouseEvent
 import org.springframework.stereotype.Component
-
-const val SCREEN_EDGE = 5.0
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
+import java.awt.event.MouseMotionListener
 
 @Component
 class MouseHandler(
     val connections: Connections,
     val mouseHelper: SwitchMouseHelper
-) : EventHandler<MouseEvent> {
+) : MouseMotionListener, MouseListener {
 
-    var mouseVisibility = true
-
-    override fun handle(event: MouseEvent) {
-        when (event.eventType) {
-            MouseEvent.MOUSE_PRESSED -> onMousePressed(event)
-            MouseEvent.MOUSE_MOVED -> onMouseMoved(event)
-            MouseEvent.MOUSE_RELEASED -> onMouseReleased(event)
-            MouseEvent.MOUSE_DRAGGED -> onMouseDragged(event)
+    private fun normalizeMousePosition(e: MouseEvent): Position {
+        var x = (e.x * RATIO).toInt()
+        var y = (e.y * RATIO).toInt()
+        if (e.x < 0) {
+            x = 0
         }
+        if (e.y < 0) {
+            y = 0
+        }
+        if (e.x > TEXTAREA_BOUNDS.width) {
+            x = TEXTAREA_BOUNDS.width
+        }
+        if (e.y > TEXTAREA_BOUNDS.height) {
+            y = TEXTAREA_BOUNDS.height
+        }
+        return Position(x, y)
     }
 
-    private fun onMouseDragged(event: MouseEvent) {
-        if (mouseVisibility && !connections.isOverlayClosed) {
-            connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
+    override fun mouseDragged(e: MouseEvent) {
+        val position = normalizeMousePosition(e)
+        if (mouseHelper.mouseVisible && !connections.isOverlayClosed) {
+            connections.sendMouseMove(position.x, position.y)
         }
-        if (!connections.isControlClosed) {
-            if (mouseHelper.mouseVisible) {
-                connections.sendTouch(
-                    HEAD_TOUCH_MOVE,
-                    TOUCH_ID_MOUSE,
-                    (event.x * RATIO).toInt(),
-                    (event.y * RATIO).toInt(),
-                    false
-                )
-            }
-        }
-        checkReachEdge(event.x, event.y)
-    }
-
-    fun checkReachEdge(x: Double, y: Double) {
-        if (x < SCREEN_EDGE) {
-            robot.mouseMove((OFFSET.x + SCREEN_EDGE).toInt(), (OFFSET.y + y).toInt())
-        }
-        if (x > CANVAS.x - SCREEN_EDGE) {
-            robot.mouseMove((OFFSET.x + CANVAS.x - SCREEN_EDGE).toInt(), (OFFSET.y + y).toInt())
-        }
-        if (y < SCREEN_EDGE) {
-            robot.mouseMove((OFFSET.x + x).toInt(), (OFFSET.y + SCREEN_EDGE).toInt())
-        }
-        if (y > CANVAS.y - SCREEN_EDGE) {
-            robot.mouseMove((OFFSET.x + x).toInt(), (OFFSET.y + CANVAS.y - SCREEN_EDGE).toInt())
-        }
-    }
-
-    private fun onMouseMoved(event: MouseEvent) {
-        if (mouseVisibility && !connections.isOverlayClosed) {
-            connections.sendMouseMove((event.x * RATIO).toInt(), (event.y * RATIO).toInt())
-        }
-        checkReachEdge(event.x, event.y)
-    }
-
-    private fun onMouseReleased(event: MouseEvent) {
-        if (connections.isControlClosed) return
-        if (mouseHelper.mouseVisible) {
+        if (!connections.isControlClosed && mouseHelper.mouseVisible) {
             connections.sendTouch(
-                HEAD_TOUCH_UP,
+                HEAD_TOUCH_MOVE,
                 TOUCH_ID_MOUSE,
-                (event.x * RATIO).toInt(),
-                (event.y * RATIO).toInt(),
+                position.x,
+                position.y,
                 false
             )
         }
     }
 
-    private fun onMousePressed(event: MouseEvent) {
+    override fun mouseMoved(e: MouseEvent) {
+        if (mouseHelper.mouseVisible && !connections.isOverlayClosed) {
+            val position = normalizeMousePosition(e)
+            connections.sendMouseMove(position.x, position.y)
+        }
+    }
+
+
+    override fun mouseClicked(e: MouseEvent) {
+    }
+
+    override fun mousePressed(e: MouseEvent) {
         if (connections.isControlClosed) return
         // mouse touch down
         if (mouseHelper.mouseVisible) {
             connections.sendTouch(
                 HEAD_TOUCH_DOWN,
                 TOUCH_ID_MOUSE,
-                (event.x * RATIO).toInt(),
-                (event.y * RATIO).toInt(),
+                (e.x * RATIO).toInt(),
+                (e.y * RATIO).toInt(),
                 false
             )
         }
+    }
+
+    override fun mouseReleased(e: MouseEvent) {
+        if (connections.isControlClosed) return
+        if (mouseHelper.mouseVisible) {
+            connections.sendTouch(
+                HEAD_TOUCH_UP,
+                TOUCH_ID_MOUSE,
+                (e.x * RATIO).toInt(),
+                (e.y * RATIO).toInt(),
+                false
+            )
+        }
+    }
+
+    override fun mouseEntered(e: MouseEvent) {
+    }
+
+    override fun mouseExited(e: MouseEvent) {
     }
 }

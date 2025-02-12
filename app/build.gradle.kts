@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion(34)
+    compileSdk = 34
     buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId = "cn.wycode.control"
-        minSdkVersion(28)
-        targetSdkVersion(34)
+        minSdk = 34
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -37,6 +37,7 @@ android {
 
 dependencies {
     implementation(project(":common"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
-    implementation("com.alibaba.fastjson2:fastjson2:2.0.54")
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.fastjson2)
+    implementation(libs.jetbrains.kotlin.reflect)
 }

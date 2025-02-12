@@ -15,12 +15,8 @@ data class Keymap(
     val sensitivityX: Double,
     val sensitivityY: Double,
     val repeatDelayMin: Long,
-    val repeatDelayMax: Long,
-    val drops: Props,
-    val drugs: Props
+    val repeatDelayMax: Long
 )
-
-data class Props(val open: Position, val buttons: List<Position>)
 
 data class Button(val key: String, var position: Position)
 

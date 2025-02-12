@@ -42,6 +42,7 @@ class AwtUi(
         frame.background = Color(0, 44, 34)
         frame.layout = FlowLayout()
         frame.preferredSize = graphicsDevice.defaultConfiguration.bounds.size
+        frame.focusTraversalKeysEnabled = false
 
         textArea = TextArea()
         textArea.preferredSize = Dimension(1280, 720)

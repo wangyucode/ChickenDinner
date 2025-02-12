@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import kotlin.math.abs
 
-const val SCREEN_FOV_EDGE = 100
+val SCREEN_FOV_EDGE = Position(500, 300)
 
 @Component
 class FovHelper(
@@ -92,13 +92,13 @@ class FovHelper(
     }
 
     private fun checkFovEdge(): Boolean {
-        return if (abs(lastFovX - resetPosition.x) > resetPosition.x / 2 || abs(lastFovY - resetPosition.y) > resetPosition.y - SCREEN_FOV_EDGE) {
+        return if (abs(lastFovX - resetPosition.x) > SCREEN_FOV_EDGE.x || abs(lastFovY - resetPosition.y) > SCREEN_FOV_EDGE.y) {
             // up from current position
             val x = lastFovX.toInt()
             val y = lastFovY.toInt()
             val id = movingFovId
             CoroutineScope(Dispatchers.IO).launch {
-                delay(100)
+                delay(50)
                 connections.sendTouch(HEAD_TOUCH_UP, id, x, y, false)
             }
             isFovAutoUp = true

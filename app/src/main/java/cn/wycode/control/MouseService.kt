@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.util.Log
 import cn.wycode.control.common.LOG_TAG
@@ -18,7 +19,7 @@ class MouseService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        startForeground(1, createNotification())
+        startForeground(1, createNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
 
         val context = this
         CoroutineScope(Dispatchers.IO).launch {
@@ -54,7 +55,7 @@ class MouseService : Service() {
 
     override fun onDestroy() {
         Log.d(LOG_TAG, "onDestroy");
-        stopForeground(true)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
     }
 }

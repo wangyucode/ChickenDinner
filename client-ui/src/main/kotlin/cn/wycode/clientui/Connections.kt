@@ -178,13 +178,5 @@ class Connections(val springContext: ApplicationContext) {
         sendOverlayData(byteArrayOf(head))
     }
 
-    fun sendSelectedProp(type: Byte, index: Byte) {
-        selectedPropBuffer.clear()
-        selectedPropBuffer.put(HEAD_SELECTED_PROP)
-        selectedPropBuffer.put(type)
-        selectedPropBuffer.put(index)
-        sendOverlayData(selectedPropBuffer.array().copyOf())
-    }
-
 
 }

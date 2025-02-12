@@ -22,7 +22,6 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation(project(":common"))
     implementation(libs.spring.boot.stater)
-    implementation(libs.jetbrains.kotlin.stdlib.jdk8)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.fastjson2)
 }

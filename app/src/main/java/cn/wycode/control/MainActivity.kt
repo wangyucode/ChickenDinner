@@ -8,6 +8,8 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
+import cn.wycode.control.common.Keymap
+import com.alibaba.fastjson2.JSON
 
 class MainActivity : Activity() {
 

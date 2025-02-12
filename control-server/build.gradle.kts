@@ -9,8 +9,8 @@ android {
     buildToolsVersion = "34.0.0"
 
     defaultConfig {
-        minSdkVersion(26)
-        targetSdkVersion(34)
+        minSdk = 26
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
         multiDexEnabled = false

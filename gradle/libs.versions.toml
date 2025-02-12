@@ -7,8 +7,9 @@ spring-boot = "3.4.2"
 spring-dependency-management = "1.1.7"
 
 [libraries]
-fastjson2 = { module = "com.alibaba.fastjson2:fastjson2", version.ref = "fastjson2" }
-jetbrains-kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref="kotlin" }
+fastjson2 = { module = "com.alibaba.fastjson2:fastjson2-kotlin", version.ref = "fastjson2" }
+jetbrains-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref="kotlin" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-core" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines-core" }
 spring-boot-stater = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
 

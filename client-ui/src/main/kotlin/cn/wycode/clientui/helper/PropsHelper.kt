@@ -17,8 +17,6 @@ class PropsHelper(
     var id: Int = 0
     var isDropOpen = false
     var isDrugOpen = false
-    lateinit var drops: Props
-    lateinit var drugs: Props
 
 
     var selectJob: Job? = null
@@ -28,45 +26,45 @@ class PropsHelper(
 
     fun change(scroll: Int) {
         selectJob?.cancel()
-        if (isDropOpen) sendSelect(PROP_TYPE_DROPS, scroll, drops, PROP_TYPE_DROPS_END)
-        if (isDrugOpen) sendSelect(PROP_TYPE_DRUGS, scroll, drugs, PROP_TYPE_DRUGS_END)
+//        if (isDropOpen) sendSelect(PROP_TYPE_DROPS, scroll, drops, PROP_TYPE_DROPS_END)
+//        if (isDrugOpen) sendSelect(PROP_TYPE_DRUGS, scroll, drugs, PROP_TYPE_DRUGS_END)
     }
 
-    private fun sendSelect(type: Byte, scroll: Int, props: Props, endType: Byte) {
-        propIndex += scroll
-        if (propIndex == props.buttons.size) propIndex = 0
-        if (propIndex == -1) propIndex = props.buttons.size - 1
-        connections.sendSelectedProp(type, propIndex.toByte())
-        println("sendSelect->$type,$propIndex")
-        selectJob = CoroutineScope(Dispatchers.IO).launch {
-            delay(PROPS_SELECT_DELAY)
-            connections.sendTouch(
-                HEAD_TOUCH_DOWN,
-                id.toByte(),
-                props.buttons[propIndex].x,
-                props.buttons[propIndex].y,
-                true
-            )
-            delay(PROPS_UP_DOWN_DELAY)
-            connections.sendTouch(
-                HEAD_TOUCH_UP,
-                id.toByte(),
-                props.buttons[propIndex].x,
-                props.buttons[propIndex].y,
-                true
-            )
-            connections.sendSelectedProp(endType, propIndex.toByte())
-            println("sendSelect->$endType, $propIndex")
-            propIndex = 0
-        }
-    }
+//    private fun sendSelect(type: Byte, scroll: Int, props: Props, endType: Byte) {
+//        propIndex += scroll
+//        if (propIndex == props.buttons.size) propIndex = 0
+//        if (propIndex == -1) propIndex = props.buttons.size - 1
+//        connections.sendSelectedProp(type, propIndex.toByte())
+//        println("sendSelect->$type,$propIndex")
+//        selectJob = CoroutineScope(Dispatchers.IO).launch {
+//            delay(PROPS_SELECT_DELAY)
+//            connections.sendTouch(
+//                HEAD_TOUCH_DOWN,
+//                id.toByte(),
+//                props.buttons[propIndex].x,
+//                props.buttons[propIndex].y,
+//                true
+//            )
+//            delay(PROPS_UP_DOWN_DELAY)
+//            connections.sendTouch(
+//                HEAD_TOUCH_UP,
+//                id.toByte(),
+//                props.buttons[propIndex].x,
+//                props.buttons[propIndex].y,
+//                true
+//            )
+//            connections.sendSelectedProp(endType, propIndex.toByte())
+//            println("sendSelect->$endType, $propIndex")
+//            propIndex = 0
+//        }
+//    }
 
     fun openDrops() {
         isDropOpen = true
         openJob = CoroutineScope(Dispatchers.IO).launch {
-            connections.sendTouch(HEAD_TOUCH_DOWN, id.toByte(), drops.open.x, drops.open.y, true)
+//            connections.sendTouch(HEAD_TOUCH_DOWN, id.toByte(), drops.open.x, drops.open.y, true)
             delay(PROPS_UP_DOWN_DELAY)
-            connections.sendTouch(HEAD_TOUCH_UP, id.toByte(), drops.open.x, drops.open.y, true)
+//            connections.sendTouch(HEAD_TOUCH_UP, id.toByte(), drops.open.x, drops.open.y, true)
             delay(PROPS_CLOSE_DELAY)
             isDropOpen = false
         }
@@ -75,9 +73,9 @@ class PropsHelper(
     fun openDrugs() {
         isDrugOpen = true
         openJob = CoroutineScope(Dispatchers.IO).launch {
-            connections.sendTouch(HEAD_TOUCH_DOWN, id.toByte(), drugs.open.x, drugs.open.y, true)
+//            connections.sendTouch(HEAD_TOUCH_DOWN, id.toByte(), drugs.open.x, drugs.open.y, true)
             delay(PROPS_UP_DOWN_DELAY)
-            connections.sendTouch(HEAD_TOUCH_UP, id.toByte(), drugs.open.x, drugs.open.y, true)
+//            connections.sendTouch(HEAD_TOUCH_UP, id.toByte(), drugs.open.x, drugs.open.y, true)
             delay(PROPS_CLOSE_DELAY)
             isDrugOpen = false
         }

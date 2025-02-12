@@ -41,8 +41,6 @@ class MouseServer(
     private lateinit var serverSocket: LocalServerSocket
     private lateinit var outputStream: OutputStream
     private lateinit var inputStream: InputStream
-    private var selectedType = 0
-    private var selectedIndex = 0
 
     private val inputPointBuffer = ByteBuffer.allocate(8)
     private val outputPointBuffer = ByteBuffer.allocate(8)
@@ -102,11 +100,8 @@ class MouseServer(
                 val dataArray = ByteArray(size)
                 inputStream.read(dataArray)
                 val keymapString = dataArray.toString(StandardCharsets.UTF_8)
+                Log.d("wy", "read:  $keymapString")
                 keymap = JSON.parseObject(keymapString, Keymap::class.java)
-            }
-            HEAD_SELECTED_PROP -> {
-                selectedType = inputStream.read()
-                selectedIndex = inputStream.read()
             }
         }
         return head
@@ -138,11 +133,6 @@ class MouseServer(
             }
             HEAD_KEYMAP_INVISIBLE -> {
                 keymapView.keymapVisible = false
-                keymapView.invalidate()
-            }
-            HEAD_SELECTED_PROP -> {
-                keymapView.selectedType = selectedType
-                keymapView.selectedIndex = selectedIndex
                 keymapView.invalidate()
             }
         }

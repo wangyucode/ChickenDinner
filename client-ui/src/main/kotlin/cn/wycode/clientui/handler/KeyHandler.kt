@@ -61,8 +61,6 @@ class KeyHandler(
         repeatHelper.repeatDelayMin = keymap.repeatDelayMin
         repeatHelper.repeatDelayMax = keymap.repeatDelayMax
         repeatHelper.leftMousePosition = keymap.mouse.left
-        propsHelper.drops = keymap.drops
-        propsHelper.drugs = keymap.drugs
         propsHelper.id = buttonMap.size + 1
     }
 
@@ -79,8 +77,7 @@ class KeyHandler(
         throw IllegalArgumentException("Unknown key name: $keyName")
     }
 
-    override fun keyTyped(e: KeyEvent) {
-    }
+    override fun keyTyped(e: KeyEvent) {}
 
     override fun keyPressed(event: KeyEvent) {
         // fix long press
@@ -89,10 +86,11 @@ class KeyHandler(
 
         when (event.keyCode) {
             KeyEvent.VK_W, KeyEvent.VK_S, KeyEvent.VK_A, KeyEvent.VK_D -> joystickHelper.pressed(event.keyCode)
-            KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3 -> return // no need to touch
+            KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3, KeyEvent.VK_4 -> return // no need to touch
             else -> {
                 // screen button
                 val buttonWithId = buttonMap[event.keyCode]
+
                 if (buttonWithId != null) {
                     val position = buttonWithId.button.position
                     connections.sendTouch(
@@ -108,7 +106,6 @@ class KeyHandler(
     }
 
     override fun keyReleased(event: KeyEvent) {
-        // fix long press
         if (event.keyCode == lastKeyDown) lastKeyDown = KeyEvent.VK_UNDEFINED
         when (event.keyCode) {
             KeyEvent.VK_PAGE_UP -> connections.sendKey(KEY_VOLUME_UP)
@@ -152,11 +149,9 @@ class KeyHandler(
             }
             KeyEvent.VK_4 ->{
                 if(!propsHelper.isDropOpen) propsHelper.openDrops()
-                sendTouchUp(event.keyCode)
             }
             KeyEvent.VK_5 ->{
                 if(!propsHelper.isDrugOpen) propsHelper.openDrugs()
-                sendTouchUp(event.keyCode)
             }
             KeyEvent.VK_F9 -> {
                 connections.sendKeymapVisible(true)

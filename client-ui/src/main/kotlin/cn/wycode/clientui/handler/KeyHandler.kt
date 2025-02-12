@@ -80,6 +80,7 @@ class KeyHandler(
     override fun keyTyped(e: KeyEvent) {}
 
     override fun keyPressed(event: KeyEvent) {
+        println("keyPressed: ${event.keyCode}")
         // fix long press
         if (event.keyCode == lastKeyDown) return
         lastKeyDown = event.keyCode
@@ -87,6 +88,7 @@ class KeyHandler(
         when (event.keyCode) {
             KeyEvent.VK_W, KeyEvent.VK_S, KeyEvent.VK_A, KeyEvent.VK_D -> joystickHelper.pressed(event.keyCode)
             KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3, KeyEvent.VK_4 -> return // no need to touch
+            KeyEvent.VK_ALT, KeyEvent.VK_F10 -> event.consume()
             else -> {
                 // screen button
                 val buttonWithId = buttonMap[event.keyCode]
@@ -158,7 +160,9 @@ class KeyHandler(
             }
             KeyEvent.VK_F10 -> {
                 connections.sendKeymapVisible(false)
+                event.consume()
             }
+            KeyEvent.VK_ALT -> event.consume()
             KeyEvent.VK_F11 -> {
                 springContext.publishEvent(SpringEvent(EVENT_CLEAR_TEXT_AREA))
             }

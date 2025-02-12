@@ -8,8 +8,8 @@ import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.ThreadLocalRandom
 
-const val RANDOM_POSITION_MIN = -20
-const val RANDOM_POSITION_MAX = 20
+const val RANDOM_POSITION_MIN = -10
+const val RANDOM_POSITION_MAX = 10
 
 @Component
 class Connections(val springContext: ApplicationContext) {
@@ -41,13 +41,6 @@ class Connections(val springContext: ApplicationContext) {
      * |  .   |  .  |
      */
     private val keyBuffer = ByteBuffer.allocate(2)
-
-    /**
-     * 1 byte head, 1 byte type(4=drops, 5=drugs), 1 byte index
-     * | head | type | index |
-     * |  .   |  .   |   .   |
-     */
-    private val selectedPropBuffer = ByteBuffer.allocate(3)
 
 
     @Volatile

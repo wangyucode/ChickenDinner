@@ -5,6 +5,10 @@ import cn.wycode.clientui.EVENT_CLEAR_TEXT_AREA
 import cn.wycode.clientui.SpringEvent
 import cn.wycode.clientui.helper.*
 import cn.wycode.control.common.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import java.awt.event.FocusEvent
@@ -49,7 +53,9 @@ class KeyHandler(
             buttonMap[keycode] = ButtonWithId(index, button)
             if (keycode == KeyEvent.VK_CONTROL) resetPosition = button.position
             // move mouse to mark button position
-            if (keycode == KeyEvent.VK_F1) bagHelper.openPosition = button.position
+            if (keycode == KeyEvent.VK_Y) bagHelper.openPosition = button.position
+            if (keycode == KeyEvent.VK_4) propsHelper.dropsPosition = button.position
+            if (keycode == KeyEvent.VK_5) propsHelper.drugsPosition = button.position
         }
         joystickHelper.joystick = keymap.joystick
         joystickHelper.sin45 = (keymap.joystick.radius * sin(PI / 4)).toInt()
@@ -80,15 +86,46 @@ class KeyHandler(
     override fun keyTyped(e: KeyEvent) {}
 
     override fun keyPressed(event: KeyEvent) {
-        println("keyPressed: ${event.keyCode}")
         // fix long press
         if (event.keyCode == lastKeyDown) return
         lastKeyDown = event.keyCode
 
         when (event.keyCode) {
             KeyEvent.VK_W, KeyEvent.VK_S, KeyEvent.VK_A, KeyEvent.VK_D -> joystickHelper.pressed(event.keyCode)
-            KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3, KeyEvent.VK_4 -> return // no need to touch
-            KeyEvent.VK_ALT, KeyEvent.VK_F10 -> event.consume()
+            KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3 -> return // no need to touch
+            KeyEvent.VK_4 -> {
+                if(!switchMouseHelper.mouseVisible){
+                    CoroutineScope(Dispatchers.IO).launch {
+                        delay(100)
+                        connections.sendTouch(
+                            HEAD_TOUCH_UP,
+                            fovHelper.movingFovId,
+                            fovHelper.lastFovX.toInt(),
+                            fovHelper.lastFovY.toInt(),
+                            false
+                        )
+                    }
+
+                    fovHandler.isPropsSelecting = true
+                    propsHelper.selectDrops()
+                }
+            }
+            KeyEvent.VK_5 -> {
+                if(!switchMouseHelper.mouseVisible) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        delay(100)
+                        connections.sendTouch(
+                            HEAD_TOUCH_UP,
+                            fovHelper.movingFovId,
+                            fovHelper.lastFovX.toInt(),
+                            fovHelper.lastFovY.toInt(),
+                            false
+                        )
+                    }
+                    fovHandler.isPropsSelecting = true
+                    propsHelper.selectDrugs()
+                }
+            }
             else -> {
                 // screen button
                 val buttonWithId = buttonMap[event.keyCode]
@@ -123,49 +160,77 @@ class KeyHandler(
                 repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY
                 connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
             }
+
             KeyEvent.VK_F3 -> {
                 repeatHelper.stopRepeatFire()
                 repeatHelper.enableRepeatFire = !repeatHelper.enableRepeatFire
                 repeatHelper.repeatInitialDelay = REPEAT_INITIAL_DELAY_1
                 connections.sendEnableRepeat(repeatHelper.enableRepeatFire)
             }
+
             KeyEvent.VK_TAB -> {
                 if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
                 sendTouchUp(event.keyCode)
             }
+
             KeyEvent.VK_F -> {
                 if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
                 sendTouchUp(event.keyCode)
             }
+
             KeyEvent.VK_1 -> {
                 weaponHelper.changeWeapon(1)
                 sendTouchUp(event.keyCode)
             }
+
             KeyEvent.VK_2 -> {
                 weaponHelper.changeWeapon(2)
                 sendTouchUp(event.keyCode)
             }
-            KeyEvent.VK_3 ->  {
+
+            KeyEvent.VK_3 -> {
                 weaponHelper.changeWeapon(3)
                 sendTouchUp(event.keyCode)
             }
-            KeyEvent.VK_4 ->{
-                if(!propsHelper.isDropOpen) propsHelper.openDrops()
+
+            KeyEvent.VK_4 -> {
+                fovHandler.isPropsSelecting = false
+                propsHelper.done()
+                connections.sendTouch(
+                    HEAD_TOUCH_DOWN,
+                    fovHelper.movingFovId,
+                    fovHelper.lastFovX.toInt(),
+                    fovHelper.lastFovY.toInt(),
+                    false
+                )
             }
-            KeyEvent.VK_5 ->{
-                if(!propsHelper.isDrugOpen) propsHelper.openDrugs()
+
+            KeyEvent.VK_5 -> {
+                fovHandler.isPropsSelecting = false
+                propsHelper.done()
+                connections.sendTouch(
+                    HEAD_TOUCH_DOWN,
+                    fovHelper.movingFovId,
+                    fovHelper.lastFovX.toInt(),
+                    fovHelper.lastFovY.toInt(),
+                    false
+                )
             }
+
             KeyEvent.VK_F9 -> {
                 connections.sendKeymapVisible(true)
             }
+
             KeyEvent.VK_F10 -> {
                 connections.sendKeymapVisible(false)
                 event.consume()
             }
+
             KeyEvent.VK_ALT -> event.consume()
             KeyEvent.VK_F11 -> {
                 springContext.publishEvent(SpringEvent(EVENT_CLEAR_TEXT_AREA))
             }
+
             else -> {
                 sendTouchUp(event.keyCode)
             }

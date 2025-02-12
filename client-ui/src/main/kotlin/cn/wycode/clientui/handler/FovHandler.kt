@@ -24,6 +24,7 @@ class FovHandler(
 
     lateinit var mouse: Mouse
     lateinit var lastFirePosition: Position
+    var isPropsSelecting = false
 
     private val mouseListener = MouseListener()
 
@@ -38,7 +39,12 @@ class FovHandler(
 
     inner class MouseListener : GlobalMouseAdapter() {
         override fun mouseMoved(event: GlobalMouseEvent) {
-            fovHelper.sendMoveFov(event.x, event.y)
+            if(isPropsSelecting){
+                propsHelper.moveMouse(event.x, event.y)
+            }else{
+                fovHelper.sendMoveFov(event.x, event.y)
+            }
+
         }
 
         override fun mousePressed(event: GlobalMouseEvent) {
@@ -100,10 +106,7 @@ class FovHandler(
             )
         }
 
-        override fun mouseWheel(event: GlobalMouseEvent) {
-            val scroll = if (event.delta > 0) 1 else -1
-            propsHelper.change(scroll)
-        }
+        override fun mouseWheel(event: GlobalMouseEvent) {}
     }
 }
 

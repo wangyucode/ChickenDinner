@@ -137,7 +137,7 @@ class AwtUi(
         textArea.cursor = if (visible) {
             Cursor.getDefaultCursor()
         } else {
-            Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
+            Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR)
         }
     }
 

@@ -2,9 +2,7 @@ package cn.wycode.control
 
 import android.content.Context
 import android.graphics.*
-import android.os.Debug
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import cn.wycode.control.common.*
 
@@ -26,7 +24,7 @@ class KeymapView : View {
         //clear previous drawings
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
-        if(!keymapVisible) return
+        if (!keymapVisible) return
         mPaint.color = 0x88FFFFFF.toInt()
         mPaint.strokeWidth = 2f
         mPaint.style = Paint.Style.STROKE
@@ -70,6 +68,6 @@ class KeymapView : View {
         val x = button.position.x.toFloat()
         val y = button.position.y.toFloat()
         canvas.drawCircle(x, y, 10f, mPaint)
-        button.key?.let { canvas.drawText(it, x, y, mPaint) }
+        canvas.drawText(button.key, x, y, mPaint)
     }
 }

@@ -35,8 +35,7 @@ enum class JoystickDirection(val joystickByte: Byte) {
 }
 
 @Component
-class JoystickHelper(val connections: Connections,
-                     val fovHelper: FovHelper) {
+class JoystickHelper(val connections: Connections) {
 
     /**
      * 4 bit -> 4 direction
@@ -145,8 +144,6 @@ class JoystickHelper(val connections: Connections,
     }
 
     private fun sendStep(dx: Int, dy: Int) {
-        if (fovHelper.isResetting) return
-
         lastJoystickX += dx
         lastJoystickY += dy
 

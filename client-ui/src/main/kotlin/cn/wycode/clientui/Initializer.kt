@@ -115,12 +115,12 @@ class Initializer(
                 }
                 val input = process.inputStream.bufferedReader().readLine()
                 val error = process.errorStream.bufferedReader().readLine()
-                withContext(Dispatchers.Main) {
+                withContext(Dispatchers.Unconfined) {
                     textArea.append("\n$input")
                     textArea.append("\n$error")
                 }
                 connections.closeAll()
-                withContext(Dispatchers.Main) {
+                withContext(Dispatchers.Unconfined) {
                     textArea.append("\nall closed!")
                 }
             }

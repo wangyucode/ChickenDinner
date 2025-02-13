@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
     ENABLE_LOG = args.isNotEmpty() && args[0] == "dev"
     val app = SpringApplication.run(Application::class.java, *args)
     Thread.setDefaultUncaughtExceptionHandler { t, e ->
+        e.printStackTrace()
         app.publishEvent(SpringEvent(EVENT_STOP, "Uncaught exception in thread $t: $e"))
     }
 }

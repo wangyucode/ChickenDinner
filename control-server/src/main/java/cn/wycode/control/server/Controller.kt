@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 
 var shouldLogEvent = ENABLE_LOG
 
-class Controller(private val inputStream: InputStream) : Thread() {
+class Controller(private val inputStream: InputStream) {
 
     private val event: Event = Event(0, 0, 0, 0, 0)
     private var lastEvent = event.copy()
@@ -32,7 +32,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
     private val touchConverter = TouchConverter()
     private var shutdown = false
 
-    override fun run() {
+    fun run() {
         while (!shutdown) {
             readEvent()
             injectEvent()
@@ -120,7 +120,7 @@ class Controller(private val inputStream: InputStream) : Thread() {
         shouldLogEvent =
             ENABLE_LOG && (lastEvent.type != event.type || lastEvent.id != event.id || event.key != ZERO_BYTE)
         if (shouldLogEvent) lastEvent = event.copy()
-        if (shouldLogEvent) Ln.d("revive->${event}")
+        if (shouldLogEvent) Ln.d("receive->${event}")
     }
 }
 

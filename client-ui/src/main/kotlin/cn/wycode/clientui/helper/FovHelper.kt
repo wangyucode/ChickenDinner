@@ -6,7 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import kotlin.math.abs
 
@@ -15,10 +14,7 @@ val SCREEN_FOV_EDGE = Position(500, 300)
 @Component
 class FovHelper(
     val connections: Connections,
-    @Lazy val joystickHelper: JoystickHelper
 ) {
-
-    var isResetting = false
     var isFovAutoUp = false
     var lastFovMoveTime = 0L
     var movingFovId = TOUCH_ID_MOUSE
@@ -31,7 +27,6 @@ class FovHelper(
     var sensitivityY = 1.0
 
     fun sendMoveFov(dx: Int, dy: Int) {
-        if (isResetting) return
         // auto up after some time
         if (isFovAutoUp) {
 
@@ -67,23 +62,6 @@ class FovHelper(
 
         connections.sendTouch(HEAD_TOUCH_MOVE, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
         lastFovMoveTime = System.currentTimeMillis()
-    }
-
-    fun resetTouchAfterGetInCar() {
-        if (!isFovAutoUp) {
-            connections.sendTouch(HEAD_TOUCH_UP, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
-            isFovAutoUp = true
-        }
-
-        val lastJoystickByte = joystickHelper.lastJoystickByte
-        joystickHelper.sendJoystick(ZERO_BYTE)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            delay(100)
-            isResetting = false
-            joystickHelper.sendJoystick(lastJoystickByte)
-        }
-        isResetting = true
     }
 
     fun resetLastFov(position: Position) {

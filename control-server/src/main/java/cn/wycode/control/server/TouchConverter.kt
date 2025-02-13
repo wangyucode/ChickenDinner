@@ -8,6 +8,7 @@ import cn.wycode.control.common.HEAD_TOUCH_DOWN
 import cn.wycode.control.common.HEAD_TOUCH_MOVE
 import cn.wycode.control.common.HEAD_TOUCH_UP
 import cn.wycode.control.server.utils.Ln
+import java.util.*
 
 
 const val MAX_POINTERS = 10
@@ -19,6 +20,12 @@ class TouchConverter {
     private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
 
     val localIdToEvent = SparseArray<Event>(10)
+
+    private val unusedIds: Queue<Int> = LinkedList<Int>().apply {
+        for (i in 0 until MAX_POINTERS) {
+            add(i)
+        }
+    }
 
     init {
         for (i in 0 until MAX_POINTERS) {
@@ -42,7 +49,8 @@ class TouchConverter {
                 if (localIdToEvent.size() == 0) {
                     downTime = now
                     action = MotionEvent.ACTION_DOWN
-                    localIdToEvent.put(0, input.copy())
+                    localId = getUnusedLocalId()
+                    localIdToEvent.put(localId, input.copy())
                 } else {
                     localId = getLocalId(input)
                     if (localId != -1) {
@@ -94,6 +102,7 @@ class TouchConverter {
 
         if (input.type == HEAD_TOUCH_UP) {
             localIdToEvent.remove(localId)
+            returnLocalId(localId)
         }
 
         val event = MotionEvent.obtain(
@@ -132,11 +141,15 @@ class TouchConverter {
     }
 
     private fun getUnusedLocalId(): Int {
-        for (i in 0 until 10) {
-            val index = localIdToEvent.indexOfKey(i)
-            if (index < 0) return i
+        return if (unusedIds.isNotEmpty()) {
+            unusedIds.poll()!!
+        } else {
+            -1
         }
-        return -1
+    }
+
+    private fun returnLocalId(id: Int) {
+        unusedIds.offer(id)
     }
 
     private fun getLocalId(input: Event): Int {

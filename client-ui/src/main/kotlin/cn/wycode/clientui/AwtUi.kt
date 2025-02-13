@@ -4,10 +4,7 @@ package cn.wycode.clientui
 import cn.wycode.clientui.handler.KeyHandler
 import cn.wycode.clientui.handler.MouseHandler
 import cn.wycode.control.common.Position
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.springframework.context.ApplicationEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
@@ -33,6 +30,7 @@ class AwtUi(
     final var frame: Frame
     final var textArea: TextArea
     final var graphicsDevice: GraphicsDevice
+    var isStopping = false
 
     init {
         System.setProperty("java.awt.headless", "false")
@@ -75,25 +73,6 @@ class AwtUi(
         }
         textArea.preferredSize = Dimension((SCREEN.x / RATIO).toInt(), (SCREEN.y / RATIO).toInt())
 
-//
-//        controlPane.prefWidth = textArea.prefWidth
-//        controlPane.prefHeight = textArea.prefHeight
-//
-//        CANVAS.x = textArea.prefWidth.toInt()
-//        CANVAS.y = textArea.prefHeight.toInt()
-//
-//        textArea.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
-//        textArea.layoutY = 0.0
-//
-//        controlPane.layoutX = screenBounds.width / 2 - textArea.prefWidth / 2
-//        controlPane.layoutY = 0.0
-//
-//        val window = textArea.scene.window
-//        window.y = 0.0
-//        window.x = screenBounds.width / 2 - window.width / 2
-//
-//        OFFSET.x = (window.x + textArea.layoutX).toInt()
-//        OFFSET.y = (window.y + textArea.layoutY).toInt()
         frame.pack()
         frame.revalidate()
         TEXTAREA_BOUNDS = textArea.bounds
@@ -129,8 +108,9 @@ class AwtUi(
         })
     }
 
-    fun onControlConnected() {
+    fun onControlConnected(message: String?) {
         frame.addKeyListener(keyHandler)
+        textArea.append("\n$message")
     }
 
     fun changeCursor(visible: Boolean) {
@@ -142,15 +122,14 @@ class AwtUi(
     }
 
     fun onStop(message: String?) {
+        if (isStopping) return
+        isStopping = true
         try { connections.closeAll() } catch (_: Exception) {}
         textArea.append("\n")
         textArea.append(message)
         textArea.append("\n")
         CoroutineScope(Dispatchers.Unconfined).launch {
-            for (i in 10 downTo 1) {
-                textArea.append("\nwill exit in $i seconds")
-                Thread.sleep(1000)
-            }
+            delay(30000)
             exitProcess(0)
         }
     }
@@ -167,7 +146,7 @@ class AwtUi(
             EVENT_STOP -> onStop(event.message)
             EVENT_SCREEN_CHANGE -> onScreenChange()
             EVENT_OVERLAY_CONNECTED -> onOverlayConnected()
-            EVENT_CONTROL_CONNECTED -> onControlConnected()
+            EVENT_CONTROL_CONNECTED -> onControlConnected(event.message)
             EVENT_CURSOR_VISIBLE -> changeCursor(true)
             EVENT_CURSOR_INVISIBLE -> changeCursor(false)
             EVENT_CLEAR_TEXT_AREA -> textArea.text = ""

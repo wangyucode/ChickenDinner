@@ -52,6 +52,7 @@ class MouseHandler(
                 false
             )
         }
+        e.consume()
     }
 
     override fun mouseMoved(e: MouseEvent) {
@@ -63,6 +64,7 @@ class MouseHandler(
 
 
     override fun mouseClicked(e: MouseEvent) {
+        e.consume()
     }
 
     override fun mousePressed(e: MouseEvent) {
@@ -77,6 +79,7 @@ class MouseHandler(
                 false
             )
         }
+        e.consume()
     }
 
     override fun mouseReleased(e: MouseEvent) {
@@ -90,11 +93,10 @@ class MouseHandler(
                 false
             )
         }
+        e.consume()
     }
 
-    override fun mouseEntered(e: MouseEvent) {
-    }
+    override fun mouseEntered(e: MouseEvent) { e.consume() }
 
-    override fun mouseExited(e: MouseEvent) {
-    }
+    override fun mouseExited(e: MouseEvent) {e.consume()}
 }

@@ -8,6 +8,7 @@ import cn.wycode.control.server.utils.Ln
 import java.io.IOException
 
 const val CONTROL_SOCKET = "control-socket"
+const val VERSION = 2
 
 var ENABLE_LOG = false
 
@@ -21,6 +22,7 @@ class Server {
         Ln.d("started!")
         controlSocket = serverSocket.accept()
         controlSocket.outputStream.write(1)
+        controlSocket.outputStream.write(VERSION)
 
         Controller(controlSocket.inputStream).run()
 

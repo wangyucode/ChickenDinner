@@ -2,10 +2,6 @@ package cn.wycode.clientui.helper
 
 import cn.wycode.clientui.Connections
 import cn.wycode.control.common.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.springframework.stereotype.Component
 
 @Component
@@ -18,8 +14,8 @@ class PropsHelper(
     lateinit var dropsPosition: Position
     lateinit var drugsPosition: Position
 
-    var lastX =0.0
-    var lastY =0.0
+    var lastX = 0.0
+    var lastY = 0.0
 
     fun selectDrops() {
         connections.sendTouch(HEAD_TOUCH_DOWN, id.toByte(), dropsPosition.x, dropsPosition.y, true)
@@ -40,9 +36,6 @@ class PropsHelper(
     }
 
     fun done() {
-        CoroutineScope(Dispatchers.IO).launch {
-            delay(100)
-            connections.sendTouch(HEAD_TOUCH_UP, id.toByte(), lastX.toInt(), lastY.toInt(), false)
-        }
+        connections.sendTouch(HEAD_TOUCH_UP, id.toByte(), lastX.toInt(), lastY.toInt(), false)
     }
 }

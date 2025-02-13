@@ -5,10 +5,6 @@ import cn.wycode.clientui.EVENT_CLEAR_TEXT_AREA
 import cn.wycode.clientui.SpringEvent
 import cn.wycode.clientui.helper.*
 import cn.wycode.control.common.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import java.awt.event.FocusEvent
@@ -83,7 +79,9 @@ class KeyHandler(
         throw IllegalArgumentException("Unknown key name: $keyName")
     }
 
-    override fun keyTyped(e: KeyEvent) {}
+    override fun keyTyped(e: KeyEvent) {
+        e.consume()
+    }
 
     override fun keyPressed(event: KeyEvent) {
         // fix long press
@@ -94,53 +92,34 @@ class KeyHandler(
             KeyEvent.VK_W, KeyEvent.VK_S, KeyEvent.VK_A, KeyEvent.VK_D -> joystickHelper.pressed(event.keyCode)
             KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3 -> return // no need to touch
             KeyEvent.VK_4 -> {
-                if(!switchMouseHelper.mouseVisible){
-                    CoroutineScope(Dispatchers.IO).launch {
-                        delay(100)
-                        connections.sendTouch(
-                            HEAD_TOUCH_UP,
-                            fovHelper.movingFovId,
-                            fovHelper.lastFovX.toInt(),
-                            fovHelper.lastFovY.toInt(),
-                            false
-                        )
-                    }
-
-                    fovHandler.isPropsSelecting = true
-                    propsHelper.selectDrops()
-                }
-            }
-            KeyEvent.VK_5 -> {
-                if(!switchMouseHelper.mouseVisible) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        delay(100)
-                        connections.sendTouch(
-                            HEAD_TOUCH_UP,
-                            fovHelper.movingFovId,
-                            fovHelper.lastFovX.toInt(),
-                            fovHelper.lastFovY.toInt(),
-                            false
-                        )
-                    }
-                    fovHandler.isPropsSelecting = true
-                    propsHelper.selectDrugs()
-                }
-            }
-            else -> {
-                // screen button
-                val buttonWithId = buttonMap[event.keyCode]
-
-                if (buttonWithId != null) {
-                    val position = buttonWithId.button.position
+                if (!switchMouseHelper.mouseVisible) {
                     connections.sendTouch(
-                        HEAD_TOUCH_DOWN,
-                        (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
-                        position.x,
-                        position.y,
-                        true
+                        HEAD_TOUCH_UP,
+                        fovHelper.movingFovId,
+                        fovHelper.lastFovX.toInt(),
+                        fovHelper.lastFovY.toInt(),
+                        false
                     )
+                    fovHandler.isPropsSelecting = true
                 }
+                propsHelper.selectDrops()
             }
+
+            KeyEvent.VK_5 -> {
+                if (!switchMouseHelper.mouseVisible) {
+                    connections.sendTouch(
+                        HEAD_TOUCH_UP,
+                        fovHelper.movingFovId,
+                        fovHelper.lastFovX.toInt(),
+                        fovHelper.lastFovY.toInt(),
+                        false
+                    )
+                    fovHandler.isPropsSelecting = true
+                }
+                propsHelper.selectDrugs()
+            }
+
+            else -> sendTouch(event.keyCode, HEAD_TOUCH_DOWN)
         }
     }
 
@@ -170,79 +149,83 @@ class KeyHandler(
 
             KeyEvent.VK_TAB -> {
                 if (!switchMouseHelper.mouseVisible) bagHelper.sendBagOpen()
-                sendTouchUp(event.keyCode)
+                sendTouch(event.keyCode, HEAD_TOUCH_UP)
             }
 
             KeyEvent.VK_F -> {
-                if (!switchMouseHelper.mouseVisible) fovHelper.resetTouchAfterGetInCar()
-                sendTouchUp(event.keyCode)
+                sendTouch(event.keyCode, HEAD_TOUCH_UP)
+                val lastJoystickByte = joystickHelper.lastJoystickByte
+                joystickHelper.sendJoystick(ZERO_BYTE)
+                joystickHelper.sendJoystick(lastJoystickByte)
+                if (!switchMouseHelper.mouseVisible) {
+                    connections.sendTouch(
+                        HEAD_TOUCH_UP,
+                        fovHelper.movingFovId,
+                        fovHelper.lastFovX.toInt(),
+                        fovHelper.lastFovY.toInt(),
+                        false
+                    )
+                    fovHelper.isFovAutoUp = true
+                }
             }
 
             KeyEvent.VK_1 -> {
                 weaponHelper.changeWeapon(1)
-                sendTouchUp(event.keyCode)
+                sendTouch(event.keyCode, HEAD_TOUCH_UP)
             }
 
             KeyEvent.VK_2 -> {
                 weaponHelper.changeWeapon(2)
-                sendTouchUp(event.keyCode)
+                sendTouch(event.keyCode, HEAD_TOUCH_UP)
             }
 
             KeyEvent.VK_3 -> {
                 weaponHelper.changeWeapon(3)
-                sendTouchUp(event.keyCode)
+                sendTouch(event.keyCode, HEAD_TOUCH_UP)
             }
 
             KeyEvent.VK_4 -> {
                 fovHandler.isPropsSelecting = false
                 propsHelper.done()
-                connections.sendTouch(
-                    HEAD_TOUCH_DOWN,
-                    fovHelper.movingFovId,
-                    fovHelper.lastFovX.toInt(),
-                    fovHelper.lastFovY.toInt(),
-                    false
-                )
+                if (!switchMouseHelper.mouseVisible) {
+                    connections.sendTouch(
+                        HEAD_TOUCH_DOWN,
+                        fovHelper.movingFovId,
+                        fovHelper.lastFovX.toInt(),
+                        fovHelper.lastFovY.toInt(),
+                        false
+                    )
+                }
             }
 
             KeyEvent.VK_5 -> {
                 fovHandler.isPropsSelecting = false
                 propsHelper.done()
-                connections.sendTouch(
-                    HEAD_TOUCH_DOWN,
-                    fovHelper.movingFovId,
-                    fovHelper.lastFovX.toInt(),
-                    fovHelper.lastFovY.toInt(),
-                    false
-                )
+                if (!switchMouseHelper.mouseVisible) {
+                    connections.sendTouch(
+                        HEAD_TOUCH_DOWN,
+                        fovHelper.movingFovId,
+                        fovHelper.lastFovX.toInt(),
+                        fovHelper.lastFovY.toInt(),
+                        false
+                    )
+                }
             }
 
-            KeyEvent.VK_F9 -> {
-                connections.sendKeymapVisible(true)
-            }
-
-            KeyEvent.VK_F10 -> {
-                connections.sendKeymapVisible(false)
-                event.consume()
-            }
-
-            KeyEvent.VK_ALT -> event.consume()
-            KeyEvent.VK_F11 -> {
-                springContext.publishEvent(SpringEvent(EVENT_CLEAR_TEXT_AREA))
-            }
-
-            else -> {
-                sendTouchUp(event.keyCode)
-            }
+            KeyEvent.VK_F9 -> connections.sendKeymapVisible(true)
+            KeyEvent.VK_F10 -> connections.sendKeymapVisible(false)
+            KeyEvent.VK_F11 -> springContext.publishEvent(SpringEvent(EVENT_CLEAR_TEXT_AREA))
+            else -> sendTouch(event.keyCode, HEAD_TOUCH_UP)
         }
+        event.consume()
     }
 
-    fun sendTouchUp(keyCode: Int) {
+    fun sendTouch(keyCode: Int, head: Byte) {
         val buttonWithId = buttonMap[keyCode]
         if (buttonWithId != null) {
             val position = buttonWithId.button.position
             connections.sendTouch(
-                HEAD_TOUCH_UP,
+                head,
                 (TOUCH_ID_BUTTON + buttonWithId.id).toByte(),
                 position.x,
                 position.y,

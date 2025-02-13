@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Point
+import android.graphics.Rect
 import android.net.LocalServerSocket
 import android.net.LocalSocket
 import android.util.Log
@@ -32,7 +33,7 @@ class MouseServer(
         context.getSystemService(Context.WINDOW_SERVICE) as
                 WindowManager
 
-    private val size = Point()
+    private var size = Rect()
     private lateinit var overlay: ViewGroup
     private lateinit var keymapView: KeymapView
     private lateinit var pointer: View
@@ -100,7 +101,6 @@ class MouseServer(
                 val dataArray = ByteArray(size)
                 inputStream.read(dataArray)
                 val keymapString = dataArray.toString(StandardCharsets.UTF_8)
-                Log.d("wy", "read:  $keymapString")
                 keymap = JSON.parseObject(keymapString, Keymap::class.java)
             }
         }
@@ -140,8 +140,8 @@ class MouseServer(
 
     private fun sendScreenInfo() {
         outputPointBuffer.clear()
-        outputPointBuffer.putInt(size.x)
-        outputPointBuffer.putInt(size.y)
+        outputPointBuffer.putInt(size.width())
+        outputPointBuffer.putInt(size.height())
         try {
             outputStream.write(outputPointBuffer.array())
         } catch (e: IOException) {
@@ -153,7 +153,7 @@ class MouseServer(
 
 
     private fun addOverlay() {
-        windowManager.defaultDisplay.getRealSize(size)
+        size = windowManager.currentWindowMetrics.bounds
         val layoutParams = WindowManager.LayoutParams()
         layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         layoutParams.format = PixelFormat.RGBA_8888
@@ -179,7 +179,7 @@ class MouseServer(
             val orientation = context.resources.configuration.orientation
             if (currentOrientation != orientation) {
                 currentOrientation = orientation
-                windowManager.defaultDisplay.getRealSize(size)
+                size = windowManager.currentWindowMetrics.bounds
 
                 CoroutineScope(Dispatchers.IO).launch {
                     sendScreenInfo()

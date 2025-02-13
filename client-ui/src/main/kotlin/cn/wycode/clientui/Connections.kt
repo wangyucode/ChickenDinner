@@ -96,7 +96,8 @@ class Connections(val springContext: ApplicationContext) {
             }
 
             if (signal == 1) {
-                springContext.publishEvent(SpringEvent(EVENT_CONTROL_CONNECTED))
+                val version = controlSocket.getInputStream().read()
+                springContext.publishEvent(SpringEvent(EVENT_CONTROL_CONNECTED, "Control Server Version: $version"))
             }
         }
     }

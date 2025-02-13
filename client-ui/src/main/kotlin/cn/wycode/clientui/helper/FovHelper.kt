@@ -2,10 +2,6 @@ package cn.wycode.clientui.helper
 
 import cn.wycode.clientui.Connections
 import cn.wycode.control.common.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.springframework.stereotype.Component
 import kotlin.math.abs
 
@@ -16,7 +12,6 @@ class FovHelper(
     val connections: Connections,
 ) {
     var isFovAutoUp = false
-    var lastFovMoveTime = 0L
     var movingFovId = TOUCH_ID_MOUSE
     lateinit var resetPosition: Position
 
@@ -61,7 +56,6 @@ class FovHelper(
         if (checkFovEdge()) return
 
         connections.sendTouch(HEAD_TOUCH_MOVE, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
-        lastFovMoveTime = System.currentTimeMillis()
     }
 
     fun resetLastFov(position: Position) {
@@ -71,14 +65,7 @@ class FovHelper(
 
     private fun checkFovEdge(): Boolean {
         return if (abs(lastFovX - resetPosition.x) > SCREEN_FOV_EDGE.x || abs(lastFovY - resetPosition.y) > SCREEN_FOV_EDGE.y) {
-            // up from current position
-            val x = lastFovX.toInt()
-            val y = lastFovY.toInt()
-            val id = movingFovId
-            CoroutineScope(Dispatchers.IO).launch {
-                delay(50)
-                connections.sendTouch(HEAD_TOUCH_UP, id, x, y, false)
-            }
+            connections.sendTouch(HEAD_TOUCH_UP, movingFovId, lastFovX.toInt(), lastFovY.toInt(), false)
             isFovAutoUp = true
             true
         } else {

@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.awt.image.BufferedImage
 import kotlin.system.exitProcess
 
 var RATIO = 3.0
@@ -27,14 +28,18 @@ class AwtUi(
     val connections: Connections
 ) : ApplicationListener<SpringEvent> {
 
-    final var frame: Frame
-    final var textArea: TextArea
-    final var graphicsDevice: GraphicsDevice
+    final val frame: Frame
+    final val textArea: TextArea
+    private final val graphicsDevice: GraphicsDevice
     var isStopping = false
+    private final val dotCursor: Cursor
 
     init {
         System.setProperty("java.awt.headless", "false")
         graphicsDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
+
+        dotCursor = createDotCursor()
+
         frame = Frame("Android Controller")
         frame.isUndecorated = true
         frame.background = Color(0, 44, 34)
@@ -60,6 +65,21 @@ class AwtUi(
         })
 
         robot = Robot()
+    }
+
+    private final fun createDotCursor(): Cursor {
+        val size = 48
+        val image = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+        val g = image.createGraphics()
+
+        // Draw a small dot in the center
+        g.color = Color.GREEN
+        g.fillOval(size/2-4, size/2-4, 8, 8)
+        g.dispose()
+
+        val toolkit = Toolkit.getDefaultToolkit()
+        val cursor =  toolkit.createCustomCursor(image, Point(size / 2, size / 2), "dotCursor")
+        return cursor
     }
 
     fun onScreenChange() {
@@ -117,7 +137,7 @@ class AwtUi(
         textArea.cursor = if (visible) {
             Cursor.getDefaultCursor()
         } else {
-            Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR)
+            dotCursor
         }
     }
 

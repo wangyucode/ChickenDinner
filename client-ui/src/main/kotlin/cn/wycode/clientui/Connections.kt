@@ -157,7 +157,7 @@ class Connections(val springContext: ApplicationContext) {
     }
 
     fun sendClearTouch() {
-        if(!isControlClosed){
+        if (!isControlClosed) {
             sendControlData(byteArrayOf(HEAD_CLEAR_TOUCH))
         }
     }

@@ -109,9 +109,7 @@ class Initializer(
                 val process = runtime.exec(command)
                 while (process.isAlive) {
                     val input = process.inputStream.bufferedReader().readLine()
-                    withContext(Dispatchers.Unconfined) {
-                        textArea.append("\n$input")
-                    }
+                    textArea.append("\n$input")
                 }
                 val input = process.inputStream.bufferedReader().readLine()
                 val error = process.errorStream.bufferedReader().readLine()

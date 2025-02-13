@@ -53,7 +53,7 @@ class JoystickHelper(val connections: Connections) {
     lateinit var joystick: Joystick
     var sin45: Int = 0
 
-    private var stepJob: Job? = null
+    var stepJob: Job? = null
 
     fun pressed(keyCode: Int) {
         joystickByte = when (keyCode) {
@@ -150,7 +150,13 @@ class JoystickHelper(val connections: Connections) {
         lastJoystickX += ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
         lastJoystickY += ThreadLocalRandom.current().nextInt(RANDOM_POSITION_MIN, RANDOM_POSITION_MAX)
 
-        connections.sendTouch(HEAD_TOUCH_MOVE, TOUCH_ID_JOYSTICK, lastJoystickX, lastJoystickY, false)
+        connections.sendTouch(
+            HEAD_TOUCH_MOVE,
+            TOUCH_ID_JOYSTICK,
+            lastJoystickX,
+            lastJoystickY,
+            false
+        )
     }
 
     fun resetLastJoystick() {

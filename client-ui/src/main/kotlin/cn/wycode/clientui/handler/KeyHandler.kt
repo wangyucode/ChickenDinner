@@ -5,6 +5,10 @@ import cn.wycode.clientui.EVENT_CLEAR_TEXT_AREA
 import cn.wycode.clientui.SpringEvent
 import cn.wycode.clientui.helper.*
 import cn.wycode.control.common.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import java.awt.event.FocusEvent
@@ -40,6 +44,7 @@ class KeyHandler(
     private val buttonMap = LinkedHashMap<Int, ButtonWithId>()
     private lateinit var keymap: Keymap
     private lateinit var resetPosition: Position
+    private var lastJoystick = ZERO_BYTE
 
     fun initButtons(keymap: Keymap) {
         this.keymap = keymap
@@ -119,6 +124,34 @@ class KeyHandler(
                 propsHelper.selectDrugs()
             }
 
+            KeyEvent.VK_F -> {
+                sendTouch(event.keyCode, HEAD_TOUCH_DOWN)
+                lastJoystick = joystickHelper.lastJoystickByte
+                if(lastJoystick!= ZERO_BYTE){
+                    joystickHelper.lastJoystickByte = ZERO_BYTE
+                    joystickHelper.stepJob?.cancel()
+                    connections.sendTouch(
+                        HEAD_TOUCH_UP,
+                        TOUCH_ID_JOYSTICK,
+                        joystickHelper.lastJoystickX,
+                        joystickHelper.lastJoystickY,
+                        false
+                    )
+                    joystickHelper.resetLastJoystick()
+                }
+
+                if (!switchMouseHelper.mouseVisible) {
+                    connections.sendTouch(
+                        HEAD_TOUCH_UP,
+                        fovHelper.movingFovId,
+                        fovHelper.lastFovX.toInt(),
+                        fovHelper.lastFovY.toInt(),
+                        false
+                    )
+                    fovHandler.stop()
+                }
+            }
+
             else -> sendTouch(event.keyCode, HEAD_TOUCH_DOWN)
         }
     }
@@ -152,20 +185,26 @@ class KeyHandler(
                 sendTouch(event.keyCode, HEAD_TOUCH_UP)
             }
 
-            KeyEvent.VK_F -> {
+            KeyEvent.VK_F->{
                 sendTouch(event.keyCode, HEAD_TOUCH_UP)
-                val lastJoystickByte = joystickHelper.lastJoystickByte
-                joystickHelper.sendJoystick(ZERO_BYTE)
-                joystickHelper.sendJoystick(lastJoystickByte)
-                if (!switchMouseHelper.mouseVisible) {
-                    connections.sendTouch(
-                        HEAD_TOUCH_UP,
-                        fovHelper.movingFovId,
-                        fovHelper.lastFovX.toInt(),
-                        fovHelper.lastFovY.toInt(),
-                        false
-                    )
+                if(lastJoystick!= ZERO_BYTE){
+                    joystickHelper.sendJoystick(lastJoystick)
+                }
+                if(!switchMouseHelper.mouseVisible){
                     fovHelper.isFovAutoUp = true
+                    fovHandler.start()
+                    // fix get in car lost fov issue
+                    CoroutineScope(Dispatchers.Unconfined).launch {
+                        delay(100)
+                        connections.sendTouch(
+                            HEAD_TOUCH_UP,
+                            fovHelper.movingFovId,
+                            fovHelper.lastFovX.toInt(),
+                            fovHelper.lastFovY.toInt(),
+                            false
+                        )
+                        fovHelper.isFovAutoUp = true
+                    }
                 }
             }
 

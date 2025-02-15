@@ -9,8 +9,6 @@ import org.springframework.context.ApplicationEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
 import java.awt.*
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
@@ -18,7 +16,7 @@ import kotlin.system.exitProcess
 
 var RATIO = 3.0
 var SCREEN = Position(0, 0)
-var TEXTAREA_BOUNDS = Rectangle(0, 0, 0, 0)
+var CONTROL_AREA_BOUNDS = Rectangle(0, 0, 0, 0)
 
 @Component
 class AwtUi(
@@ -28,8 +26,8 @@ class AwtUi(
     val connections: Connections
 ) : ApplicationListener<SpringEvent> {
 
-    final val frame: Frame
-    final val textArea: TextArea
+    private final val frame: Frame
+    private final val controlCanvas: ControlCanvas
     private final val graphicsDevice: GraphicsDevice
     var isStopping = false
     private final val dotCursor: Cursor
@@ -42,19 +40,17 @@ class AwtUi(
 
         frame = Frame("Android Controller")
         frame.isUndecorated = true
-        frame.background = Color(0, 44, 34)
-        frame.layout = FlowLayout()
+        frame.layout = FlowLayout(FlowLayout.CENTER, 0, 0)
         frame.preferredSize = graphicsDevice.defaultConfiguration.bounds.size
-        frame.focusTraversalKeysEnabled = false
+        frame.isFocusable = false
+        frame.isResizable = false
 
-        textArea = TextArea()
-        textArea.preferredSize = Dimension(1280, 720)
-        textArea.background = Color(0, 188, 125)
-        textArea.isEditable = false
-        textArea.isFocusable = false
-        textArea.cursor = Cursor.getDefaultCursor()
+        controlCanvas = ControlCanvas()
+        controlCanvas.preferredSize = frame.preferredSize
+        controlCanvas.isFocusable = true
+        controlCanvas.requestFocus()
 
-        frame.add(textArea)
+        frame.add(controlCanvas)
         frame.pack()
 
         frame.addWindowListener(object : WindowAdapter() {
@@ -74,67 +70,54 @@ class AwtUi(
 
         // Draw a small dot in the center
         g.color = Color.GREEN
-        g.fillOval(size/2-4, size/2-4, 8, 8)
+        g.fillRect(size / 2 - 1, size / 2 - 1, 2, 2)
         g.dispose()
 
         val toolkit = Toolkit.getDefaultToolkit()
-        val cursor =  toolkit.createCustomCursor(image, Point(size / 2, size / 2), "dotCursor")
+        val cursor = toolkit.createCustomCursor(image, Point(size / 2, size / 2), "dotCursor")
         return cursor
     }
 
-    fun onScreenChange() {
-        textArea.append("\nScreenChange::$SCREEN")
-        // get screen size
-        val screenBounds = graphicsDevice.defaultConfiguration.bounds
-        RATIO = if (screenBounds.width.toDouble() / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
-            SCREEN.y / (screenBounds.height - 10.0) // 10 is the width of the border
-        } else {
-            SCREEN.x / (screenBounds.width - 10.0)
-        }
-        textArea.preferredSize = Dimension((SCREEN.x / RATIO).toInt(), (SCREEN.y / RATIO).toInt())
 
-        frame.pack()
-        frame.revalidate()
-        TEXTAREA_BOUNDS = textArea.bounds
+    fun show() {
+        frame.isVisible = true
+        controlCanvas.append("start")
+        CoroutineScope(Dispatchers.Unconfined + CoroutineExceptionHandler { context, throwable -> onStop("unhandled exception in $context: $throwable") }).launch {
+            initializer.initialize(controlCanvas)
+        }
+    }
+
+    fun onScreenChange() {
+        controlCanvas.append("\nScreenChange::$SCREEN")
+        // get screen size
+        val screenBounds = frame.preferredSize
+        RATIO = if (screenBounds.width.toDouble() / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
+            SCREEN.y / screenBounds.height.toDouble()
+        } else {
+            SCREEN.x / screenBounds.width.toDouble()
+        }
+        val controlWidth = (SCREEN.x / RATIO).toInt()
+        val controlHeight = (SCREEN.y / RATIO).toInt()
+        val x = (screenBounds.width / 2.0 - controlWidth / 2.0).toInt()
+        val y = 0
+
+        CONTROL_AREA_BOUNDS = Rectangle(x, y, controlWidth, controlHeight)
+        controlCanvas.drawRect()
     }
 
     fun onOverlayConnected() {
-        textArea.addMouseMotionListener(mouseHandler)
-        textArea.addMouseListener(mouseHandler)
-        frame.addFocusListener(keyHandler)
-        frame.addMouseMotionListener(object : MouseMotionListener {
-            fun checkEdge(e: MouseEvent) {
-                if (e.x < textArea.bounds.x) {
-                    robot.mouseMove(textArea.bounds.x, e.y)
-                }
-                if (e.x > textArea.bounds.x + textArea.bounds.width) {
-                    robot.mouseMove(textArea.bounds.x + textArea.bounds.width, e.y)
-                }
-                if (e.y < textArea.bounds.y) {
-                    robot.mouseMove(e.x, textArea.bounds.y)
-                }
-                if (e.y > textArea.bounds.y + textArea.bounds.height) {
-                    robot.mouseMove(e.x, textArea.bounds.y + textArea.bounds.height)
-                }
-            }
-
-            override fun mouseDragged(e: MouseEvent) {
-
-            }
-
-            override fun mouseMoved(e: MouseEvent) {
-                if (mouseHandler.mouseHelper.mouseVisible) checkEdge(e)
-            }
-        })
+        controlCanvas.addMouseMotionListener(mouseHandler)
+        controlCanvas.addMouseListener(mouseHandler)
+        controlCanvas.addFocusListener(keyHandler)
     }
 
     fun onControlConnected(message: String?) {
-        frame.addKeyListener(keyHandler)
-        textArea.append("\n$message")
+        controlCanvas.addKeyListener(keyHandler)
+        controlCanvas.append("\n$message")
     }
 
     fun changeCursor(visible: Boolean) {
-        textArea.cursor = if (visible) {
+        controlCanvas.cursor = if (visible) {
             Cursor.getDefaultCursor()
         } else {
             dotCursor
@@ -144,22 +127,20 @@ class AwtUi(
     fun onStop(message: String?) {
         if (isStopping) return
         isStopping = true
-        try { connections.closeAll() } catch (_: Exception) {}
-        textArea.append("\n")
-        textArea.append(message)
-        textArea.append("\n")
+        try {
+            connections.closeAll()
+        } catch (_: Exception) {
+        }
+        if (message != null) {
+            controlCanvas.append(message)
+        }
         CoroutineScope(Dispatchers.Unconfined).launch {
+            controlCanvas.append("will exit in 30 seconds")
             delay(30000)
             exitProcess(0)
         }
     }
 
-    fun show() {
-        frame.isVisible = true
-        CoroutineScope(Dispatchers.Unconfined + CoroutineExceptionHandler { context, throwable -> onStop("unhandled exception in $context: $throwable") }).launch {
-            initializer.initialize(textArea)
-        }
-    }
 
     override fun onApplicationEvent(event: SpringEvent) {
         when (event.source as String) {
@@ -169,7 +150,7 @@ class AwtUi(
             EVENT_CONTROL_CONNECTED -> onControlConnected(event.message)
             EVENT_CURSOR_VISIBLE -> changeCursor(true)
             EVENT_CURSOR_INVISIBLE -> changeCursor(false)
-            EVENT_CLEAR_TEXT_AREA -> textArea.text = ""
+            EVENT_CLEAR_TEXT_AREA -> controlCanvas.clean()
         }
     }
 

@@ -29,7 +29,7 @@ class BagHelper(
             fovHelper.lastFovY.toInt(),
             false
         )
-        robot.mouseMove((openPosition.x / RATIO + TEXTAREA_BOUNDS.x).toInt(), (openPosition.y / RATIO + TEXTAREA_BOUNDS.y).toInt())
+        robot.mouseMove((openPosition.x / RATIO + CONTROL_AREA_BOUNDS.x).toInt(), (openPosition.y / RATIO + CONTROL_AREA_BOUNDS.y).toInt())
         connections.sendMouseMove(openPosition.x, openPosition.y)
         connections.sendOverlayData(byteArrayOf(HEAD_MOUSE_VISIBLE))
         springContext.publishEvent(SpringEvent(EVENT_CURSOR_VISIBLE))

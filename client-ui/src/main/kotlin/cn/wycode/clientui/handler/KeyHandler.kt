@@ -44,7 +44,7 @@ class KeyHandler(
     private val buttonMap = LinkedHashMap<Int, ButtonWithId>()
     private lateinit var keymap: Keymap
     private lateinit var resetPosition: Position
-    private var lastJoystick = ZERO_BYTE
+    private var recordedJoystick = ZERO_BYTE
 
     fun initButtons(keymap: Keymap) {
         this.keymap = keymap
@@ -126,8 +126,8 @@ class KeyHandler(
 
             KeyEvent.VK_F -> {
                 sendTouch(event.keyCode, HEAD_TOUCH_DOWN)
-                lastJoystick = joystickHelper.lastJoystickByte
-                if(lastJoystick!= ZERO_BYTE){
+                if (joystickHelper.lastJoystickByte != ZERO_BYTE) {
+                    recordedJoystick = joystickHelper.lastJoystickByte
                     joystickHelper.lastJoystickByte = ZERO_BYTE
                     joystickHelper.stepJob?.cancel()
                     connections.sendTouch(
@@ -141,14 +141,8 @@ class KeyHandler(
                 }
 
                 if (!switchMouseHelper.mouseVisible) {
-                    connections.sendTouch(
-                        HEAD_TOUCH_UP,
-                        fovHelper.movingFovId,
-                        fovHelper.lastFovX.toInt(),
-                        fovHelper.lastFovY.toInt(),
-                        false
-                    )
                     fovHandler.stop()
+                    fovHelper.isFovAutoUp = true
                 }
             }
 
@@ -185,24 +179,17 @@ class KeyHandler(
                 sendTouch(event.keyCode, HEAD_TOUCH_UP)
             }
 
-            KeyEvent.VK_F->{
+            KeyEvent.VK_F -> {
                 sendTouch(event.keyCode, HEAD_TOUCH_UP)
-                if(lastJoystick!= ZERO_BYTE){
-                    joystickHelper.sendJoystick(lastJoystick)
+                if (recordedJoystick != ZERO_BYTE) {
+                    joystickHelper.sendJoystick(recordedJoystick)
+                    recordedJoystick = ZERO_BYTE
                 }
-                if(!switchMouseHelper.mouseVisible){
-                    fovHelper.isFovAutoUp = true
+                if (!switchMouseHelper.mouseVisible) {
                     fovHandler.start()
                     // fix get in car lost fov issue
                     CoroutineScope(Dispatchers.Unconfined).launch {
                         delay(100)
-                        connections.sendTouch(
-                            HEAD_TOUCH_UP,
-                            fovHelper.movingFovId,
-                            fovHelper.lastFovX.toInt(),
-                            fovHelper.lastFovY.toInt(),
-                            false
-                        )
                         fovHelper.isFovAutoUp = true
                     }
                 }

@@ -101,16 +101,19 @@ class JoystickHelper(val connections: Connections) {
                 destJoystickX += sin45
                 destJoystickY -= sin45
             }
+
             JoystickDirection.RIGHT.joystickByte -> destJoystickX += joystick.radius
             JoystickDirection.RIGHT_BOTTOM.joystickByte -> {
                 destJoystickX += sin45
                 destJoystickY += sin45
             }
+
             JoystickDirection.BOTTOM.joystickByte -> destJoystickY += joystick.radius
             JoystickDirection.BOTTOM_LEFT.joystickByte -> {
                 destJoystickX -= sin45
                 destJoystickY += sin45
             }
+
             JoystickDirection.LEFT.joystickByte -> destJoystickX -= joystick.radius
             JoystickDirection.LEFT_TOP.joystickByte -> {
                 destJoystickX -= sin45
@@ -144,6 +147,8 @@ class JoystickHelper(val connections: Connections) {
     }
 
     private fun sendStep(dx: Int, dy: Int) {
+        if (lastJoystickByte == ZERO_BYTE) return
+
         lastJoystickX += dx
         lastJoystickY += dy
 

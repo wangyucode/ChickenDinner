@@ -26,16 +26,16 @@ class SwitchMouseHelper(
     fun sendSwitchMouse() {
         mouseVisible = !mouseVisible
         val head = if (mouseVisible) {
+            fovHandler.stop()
             connections.sendClearTouch()
             connections.sendMouseMove(resetPosition.x, resetPosition.y)
-            fovHandler.stop()
             robot.mouseMove((TEXTAREA_BOUNDS.x + resetPosition.x / RATIO).toInt(), (TEXTAREA_BOUNDS.y + resetPosition.y / RATIO).toInt())
             springContext.publishEvent(SpringEvent(EVENT_CURSOR_VISIBLE))
             HEAD_MOUSE_VISIBLE
         } else {
-            connections.sendTouch(HEAD_TOUCH_DOWN, fovHelper.movingFovId, resetPosition.x, resetPosition.y, true)
             fovHelper.resetLastFov(resetPosition)
             robot.mouseMove((TEXTAREA_BOUNDS.x + resetPosition.x / RATIO).toInt(), (TEXTAREA_BOUNDS.y + resetPosition.y / RATIO).toInt())
+            connections.sendTouch(HEAD_TOUCH_DOWN, fovHelper.movingFovId, resetPosition.x, resetPosition.y, true)
             fovHandler.start()
             springContext.publishEvent(SpringEvent(EVENT_CURSOR_INVISIBLE))
             HEAD_MOUSE_INVISIBLE

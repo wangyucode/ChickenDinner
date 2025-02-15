@@ -40,17 +40,19 @@ class MouseHandler(
 
     override fun mouseDragged(e: MouseEvent) {
         val position = normalizeMousePosition(e)
-        if (mouseHelper.mouseVisible && !connections.isOverlayClosed) {
-            connections.sendMouseMove(position.x, position.y)
-        }
-        if (!connections.isControlClosed && mouseHelper.mouseVisible) {
-            connections.sendTouch(
-                HEAD_TOUCH_MOVE,
-                TOUCH_ID_MOUSE,
-                position.x,
-                position.y,
-                false
-            )
+        if (mouseHelper.mouseVisible) {
+            if (!connections.isOverlayClosed) {
+                connections.sendMouseMove(position.x, position.y)
+            }
+            if (!connections.isControlClosed) {
+                connections.sendTouch(
+                    HEAD_TOUCH_MOVE,
+                    TOUCH_ID_MOUSE,
+                    position.x,
+                    position.y,
+                    false
+                )
+            }
         }
         e.consume()
     }
@@ -60,6 +62,7 @@ class MouseHandler(
             val position = normalizeMousePosition(e)
             connections.sendMouseMove(position.x, position.y)
         }
+        e.consume()
     }
 
 
@@ -96,7 +99,11 @@ class MouseHandler(
         e.consume()
     }
 
-    override fun mouseEntered(e: MouseEvent) { e.consume() }
+    override fun mouseEntered(e: MouseEvent) {
+        e.consume()
+    }
 
-    override fun mouseExited(e: MouseEvent) {e.consume()}
+    override fun mouseExited(e: MouseEvent) {
+        e.consume()
+    }
 }

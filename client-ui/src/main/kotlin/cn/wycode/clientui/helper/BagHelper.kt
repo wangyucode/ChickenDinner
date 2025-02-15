@@ -1,13 +1,12 @@
 package cn.wycode.clientui.helper
 
+import cn.wycode.clientui.*
 import cn.wycode.clientui.AwtUi.Companion.robot
-import cn.wycode.clientui.Connections
-import cn.wycode.clientui.RATIO
-import cn.wycode.clientui.TEXTAREA_BOUNDS
 import cn.wycode.clientui.handler.FovHandler
 import cn.wycode.control.common.HEAD_MOUSE_VISIBLE
 import cn.wycode.control.common.HEAD_TOUCH_UP
 import cn.wycode.control.common.Position
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,7 +14,8 @@ class BagHelper(
     val fovHandler: FovHandler,
     val mouseHelper: SwitchMouseHelper,
     val fovHelper: FovHelper,
-    val connections: Connections
+    val connections: Connections,
+    val springContext: ApplicationContext
 ) {
     lateinit var openPosition: Position
 
@@ -32,5 +32,6 @@ class BagHelper(
         robot.mouseMove((openPosition.x / RATIO + TEXTAREA_BOUNDS.x).toInt(), (openPosition.y / RATIO + TEXTAREA_BOUNDS.y).toInt())
         connections.sendMouseMove(openPosition.x, openPosition.y)
         connections.sendOverlayData(byteArrayOf(HEAD_MOUSE_VISIBLE))
+        springContext.publishEvent(SpringEvent(EVENT_CURSOR_VISIBLE))
     }
 }

@@ -37,6 +37,9 @@ class ControlCanvas : Canvas() {
             g.clearRect(0, 0, width, height)
             isClean = false
             lastLogY = TEXT_SIZE
+            g.color = Color(0,0,0,0x55)
+            g.fillRect(lastRect.x, lastRect.y, lastRect.width, lastRect.height)
+            return
         }
         if (isDrawRect) {
             g.clip = Rectangle(0,0,width,height)

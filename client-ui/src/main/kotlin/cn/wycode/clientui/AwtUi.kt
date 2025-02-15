@@ -48,7 +48,7 @@ class AwtUi(
         controlCanvas = ControlCanvas()
         controlCanvas.preferredSize = frame.preferredSize
         controlCanvas.isFocusable = true
-        controlCanvas.requestFocus()
+        controlCanvas.focusTraversalKeysEnabled = false
 
         frame.add(controlCanvas)
         frame.pack()

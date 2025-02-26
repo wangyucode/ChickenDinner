@@ -21,10 +21,8 @@ class TouchConverter {
 
     val localIdToEvent = SparseArray<Event>(10)
 
-    private val unusedIds: Queue<Int> = LinkedList<Int>().apply {
-        for (i in 0 until MAX_POINTERS) {
-            add(i)
-        }
+    private val unusedIds: Deque<Int> = ArrayDeque<Int>().apply {
+        for (i in MAX_POINTERS - 1 downTo 0) push(i)
     }
 
     init {
@@ -48,13 +46,14 @@ class TouchConverter {
                 // first touch down
                 if (localIdToEvent.size() == 0) {
                     downTime = now
-                    action = MotionEvent.ACTION_DOWN
                     localId = getUnusedLocalId()
+                    action = MotionEvent.ACTION_DOWN
                     localIdToEvent.put(localId, input.copy())
                 } else {
                     localId = getLocalId(input)
                     if (localId != -1) {
                         Ln.w("already down $input, $localIdToEvent")
+                        return null
                     } else {
                         localId = getUnusedLocalId()
                         if (localId == -1) {
@@ -63,8 +62,7 @@ class TouchConverter {
                         }
                     }
                     localIdToEvent.put(localId, input.copy())
-                    action =
-                        MotionEvent.ACTION_POINTER_DOWN or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                    action = computeAction(MotionEvent.ACTION_POINTER_DOWN, localIdToEvent.indexOfKey(localId))
                 }
             }
             HEAD_TOUCH_UP -> {
@@ -72,7 +70,7 @@ class TouchConverter {
                 action = if (localIdToEvent.size() == 1) {
                     MotionEvent.ACTION_UP
                 } else {
-                    MotionEvent.ACTION_POINTER_UP or (localIdToEvent.indexOfKey(localId) shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+                    computeAction(MotionEvent.ACTION_POINTER_UP, localIdToEvent.indexOfKey(localId))
                 }
                 if (localId == -1) {
                     Ln.w("up id not found $input, $localIdToEvent")
@@ -129,6 +127,10 @@ class TouchConverter {
         return event
     }
 
+    fun computeAction(eventType: Int, index: Int): Int {
+        return (index shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or eventType
+    }
+
     private fun updatePointerData() {
         for (i in 0 until localIdToEvent.size()) {
             val localId = localIdToEvent.keyAt(i)
@@ -142,14 +144,14 @@ class TouchConverter {
 
     private fun getUnusedLocalId(): Int {
         return if (unusedIds.isNotEmpty()) {
-            unusedIds.poll()!!
+            unusedIds.pop()
         } else {
             -1
         }
     }
 
     private fun returnLocalId(id: Int) {
-        unusedIds.offer(id)
+        unusedIds.push(id)
     }
 
     private fun getLocalId(input: Event): Int {

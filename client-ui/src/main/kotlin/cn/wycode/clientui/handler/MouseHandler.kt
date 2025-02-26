@@ -6,11 +6,7 @@ import cn.wycode.clientui.RATIO
 import cn.wycode.clientui.CONTROL_AREA_BOUNDS
 import cn.wycode.clientui.SCREEN
 import cn.wycode.clientui.helper.SwitchMouseHelper
-import cn.wycode.control.common.HEAD_TOUCH_DOWN
-import cn.wycode.control.common.HEAD_TOUCH_MOVE
-import cn.wycode.control.common.HEAD_TOUCH_UP
-import cn.wycode.control.common.Position
-import cn.wycode.control.common.TOUCH_ID_MOUSE
+import cn.wycode.control.common.*
 import org.springframework.stereotype.Component
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener

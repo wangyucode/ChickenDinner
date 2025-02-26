@@ -53,6 +53,7 @@ class Controller(private val inputStream: InputStream) {
                     injectTouch()
                 }
             }
+
             HEAD_SHUT_DOWN -> return
             else -> injectTouch()
         }
@@ -102,13 +103,16 @@ class Controller(private val inputStream: InputStream) {
             HEAD_KEY -> {
                 event.key = inputStream.read().toByte()
             }
+
             HEAD_SHUT_DOWN -> {
                 shutdown = true
                 return
             }
+
             HEAD_CLEAR_TOUCH -> {
                 return
             }
+
             else -> {
                 touchBuffer.clear()
                 inputStream.read(touchBuffer.array())
@@ -117,8 +121,13 @@ class Controller(private val inputStream: InputStream) {
                 event.y = touchBuffer.getInt(5)
             }
         }
-        shouldLogEvent =
-            ENABLE_LOG && (lastEvent.type != event.type || lastEvent.id != event.id || event.key != ZERO_BYTE)
+        shouldLogEvent = ENABLE_LOG && (
+                event.type == HEAD_TOUCH_UP ||
+                        event.type == HEAD_TOUCH_DOWN ||
+                        lastEvent.type != event.type ||
+                        lastEvent.id != event.id ||
+                        event.key != ZERO_BYTE
+                )
         if (shouldLogEvent) lastEvent = event.copy()
         if (shouldLogEvent) Ln.d("receive->${event}")
     }

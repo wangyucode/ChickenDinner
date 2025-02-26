@@ -1,6 +1,7 @@
 package cn.wycode.control.server
 
 import android.os.SystemClock
+import android.util.Log
 import android.util.SparseArray
 import android.view.InputDevice
 import android.view.MotionEvent
@@ -16,6 +17,7 @@ const val MAX_POINTERS = 10
 class TouchConverter {
 
     private var downTime = 0L
+    private var touchScreenDeviceId = 6
     private val pointerProperties = arrayOfNulls<MotionEvent.PointerProperties>(MAX_POINTERS)
     private val pointerCoords = arrayOfNulls<MotionEvent.PointerCoords>(MAX_POINTERS)
 
@@ -34,6 +36,15 @@ class TouchConverter {
             coords.size = 128f
             pointerProperties[i] = props
             pointerCoords[i] = coords
+        }
+
+        InputDevice.getDeviceIds().forEach {
+            val device = InputDevice.getDevice(it)
+            if (device != null && (device.sources and InputDevice.SOURCE_TOUCHSCREEN) == InputDevice.SOURCE_TOUCHSCREEN && device.name.contains("touch", true)) {
+                Ln.d("Touch device id: $it, Name: ${device.name}")
+                touchScreenDeviceId = it
+                return@forEach
+            }
         }
     }
 
@@ -114,7 +125,7 @@ class TouchConverter {
             0,
             1f,
             1f,
-            8,
+            touchScreenDeviceId,
             0,
             InputDevice.SOURCE_TOUCHSCREEN,
             0

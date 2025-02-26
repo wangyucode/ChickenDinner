@@ -54,8 +54,8 @@ class Connections(val springContext: ApplicationContext) {
             var signal = 0
             while (!isControlClosed && signal != 1) {
                 overlaySocket = Socket("localhost", MOUSE_PORT)
-                signal = overlaySocket.inputStream.read()
                 delay(200)
+                signal = overlaySocket.inputStream.read()
             }
 
             if (signal == 1) {
@@ -66,7 +66,12 @@ class Connections(val springContext: ApplicationContext) {
                 // read screen change
                 val buffer = ByteArray(8)
                 while (!isOverlayClosed) {
-                    overlaySocket.inputStream.read(buffer)
+                    val read = overlaySocket.inputStream.read(buffer)
+                    if(read == -1) {
+                        isOverlayClosed = true
+                        springContext.publishEvent(SpringEvent(EVENT_STOP, "Overlay Server Closed"))
+                        break
+                    }
                     SCREEN.x = ByteBuffer.wrap(buffer).getInt(0)
                     SCREEN.y = ByteBuffer.wrap(buffer).getInt(4)
                     springContext.publishEvent(SpringEvent(EVENT_SCREEN_CHANGE))
@@ -103,10 +108,14 @@ class Connections(val springContext: ApplicationContext) {
     }
 
     fun closeAll() {
+        if (!isOverlayClosed) {
+            overlaySocket.outputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
+        }
+        if (!isControlClosed) {
+            controlSocket.outputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
+        }
         isOverlayClosed = true
         isControlClosed = true
-        overlaySocket.outputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
-        controlSocket.outputStream.write(byteArrayOf(HEAD_SHUT_DOWN))
         overlaySocket.close()
         controlSocket.close()
     }

@@ -88,7 +88,7 @@ class AwtUi(
     }
 
     fun onScreenChange() {
-        controlCanvas.append("\nScreenChange::$SCREEN")
+        controlCanvas.append("ScreenChange::$SCREEN")
         // get screen size
         val screenBounds = frame.preferredSize
         RATIO = if (screenBounds.width.toDouble() / screenBounds.height > SCREEN.x.toDouble() / SCREEN.y) {
@@ -113,7 +113,7 @@ class AwtUi(
 
     fun onControlConnected(message: String?) {
         controlCanvas.addKeyListener(keyHandler)
-        controlCanvas.append("\n$message")
+        controlCanvas.append("$message")
     }
 
     fun changeCursor(visible: Boolean) {
@@ -135,8 +135,8 @@ class AwtUi(
             controlCanvas.append(message)
         }
         CoroutineScope(Dispatchers.Unconfined).launch {
-            controlCanvas.append("will exit in 30 seconds")
-            delay(30000)
+            controlCanvas.append("will exit in 10 seconds")
+            delay(10000)
             exitProcess(0)
         }
     }

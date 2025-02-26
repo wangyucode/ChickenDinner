@@ -24,53 +24,53 @@ class Initializer(
 
     suspend fun initialize(controlArea: ControlCanvas) {
         this.controlArea = controlArea
-        controlArea.append("\nget device name")
+        controlArea.append("get device name")
         val deviceName = getDeviceName()
-        controlArea.append("\ndevice name: $deviceName")
+        controlArea.append("device name: $deviceName")
 
-        controlArea.append("\nstart control service")
+        controlArea.append("start control service")
         startMouseService()
 
-        controlArea.append("\nenable overlay tunnel")
+        controlArea.append("enable overlay tunnel")
         enableTunnel(MOUSE_PORT, MOUSE_SOCKET)
 
         val keymapFileName = deviceName.trim() + ".json"
 
-        controlArea.append("\nread keymap: $keymapFileName")
+        controlArea.append("read keymap: $keymapFileName")
         keymapString = javaClass.classLoader.getResource(keymapFileName)!!.readText()
         keymap = JSON.parseObject(keymapString, Keymap::class.java)
         connections.keymapString = keymapString
         keyHandler.initButtons(keymap)
 
-        controlArea.append("\nconnecting to mouse")
+        controlArea.append("connecting to mouse")
         connections.connectToOverlayServer()
 
-        controlArea.append("\nenable control tunnel")
+        controlArea.append("enable control tunnel")
         enableTunnel(CONTROL_PORT, CONTROL_SOCKET)
 
-        controlArea.append("\nstart control service")
+        controlArea.append("start control service")
         startController()
 
-        controlArea.append("\nconnecting to control")
+        controlArea.append("connecting to control")
         connections.connectToControlServer()
-        controlArea.append("\ninitialized!")
+        controlArea.append("initialized!")
     }
 
     suspend fun getDeviceName(): String {
         val command = "adb shell getprop ro.product.model"
-        controlArea.append("\n$command")
+        controlArea.append(command)
         return executeCommand(command)
     }
 
     suspend fun startMouseService() {
         try {
             var command = "adb shell am force-stop cn.wycode.control"
-            controlArea.append("\n$command")
-            controlArea.append("\n${executeCommand(command)}")
+            controlArea.append(command)
+            controlArea.append(executeCommand(command))
 
             command = "adb shell am start-activity cn.wycode.control/.MainActivity"
-            controlArea.append("\n$command")
-            controlArea.append("\n${executeCommand(command)}")
+            controlArea.append(command)
+            controlArea.append(executeCommand(command))
         } catch (e: Exception) {
             e.message?.let { controlArea.append(it) }
         }
@@ -88,8 +88,8 @@ class Initializer(
     private suspend fun startController(): Boolean {
         try {
             var command = "adb shell killall $CONTROL_SERVER"
-            controlArea.append("\n$command")
-            controlArea.append("\n${executeCommand(command)}")
+            controlArea.append(command)
+            controlArea.append(executeCommand(command))
 
             //vm-options – VM 选项
             //cmd-dir –父目录 (/system/bin)
@@ -103,22 +103,22 @@ class Initializer(
             val args = if (ENABLE_LOG) "--debug" else ""
             command =
                 "adb shell CLASSPATH=$CONTROL_PATH app_process / --nice-name=$CONTROL_SERVER $CONTROL_SERVER $args"
-            controlArea.append("\n$command")
+            controlArea.append(command)
             CoroutineScope(Dispatchers.IO).launch {
                 val process = runtime.exec(command)
                 while (process.isAlive) {
                     val input = process.inputStream.bufferedReader().readLine()
-                    controlArea.append("\n$input")
+                    if(input!=null) controlArea.append(input)
                 }
                 val input = process.inputStream.bufferedReader().readLine()
                 val error = process.errorStream.bufferedReader().readLine()
                 withContext(Dispatchers.Unconfined) {
-                    controlArea.append("\n$input")
-                    controlArea.append("\n$error")
+                    if(input!=null) controlArea.append(input)
+                    if(error!=null) controlArea.append(error)
                 }
                 connections.closeAll()
                 withContext(Dispatchers.Unconfined) {
-                    controlArea.append("\nall closed!")
+                    controlArea.append("all closed!")
                 }
             }
         } catch (e: Exception) {
@@ -130,8 +130,8 @@ class Initializer(
     private suspend fun enableTunnel(port: Int, socketName: String) {
         try {
             val command = "adb forward tcp:$port localabstract:$socketName"
-            controlArea.append("\n$command")
-            controlArea.append("\n${executeCommand(command)}")
+            controlArea.append(command)
+            controlArea.append(executeCommand(command))
         } catch (e: Exception) {
             e.message?.let { controlArea.append(it) }
         }

@@ -98,13 +98,6 @@ class KeyHandler(
             KeyEvent.VK_CONTROL, KeyEvent.VK_F2, KeyEvent.VK_F3 -> return // no need to touch
             KeyEvent.VK_4 -> {
                 if (!switchMouseHelper.mouseVisible) {
-                    connections.sendTouch(
-                        HEAD_TOUCH_UP,
-                        fovHelper.movingFovId,
-                        fovHelper.lastFovX.toInt(),
-                        fovHelper.lastFovY.toInt(),
-                        false
-                    )
                     fovHandler.isPropsSelecting = true
                 }
                 propsHelper.selectDrops()
@@ -112,13 +105,6 @@ class KeyHandler(
 
             KeyEvent.VK_5 -> {
                 if (!switchMouseHelper.mouseVisible) {
-                    connections.sendTouch(
-                        HEAD_TOUCH_UP,
-                        fovHelper.movingFovId,
-                        fovHelper.lastFovX.toInt(),
-                        fovHelper.lastFovY.toInt(),
-                        false
-                    )
                     fovHandler.isPropsSelecting = true
                 }
                 propsHelper.selectDrugs()
@@ -213,29 +199,11 @@ class KeyHandler(
             KeyEvent.VK_4 -> {
                 fovHandler.isPropsSelecting = false
                 propsHelper.done()
-                if (!switchMouseHelper.mouseVisible) {
-                    connections.sendTouch(
-                        HEAD_TOUCH_DOWN,
-                        fovHelper.movingFovId,
-                        fovHelper.lastFovX.toInt(),
-                        fovHelper.lastFovY.toInt(),
-                        false
-                    )
-                }
             }
 
             KeyEvent.VK_5 -> {
                 fovHandler.isPropsSelecting = false
                 propsHelper.done()
-                if (!switchMouseHelper.mouseVisible) {
-                    connections.sendTouch(
-                        HEAD_TOUCH_DOWN,
-                        fovHelper.movingFovId,
-                        fovHelper.lastFovX.toInt(),
-                        fovHelper.lastFovY.toInt(),
-                        false
-                    )
-                }
             }
 
             KeyEvent.VK_F9 -> connections.sendKeymapVisible(true)

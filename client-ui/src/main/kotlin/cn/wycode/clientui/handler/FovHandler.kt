@@ -39,12 +39,8 @@ class FovHandler(
 
     inner class MouseListener : GlobalMouseAdapter() {
         override fun mouseMoved(event: GlobalMouseEvent) {
-            if(isPropsSelecting){
-                propsHelper.moveMouse(event.x, event.y)
-            }else{
-                fovHelper.sendMoveFov(event.x, event.y)
-            }
-
+            if (isPropsSelecting) propsHelper.moveMouse(event.x, event.y)
+            fovHelper.sendMoveFov(event.x, event.y)
         }
 
         override fun mousePressed(event: GlobalMouseEvent) {
@@ -88,10 +84,12 @@ class FovHandler(
                     position = lastFirePosition
                     id = TOUCH_ID_MOUSE_LEFT
                 }
+
                 GlobalMouseEvent.BUTTON_RIGHT -> {
                     position = mouse.right
                     id = TOUCH_ID_MOUSE_RIGHT
                 }
+
                 else -> {
                     return
                 }

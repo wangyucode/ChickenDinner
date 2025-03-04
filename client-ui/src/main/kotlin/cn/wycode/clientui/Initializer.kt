@@ -108,13 +108,13 @@ class Initializer(
                 val process = runtime.exec(command)
                 while (process.isAlive) {
                     val input = process.inputStream.bufferedReader().readLine()
-                    if(input!=null) controlArea.append(input)
+                    if (input != null) controlArea.append(input)
                 }
                 val input = process.inputStream.bufferedReader().readLine()
                 val error = process.errorStream.bufferedReader().readLine()
                 withContext(Dispatchers.Unconfined) {
-                    if(input!=null) controlArea.append(input)
-                    if(error!=null) controlArea.append(error)
+                    if (input != null) controlArea.append(input)
+                    if (error != null) controlArea.append(error)
                 }
                 connections.closeAll()
                 withContext(Dispatchers.Unconfined) {
